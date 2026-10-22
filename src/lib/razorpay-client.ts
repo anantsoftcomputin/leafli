@@ -31,6 +31,9 @@ export interface CheckoutArgs {
   orderId: string;
   orderNo: string;
   prefill?: { name?: string; email?: string; contact?: string };
+  /** Defaults to order verification; subscriptions pass their own endpoint. */
+  verifyPath?: string;
+  description?: string;
 }
 
 /**
@@ -46,13 +49,13 @@ export async function payWithRazorpay(a: CheckoutArgs): Promise<"paid" | "dismis
       amount: a.amount,
       currency: "INR",
       name: "Leafli",
-      description: `Order ${a.orderNo}`,
+      description: a.description ?? `Order ${a.orderNo}`,
       image: "/brand/favicon.png",
       prefill: a.prefill,
       theme: { color: "#255f30" },
       handler: async (r: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
         try {
-          await api("/api/payments/razorpay/verify", { orderId: a.orderId, ...r });
+          await api(a.verifyPath ?? "/api/payments/razorpay/verify", a.verifyPath ? r : { orderId: a.orderId, ...r });
           resolve("paid");
         } catch (e) {
           reject(e);

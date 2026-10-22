@@ -33,7 +33,7 @@ Every quantity the SOPs leave "to be confirmed" is flagged **TBC** and listed on
    - Register a **Web app** and copy its config.
 2. **Local env** — `cp .env.example .env.local`, fill the `NEXT_PUBLIC_FIREBASE_*` values, and paste a service-account key (Project settings → Service accounts) as one line into `FIREBASE_SERVICE_ACCOUNT_JSON`. Put your email in `ADMIN_EMAILS`.
 3. **Deploy rules & indexes** — `firebase use <project-id>` then `firebase deploy --only firestore,storage`.
-4. **Run** — `npm install && npm run dev`, open http://localhost:3000/login and sign in with the admin email.
+4. **Run** — `npm install && npm run dev`, open http://localhost:3000/admin and sign in with the admin email.
 5. **Load the SOP data** — `npm run seed` (or Settings → *Load SOP data*). This writes the menu, recipes, stock items and
    suppliers to Firestore and uploads the dish photos from `seed-assets/menu/` to Firebase Storage (`menu/…`). Then:
    - Settings → fill legal name, **GSTIN**, **FSSAI**, kitchen address **with coordinates** (needed for Porter).
@@ -101,3 +101,29 @@ npm run test:e2e   # full order/stock/PO/batch flow on the Firestore emulator (n
    update the DNS records at your registrar as shown there.
 3. Add `leafli.in` to Firebase Authentication → Settings → **Authorized domains** (needed for Google & phone sign-in).
 4. Move the Razorpay webhook to the new domain and retire the old `api.leafli.in` backend once traffic has moved.
+
+## Admin dashboard
+
+Go to **`/admin`** (e.g. `https://leafli.in/admin`, or `http://localhost:3000/admin` locally) and sign in with an email
+listed in `ADMIN_EMAILS` (verified emails only — Google sign-in counts as verified). Staff you add under
+Settings → Team land on the page their role uses. There's also a "Team login" link in the site footer.
+
+| Section | What it's for |
+|---|---|
+| Subscriptions | Each morning: review who's due, then **Send to kitchen** to create the day's orders. Activate cash/UPI plans. |
+| Plans | Create/edit subscription plans (each gets `/plans/[slug]`). Shows estimated food cost per bowl. |
+| Blog & SEO | Write posts with a live SEO score, Google preview, social preview and every meta field. |
+| Testimonials | Add real customer quotes (Google/Zomato/direct). The home page section appears once one is published. |
+
+## SEO built in
+
+- Server-rendered pages for the menu, every dish (`/menu/[slug]`), plans, blog posts, categories, FAQ, about, contact and policies.
+- Unique titles/descriptions within Google's display limits, canonical URLs, Open Graph/Twitter cards (1200×630 JPEG cards per dish).
+- Structured data: Organization, WebSite, Restaurant, Menu/MenuItem, Product (plans), BlogPosting, FAQPage, BreadcrumbList.
+- `sitemap.xml` (with image entries and real post dates), `robots.txt`, RSS (`/blog/rss.xml`), web manifest.
+- 301/308 redirects from the old leafli.in URLs (`/products/:slug` → `/menu/:slug`, etc.) so existing rankings carry over.
+- Admin, account and login pages are `noindex`.
+
+After launch: verify the domain in **Google Search Console** (put the token in `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`),
+submit `https://leafli.in/sitemap.xml`, and create/claim your **Google Business Profile** — for a food business that's
+the biggest local-ranking lever.

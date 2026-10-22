@@ -26,8 +26,11 @@ env:
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     value: "1:455991305875:web:814a7b518b0937e3064f66"
     availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_SITE_URL
+    value: https://leafli.in
+    availability: [BUILD, RUNTIME]
   - variable: ADMIN_EMAILS
-    value: jigarredesai@gmail.com
+    value: jigarredesai@gmail.com,anantsoftcomputing@gmail.com
   - variable: CORS_ALLOWED_ORIGINS
     value: https://leafli.in,https://www.leafli.in
   - variable: PORTER_BASE_URL

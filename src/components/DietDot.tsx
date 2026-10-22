@@ -1,5 +1,5 @@
 import type { MenuItem } from "@/lib/types";
-import { cx } from "./ui";
+const cx = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(" ");
 
 /** FSSAI-style veg / egg / non-veg marker. */
 export function DietDot({ diet }: { diet: MenuItem["diet"] }) {

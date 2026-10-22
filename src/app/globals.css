@@ -89,3 +89,24 @@ body {
   .no-print { display: none !important; }
   body { background: white; }
 }
+
+/* Long-form content (blog posts, policies) */
+.prose-leafli {
+  @apply text-[1.075rem] leading-[1.8] text-ink/80;
+}
+.prose-leafli > * + * { @apply mt-5; }
+.prose-leafli h2 { @apply mt-14 scroll-mt-28 font-display text-3xl leading-tight font-medium tracking-tight text-ink; }
+.prose-leafli h3 { @apply mt-10 scroll-mt-28 font-display text-2xl font-medium text-ink; }
+.prose-leafli h4 { @apply mt-8 font-semibold text-ink; }
+.prose-leafli a { @apply font-medium text-leaf-700 underline decoration-lime-500 decoration-2 underline-offset-4 hover:decoration-leaf-700; }
+.prose-leafli strong { @apply font-semibold text-ink; }
+.prose-leafli ul { @apply list-disc space-y-2 pl-6 marker:text-leaf-500; }
+.prose-leafli ol { @apply list-decimal space-y-2 pl-6 marker:font-semibold marker:text-leaf-600; }
+.prose-leafli blockquote { @apply rounded-r-2xl border-l-4 border-lime-400 bg-lime-300/25 px-6 py-4 font-display text-xl text-ink italic; }
+.prose-leafli figure img, .prose-leafli > p > img { @apply w-full rounded-[1.5rem]; }
+.prose-leafli figcaption { @apply mt-2 text-center text-sm text-ink/50; }
+.prose-leafli hr { @apply my-12 border-ink/10; }
+.prose-leafli table { @apply w-full overflow-hidden rounded-2xl text-left text-[0.95rem] ring-1 ring-ink/10; }
+.prose-leafli th { @apply bg-cream-200 px-4 py-2 font-semibold text-ink; }
+.prose-leafli td { @apply border-t border-ink/5 px-4 py-2; }
+.prose-leafli code { @apply rounded bg-ink/5 px-1.5 py-0.5 text-[0.9em]; }

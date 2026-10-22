@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef } from "react";
 import { gsap, MOTION_OK, SplitText, useGSAP } from "@/lib/gsap";
 import { rupees as inr } from "@/lib/costing";
@@ -103,7 +104,9 @@ export function BowlsShowcase() {
                   <div data-card-copy className="mt-auto">
                     <div className="flex items-start gap-2">
                       <DietDot diet={b.diet} />
-                      <h3 className="font-display text-2xl leading-tight font-medium tracking-tight lg:text-3xl">{b.name}</h3>
+                      <h3 className="font-display text-2xl leading-tight font-medium tracking-tight lg:text-3xl">
+                        {b.slug ? <Link href={`/menu/${b.slug}`} className="hover:underline">{b.name}</Link> : b.name}
+                      </h3>
                     </div>
                     <p className="mt-2 line-clamp-2 text-sm opacity-75">{b.description}</p>
                     <div className="mt-5 flex items-center justify-between">

@@ -5,6 +5,8 @@ import type { MenuItem } from "@/lib/types";
 import { storagePhoto } from "./DishImage";
 
 export type PublicItem = Pick<MenuItem, "id" | "name" | "description" | "category" | "price" | "imageUrl" | "available" | "diet" | "allergens"> & {
+  slug?: string;
+  photoUrl?: string | null;
   nutrition?: MenuItem["nutrition"] | null;
 };
 export interface PublicMenu {
@@ -49,9 +51,10 @@ interface SiteState {
 const Ctx = createContext<SiteState | null>(null);
 const CART_KEY = "leafli-cart";
 
-export function SiteProvider({ children }: { children: React.ReactNode }) {
-  const [menu, setMenu] = useState<PublicMenu>(FALLBACK);
-  const [live, setLive] = useState(false);
+export function SiteProvider({ children, initialMenu }: { children: React.ReactNode; initialMenu?: PublicMenu | null }) {
+  // The server passes the live menu so pages render complete HTML (SEO) with no flash.
+  const [menu, setMenu] = useState<PublicMenu>(initialMenu?.items.length ? initialMenu : FALLBACK);
+  const [live, setLive] = useState(!!initialMenu?.items.length);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [cartOpen, setCartOpen] = useState(false);
   const [cartTarget, setCartTarget] = useState<HTMLElement | null>(null);

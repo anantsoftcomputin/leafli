@@ -9,6 +9,8 @@ export interface BillInput {
   discount?: number; // flat rupees, applied before tax
   delivery?: boolean;
   deliveryCharge?: number;
+  /** Prepaid subscription meal: GST was invoiced with the subscription, so none here. */
+  prepaid?: boolean;
 }
 
 export interface Bill {
@@ -35,11 +37,11 @@ export function computeBill(input: BillInput, s: BusinessSettings): Bill {
   const subtotal = round2(input.lines.reduce((sum, l) => sum + l.unitPrice * l.qty, 0));
   const discount = round2(Math.min(Math.max(input.discount ?? 0, 0), subtotal));
   const isAggregator = input.source === "zomato";
-  const packagingCharge = isAggregator || subtotal === 0 ? 0 : s.packagingChargePerOrder;
-  const deliveryCharge =
-    isAggregator || !input.delivery ? 0 : round2(input.deliveryCharge ?? s.defaultDeliveryCharge);
+  const noExtras = isAggregator || !!input.prepaid;
+  const packagingCharge = noExtras || subtotal === 0 ? 0 : s.packagingChargePerOrder;
+  const deliveryCharge = noExtras || !input.delivery ? 0 : round2(input.deliveryCharge ?? s.defaultDeliveryCharge);
   const taxableValue = round2(subtotal - discount + packagingCharge + deliveryCharge);
-  const half = isAggregator ? 0 : round2((taxableValue * s.gstRate) / 200);
+  const half = noExtras ? 0 : round2((taxableValue * s.gstRate) / 200);
   const gross = taxableValue + half * 2;
   const total = Math.round(gross);
   return {
@@ -74,3 +76,11 @@ export const DEFAULT_SETTINGS: BusinessSettings = {
   zomatoEnabled: false,
   invoiceFooter: "Thank you for ordering from Leafli!",
 };
+
+/** GST split for a subscription (plan price is excl. GST, like menu prices). */
+export function subscriptionTotals(price: number, gstRate: number) {
+  const half = round2((price * gstRate) / 200);
+  const gross = price + half * 2;
+  const total = Math.round(gross);
+  return { taxableValue: price, cgst: half, sgst: half, roundOff: round2(total - gross), total };
+}

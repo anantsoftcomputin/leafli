@@ -11,7 +11,10 @@ process.env.RAZORPAY_WEBHOOK_SECRET = "hook_secret";
 
 async function main() {
   const { adminDb } = await import("../src/lib/firebase/admin");
-  const { MENU_ITEMS, PREP_ITEMS, RAW_ITEMS, SUPPLIERS } = await import("../src/lib/seed/sopData");
+  const { MENU_ITEMS, PLANS, PREP_ITEMS, RAW_ITEMS, SUPPLIERS } = await import("../src/lib/seed/sopData");
+  const subsSvc = await import("../src/lib/server/subscriptions");
+  const { addDays } = await import("../src/lib/subscriptions");
+  const { istDate } = await import("../src/lib/site");
   const { DEFAULT_SETTINGS } = await import("../src/lib/billing");
   const ops = await import("../src/lib/server/stockOps");
   const { createOrder, setOrderStatus, markOrderPaid } = await import("../src/lib/server/orders");
@@ -36,6 +39,10 @@ async function main() {
   for (const m of MENU_ITEMS) {
     const { id, ...rest } = m;
     batch.set(adminDb.collection("menuItems").doc(id), rest);
+  }
+  for (const p of PLANS) {
+    const { id, ...rest } = p;
+    batch.set(adminDb.collection("plans").doc(id), rest);
   }
   batch.set(adminDb.collection("settings").doc("business"), { ...DEFAULT_SETTINGS, packagingChargePerOrder: 10 });
   await batch.commit();
@@ -153,6 +160,43 @@ async function main() {
   assert.equal(summarize(all2).orders, before + 1, "paid order now counts in sales");
   await setOrderStatus(online.id, "accepted", actor);
   ok("online order: blocked until paid, signatures verified, payment matched to its order, idempotent, then accepted");
+
+  // ---- Subscriptions: buy → activate → daily kitchen orders
+  const start = addDays(istDate(), 1);
+  await assert.rejects(
+    subsSvc.createSubscription({ planId: "taster-week", startDate: istDate(), deliveryDays: [0, 1, 2, 3, 4, 5, 6], slot: "lunch", diet: "veg", address: { line1: "1 Test Rd", city: "Pune", state: "MH", pincode: "411001", lat: 18.5, lng: 73.8 }, customer: { name: "Sub", phone: "+919000000000" }, paymentMode: "offline" }, actor),
+    /tomorrow or later/,
+  );
+  const sub = await subsSvc.createSubscription(
+    { planId: "taster-week", startDate: start, deliveryDays: [0, 1, 2, 3, 4, 5, 6], slot: "lunch", diet: "veg", address: { line1: "1 Test Rd", city: "Pune", state: "MH", pincode: "411001", lat: 18.5, lng: 73.8 }, customer: { name: "Sub", phone: "+919000000000" }, paymentMode: "offline" },
+    actor,
+  );
+  near(sub.total, Math.round(2099 * 1.05), "plan total incl. 5% GST");
+  const menuNow = (await adminDb.collection("menuItems").get()).docs.map((d) => ({ id: d.id, ...d.data() })) as never[];
+  let gen = await subsSvc.generateSubscriptionOrders(start, actor, menuNow);
+  assert.equal(gen.created.length, 0, "unpaid subscription produces no kitchen orders");
+  await subsSvc.activateSubscription(sub.id, null);
+  const subDoc = (await adminDb.collection("subscriptions").doc(sub.id).get()).data()!;
+  assert.equal(subDoc.status, "active");
+  assert.ok(String(subDoc.invoiceNo).startsWith("LF/"), "subscription gets a GST invoice number");
+  gen = await subsSvc.generateSubscriptionOrders(start, actor, menuNow);
+  assert.equal(gen.created.length, 1, "one kitchen order for the due day");
+  const rerun = await subsSvc.generateSubscriptionOrders(start, actor, menuNow);
+  assert.equal(rerun.created.length, 0, "re-running the day creates no duplicates");
+  const mealOrder = (await adminDb.collection("orders").where("subscriptionId", "==", sub.id).get()).docs;
+  assert.equal(mealOrder.length, 1);
+  const mo = mealOrder[0]!.data();
+  assert.equal(mo.cgst, 0, "no second GST on a prepaid meal");
+  assert.equal(mo.invoiceNo, undefined, "no second invoice on a prepaid meal");
+  assert.equal(mo.stockDeducted, true, "meal deducts stock");
+  assert.ok(["veg"].includes((MENU_ITEMS.find((m) => m.id === mo.lines[0].menuItemId)?.diet) ?? ""), "veg subscriber gets a veg bowl");
+  near(mo.lines[0].unitPrice, 420, "meal valued at per-bowl plan price");
+  const after = (await adminDb.collection("subscriptions").doc(sub.id).get()).data()!;
+  assert.equal(after.mealsUsed, 1);
+  await subsSvc.updateSubscription(sub.id, { type: "skip", date: addDays(start, 1) }, actor, true, menuNow);
+  gen = await subsSvc.generateSubscriptionOrders(addDays(start, 1), actor, menuNow);
+  assert.equal(gen.created.length, 0, "skipped day produces no order");
+  ok(`subscription: GST invoice on purchase, 1 prepaid kitchen order (no double GST), idempotent, skip honoured`);
 
   // ---- Wastage, counts, batch close
   await ops.recordWastage("lettuce", 100, "Wilted", actor);

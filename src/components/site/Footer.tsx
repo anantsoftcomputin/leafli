@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRef } from "react";
 import { gsap, MOTION_OK, SplitText, useGSAP } from "@/lib/gsap";
 import { Logo } from "@/components/brand/Logo";
+import type { PublicSettings } from "@/lib/server/content";
 import { DishImage } from "./DishImage";
 
 export function ClosingCta() {
@@ -43,34 +44,44 @@ export function ClosingCta() {
   );
 }
 
-export function Footer() {
+const NAV = [
+  { title: "Eat", links: [["Menu", "/menu"], ["Subscriptions", "/plans"], ["How it works", "/#how"], ["My orders", "/account"]] },
+  { title: "Leafli", links: [["About us", "/about"], ["Blog", "/blog"], ["FAQs", "/faq"], ["Contact", "/contact"]] },
+  { title: "Policies", links: [["Terms of service", "/terms"], ["Privacy policy", "/privacy"], ["Refunds & cancellations", "/refunds"], ["Delivery policy", "/delivery-policy"]] },
+] as const;
+
+export function Footer({ settings }: { settings?: PublicSettings | null }) {
+  const a = settings?.address;
   return (
     <footer className="bg-leaf-950 pt-20 pb-10 text-cream-50/70">
-      <div className="mx-auto grid max-w-7xl gap-12 px-5 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]">
+      <div className="mx-auto grid max-w-7xl gap-12 px-5 sm:px-8 md:grid-cols-[1.3fr_repeat(3,1fr)]">
         <div>
           <Logo tone="light" className="h-20" />
           <p className="mt-5 max-w-xs font-display text-2xl leading-snug text-cream-50 italic">Fresh bowls. Happy moods.</p>
-          <a href="https://www.instagram.com/leafli.in" target="_blank" rel="noreferrer" className="mt-4 inline-flex text-sm text-lime-300 hover:underline">@leafli.in on Instagram ↗</a>
+          <div className="mt-5 space-y-1 text-sm">
+            {a?.line1 && <address className="not-italic">{[a.line1, a.line2, a.city, a.pincode].filter(Boolean).join(", ")}</address>}
+            {settings?.phone && <a href={`tel:${settings.phone}`} className="block hover:text-cream-50">{settings.phone}</a>}
+            {settings?.email && <a href={`mailto:${settings.email}`} className="block hover:text-cream-50">{settings.email}</a>}
+            <a href="https://www.instagram.com/leafli.in" target="_blank" rel="noreferrer" className="inline-flex text-lime-300 hover:underline">@leafli.in on Instagram ↗</a>
+          </div>
         </div>
-        <div>
-          <h3 className="mb-4 text-xs font-semibold tracking-[0.2em] text-lime-400 uppercase">Explore</h3>
-          <ul className="space-y-2">
-            <li><Link href="/#bowls" className="hover:text-cream-50">Our bowls</Link></li>
-            <li><Link href="/#menu" className="hover:text-cream-50">Menu</Link></li>
-            <li><Link href="/#how" className="hover:text-cream-50">How it works</Link></li>
-            <li><Link href="/account" className="hover:text-cream-50">My orders</Link></li>
-          </ul>
-        </div>
-        <div>
-          <h3 className="mb-4 text-xs font-semibold tracking-[0.2em] text-lime-400 uppercase">Also on</h3>
-          <ul className="space-y-2">
-            <li><a href="https://www.zomato.com" target="_blank" rel="noreferrer" className="hover:text-cream-50">Zomato ↗</a></li>
-          </ul>
-          <p className="mt-6 text-sm">Allergen information is listed on every dish. Please tell us about any allergies before ordering.</p>
-        </div>
+        {NAV.map((col) => (
+          <nav key={col.title} aria-label={col.title}>
+            <h3 className="mb-4 text-xs font-semibold tracking-[0.2em] text-lime-400 uppercase">{col.title}</h3>
+            <ul className="space-y-2">
+              {col.links.map(([label, href]) => (
+                <li key={href}><Link href={href} className="hover:text-cream-50">{label}</Link></li>
+              ))}
+            </ul>
+          </nav>
+        ))}
       </div>
       <div className="mx-auto mt-16 flex max-w-7xl flex-wrap justify-between gap-4 border-t border-white/10 px-5 pt-6 text-xs sm:px-8">
-        <span>© {new Date().getFullYear()} Leafli. All rights reserved.</span>
+        <span>
+          © {new Date().getFullYear()} {settings?.legalName || "Leafli"}
+          {settings?.fssai && <> · FSSAI Lic. No. {settings.fssai}</>}
+          {settings?.gstin && <> · GSTIN {settings.gstin}</>}
+        </span>
         <Link href="/login" className="hover:text-cream-50">Team login</Link>
       </div>
     </footer>

@@ -56,6 +56,17 @@ service cloud.firestore {
     match /integrationLogs/{id} { allow read: if isManager(); allow write: if false; }
     match /meta/{id} { allow read: if isStaff(); allow write: if false; }
 
+    // Plans are public (shown on /plans). Edits go through the server (cache refresh).
+    match /plans/{id} { allow read: if true; allow write: if false; }
+    // Blog posts and testimonials: staff read in the admin; the public site reads via the server.
+    match /posts/{id} { allow read: if isStaff(); allow write: if false; }
+    match /testimonials/{id} { allow read: if isStaff(); allow write: if false; }
+    // Customers read their own subscriptions; all changes go through the server.
+    match /subscriptions/{id} {
+      allow read: if isStaff() || (signedIn() && resource.data.customerUid == request.auth.uid);
+      allow write: if false;
+    }
+
     match /settings/{id} {
       allow read: if isStaff();
       allow write: if isAdmin();

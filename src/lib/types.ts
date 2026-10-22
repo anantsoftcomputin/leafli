@@ -127,12 +127,17 @@ export type Channel = "pos" | "website" | "zomato";
 
 export interface MenuItem {
   id: string;
+  /** URL slug for /menu/[slug] (kept identical to the old leafli.in /products/[slug]). */
+  slug?: string;
+  /** Customer-facing ingredient list (shown on the dish page). */
+  ingredients?: string[];
   name: string;
   description: string;
   category: string;
   price: number; // selling price excluding GST
   imageUrl?: string | null; // round cut-out (Firebase Storage)
   photoUrl?: string | null; // square photo (Firebase Storage)
+  ogImageUrl?: string | null; // 1200×630 JPEG share card
   available: boolean;
   channels: Record<Channel, boolean>;
   /** Optional per-channel price override (e.g. Zomato menu markup). */
@@ -207,6 +212,8 @@ export interface Order {
   foodCost: number;
   paymentMode: "cash" | "upi" | "card" | "online" | "zomato" | "pay_later";
   paymentStatus: "pending" | "paid" | "refunded";
+  /** Set when the order is a prepaid meal from a subscription. */
+  subscriptionId?: string | null;
   /** Online payment details (Razorpay). */
   payment?: { provider: "razorpay"; rzpOrderId: string; paymentId?: string; paidAt?: number; refundId?: string; refundError?: string };
   status: OrderStatus;
@@ -271,3 +278,123 @@ export const ORDER_FLOW: OrderStatus[] = [
 /** Online orders stay out of the kitchen until Razorpay confirms payment. */
 export const awaitingPayment = (o: Pick<Order, "paymentMode" | "paymentStatus" | "status">) =>
   o.paymentMode === "online" && o.paymentStatus === "pending" && o.status !== "cancelled";
+
+// ───────────────────────────────────────────── Subscriptions
+
+export type DietPref = "veg" | "egg" | "nonveg";
+
+export interface Plan {
+  id: string;
+  slug: string;
+  name: string;
+  tagline: string;
+  description: string; // markdown
+  meals: number; // prepaid bowls
+  validityDays: number; // days to use them from the start date
+  price: number; // excl. GST
+  compareAtPrice: number; // price of the same bowls bought one by one
+  /** Dishes the rotation may use; empty = every salad on the menu. */
+  eligibleMenuIds: string[];
+  freeDelivery: boolean;
+  features: string[];
+  highlight?: string | null; // e.g. "Most popular"
+  active: boolean;
+  sortOrder: number;
+  faqs?: { q: string; a: string }[];
+  metaTitle?: string;
+  metaDescription?: string;
+  updatedAt?: number;
+}
+
+export type SubscriptionStatus = "pending_payment" | "active" | "paused" | "completed" | "cancelled" | "expired";
+
+export interface Subscription {
+  id: string;
+  planId: string;
+  planName: string;
+  customerUid: string;
+  customer: { name: string; phone?: string; email?: string | null };
+  address: Address;
+  slot: "lunch" | "dinner";
+  /** 0 = Sunday … 6 = Saturday */
+  deliveryDays: number[];
+  diet: DietPref;
+  startDate: string; // YYYY-MM-DD (IST)
+  endDate: string; // last usable day (start + validity)
+  mealsTotal: number;
+  mealsUsed: number;
+  /** Customer picks for specific dates; otherwise the chef's rotation decides. */
+  selections: Record<string, string>;
+  skipped: string[]; // YYYY-MM-DD
+  /** Dates an order has already been generated for. */
+  fulfilled: Record<string, string>; // date -> orderId
+  status: SubscriptionStatus;
+  pausedFrom?: string | null;
+  price: number;
+  taxableValue: number;
+  cgst: number;
+  sgst: number;
+  total: number;
+  paymentMode: "online" | "offline";
+  paymentStatus: "pending" | "paid" | "refunded";
+  payment?: { provider: "razorpay"; rzpOrderId: string; paymentId?: string; paidAt?: number };
+  invoiceNo?: string;
+  notes?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+// ───────────────────────────────────────────── Content
+
+export interface PostFaq {
+  q: string;
+  a: string;
+}
+
+export interface Post {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string; // markdown
+  coverImage?: string | null;
+  coverAlt?: string;
+  authorName: string;
+  authorBio?: string;
+  category: string;
+  tags: string[];
+  status: "draft" | "published" | "scheduled";
+  publishedAt?: number | null;
+  updatedAt: number;
+  createdAt: number;
+  readingMinutes?: number;
+  wordCount?: number;
+  // SEO
+  metaTitle?: string;
+  metaDescription?: string;
+  focusKeyword?: string;
+  secondaryKeywords?: string[];
+  canonicalUrl?: string;
+  noindex?: boolean;
+  nofollow?: boolean;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string | null;
+  twitterCard?: "summary" | "summary_large_image";
+  schemaType?: "BlogPosting" | "Article" | "NewsArticle";
+  faqs?: PostFaq[];
+  relatedMenuIds?: string[];
+}
+
+export interface Testimonial {
+  id: string;
+  name: string;
+  quote: string;
+  rating: number; // 1-5
+  dish?: string;
+  location?: string;
+  source?: "google" | "zomato" | "instagram" | "direct";
+  published: boolean;
+  sortOrder: number;
+  createdAt: number;
+}

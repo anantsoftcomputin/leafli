@@ -9,7 +9,7 @@
 //  - Anything the SOPs mark "to be confirmed" is flagged `tbc` / `openItems` and
 //    surfaced in the UI until someone confirms it.
 //  - Shelf-life hours come from the shelf-life guide (lower bound of each range).
-import type { MenuItem, StockItem, Supplier } from "../types";
+import type { MenuItem, Plan, StockItem, Supplier } from "../types";
 
 const H = 1; // hours
 const D = 24; // days -> hours
@@ -497,6 +497,8 @@ const allChannels = { pos: true, website: true, zomato: true };
 export const MENU_ITEMS: MenuItem[] = [
   {
     id: "chicken-caesar",
+    ingredients: ["Grilled chicken steak", "Hard-boiled eggs", "Lettuce", "Cherry tomatoes", "Parmesan cheese", "Garlic croutons", "Caesar dressing"],
+    slug: "classic-chicken-caesar-salad",
     name: "Classic Chicken Caesar Salad",
     description: "Grilled chicken steak, hard-boiled eggs, crisp lettuce, cherry tomatoes, shaved parmesan and crunchy garlic croutons tossed in a signature Caesar dressing.",
     category: "Protein Salads",
@@ -532,6 +534,8 @@ export const MENU_ITEMS: MenuItem[] = [
   },
   {
     id: "asian-rice-noodle",
+    ingredients: ["Rice noodles", "Purple cabbage", "Carrots", "Sliced onions", "Peanuts", "Fresh mint", "Fresh coriander", "Sesame-soy vinaigrette"],
+    slug: "asian-noodle-salad",
     name: "Asian Noodle Salad",
     description: "Rice noodles, shredded purple cabbage, carrots, sliced onions, crunchy peanuts, fresh mint and coriander in a toasted sesame-soy vinaigrette.",
     category: "Fresh Salads",
@@ -567,6 +571,8 @@ export const MENU_ITEMS: MenuItem[] = [
   },
   {
     id: "chana-moong",
+    ingredients: ["Chana", "Moong sprouts", "Fresh mango", "Cucumber", "Tomatoes", "Chaat masala", "Mango-jalapeño dressing"],
+    slug: "desi-mango-sprout-salad",
     name: "Desi Mango & Sprout Salad",
     description: "Protein-packed chana and moong sprouts tossed with fresh mango, cucumber, tomatoes, chaat masala and a sweet-spicy mango-jalapeño dressing.",
     category: "Fresh Salads",
@@ -606,6 +612,8 @@ export const MENU_ITEMS: MenuItem[] = [
   },
   {
     id: "caprese",
+    ingredients: ["Buffalo mozzarella", "Tomatoes", "Arugula", "Basil", "Walnut-basil pesto", "Balsamic glaze", "Toasted nuts"],
+    slug: "salad-caprese",
     name: "Salad Caprese",
     description: "Fresh buffalo mozzarella, ripe tomatoes, peppery arugula and basil, drizzled with walnut-basil pesto, balsamic glaze and toasted nuts.",
     category: "Fresh Salads",
@@ -641,6 +649,8 @@ export const MENU_ITEMS: MenuItem[] = [
   },
   {
     id: "potato-apple",
+    ingredients: ["Roasted potatoes", "Apples", "Lettuce", "Cherry tomatoes", "Walnuts", "French egg gribiche sauce", "Capers", "Gherkins", "Herbs"],
+    slug: "roasted-potato-apple-salad",
     name: "Roasted Potato & Apple Salad",
     description: "Herb-roasted potatoes, crisp apples, lettuce, cherry tomatoes and walnuts folded in a tangy French egg gribiche sauce with capers and gherkins.",
     category: "Fresh Salads",
@@ -675,6 +685,8 @@ export const MENU_ITEMS: MenuItem[] = [
   },
   {
     id: "chocolate-fruit-bowl",
+    ingredients: ["Hung curd", "dark chocolate compound", "cocoa", "orange zest", "honey", "seasonal exotic fruits", "granola/nuts"],
+    slug: "dark-chocolate-fruit-bowl",
     name: "Dark Chocolate Fruit Bowl",
     description: "Velvety hung curd blended with dark chocolate compound, cocoa, orange zest and honey, topped with seasonal exotic fruits and granola or nuts.",
     category: "Fruit & Dessert Bowls",
@@ -705,3 +717,93 @@ export const MENU_ITEMS: MenuItem[] = [
     openItems: [PRICE_TBC, "Confirm mousse portion per bowl", "Confirm fruit and granola quantities", "Confirm cocoa powder quantity in mousse"],
   },
 ];
+
+// ------------------------------------------------------------ subscription plans
+// Priced off the live menu: salads average ₹478 (Caesar 550, Caprese 550, Asian 460,
+// Sprout 460, Potato–Apple 370). Discounts grow with commitment; at ₹375/meal the
+// monthly plan still runs ~27% food cost on the SOP recipe costs. Delivery included.
+const SALAD_AVG = 478;
+export const PLANS: Plan[] = [
+  {
+    id: "taster-week",
+    slug: "taster-week",
+    name: "Taster Week",
+    tagline: "5 bowls · try the full range",
+    description:
+      "New to Leafli? Five weekday lunches that rotate through our salads so you can find your favourites. Pick your own bowl for any day, or let the chef surprise you.",
+    meals: 5,
+    validityDays: 10,
+    price: 2099,
+    compareAtPrice: 5 * SALAD_AVG,
+    eligibleMenuIds: [],
+    freeDelivery: true,
+    features: ["5 chef-made bowls", "Use within 10 days", "Delivery included", "Choose or let the chef rotate", "Skip or pause anytime before 9 pm"],
+    highlight: null,
+    active: true,
+    sortOrder: 1,
+  },
+  {
+    id: "fortnight-fresh",
+    slug: "fortnight-fresh",
+    name: "Fortnight Fresh",
+    tagline: "12 bowls · two weeks of easy lunches",
+    description:
+      "Two weeks of lunches sorted. Twelve fresh bowls across six days a week, with dressings packed on the side so every salad arrives crisp.",
+    meals: 12,
+    validityDays: 21,
+    price: 4799,
+    compareAtPrice: 12 * SALAD_AVG,
+    eligibleMenuIds: [],
+    freeDelivery: true,
+    features: ["12 chef-made bowls", "Use within 21 days", "Delivery included", "Pick your bowl or rotate", "Pause for travel, resume anytime"],
+    highlight: "Most popular",
+    active: true,
+    sortOrder: 2,
+  },
+  {
+    id: "monthly-green",
+    slug: "monthly-green",
+    name: "Monthly Green",
+    tagline: "24 bowls · our best price per bowl",
+    description:
+      "A month of healthy eating on autopilot. Twenty-four bowls at our lowest price per bowl, with priority delivery slots and the full salad menu to choose from.",
+    meals: 24,
+    validityDays: 40,
+    price: 8999,
+    compareAtPrice: 24 * SALAD_AVG,
+    eligibleMenuIds: [],
+    freeDelivery: true,
+    features: ["24 chef-made bowls", "Use within 40 days", "Delivery included", "Priority delivery slot", "Pause, skip or swap bowls anytime"],
+    highlight: "Best value",
+    active: true,
+    sortOrder: 3,
+  },
+  {
+    id: "protein-pro",
+    slug: "protein-pro",
+    name: "Protein Pro",
+    tagline: "20 high-protein bowls · Caesar, Caprese & Sprout",
+    description:
+      "Built for training days. Rotates our most protein-rich bowls — Classic Chicken Caesar, Salad Caprese with buffalo mozzarella, and the Desi Mango & Sprout Salad.",
+    meals: 20,
+    validityDays: 35,
+    price: 8799,
+    compareAtPrice: Math.round((550 + 550 + 460) / 3) * 20,
+    eligibleMenuIds: ["chicken-caesar", "caprese", "chana-moong"],
+    freeDelivery: true,
+    features: ["20 high-protein bowls", "Use within 35 days", "Delivery included", "Veg option skips the chicken", "Pause or skip anytime"],
+    highlight: null,
+    active: true,
+    sortOrder: 4,
+  },
+].map((p) => ({
+  ...p,
+  metaTitle: `${p.name} Salad Subscription — ${p.meals} Bowls | Leafli`,
+  metaDescription: `${p.tagline}. Fresh chef-made salads delivered with dressings on the side. ₹${Math.round(p.price / p.meals)} per bowl, delivery included. Subscribe to Leafli.`,
+  faqs: [
+    { q: "Can I choose which salad I get each day?", a: "Yes. Pick a bowl for any upcoming day from your account until 9 pm the day before. If you don't choose, the chef rotates through the bowls in your plan." },
+    { q: "Can I pause or skip deliveries?", a: "Yes. Skip a single day or pause the whole plan from your account before 9 pm the day before. Skipped meals stay in your balance until the plan's validity ends." },
+    { q: "What if I don't use all my bowls?", a: `Bowls must be used within ${p.validityDays} days of your start date. Unused bowls after that expire, so set your delivery days to match your routine.` },
+    { q: "Do you cater to vegetarians?", a: "Yes. Choose a vegetarian, eggetarian or non-vegetarian preference and we'll only send bowls that match." },
+  ],
+}));

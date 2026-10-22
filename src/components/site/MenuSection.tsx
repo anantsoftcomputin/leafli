@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { Flip, gsap, MOTION_OK, useGSAP } from "@/lib/gsap";
 import { rupees as inr } from "@/lib/costing";
@@ -17,7 +18,7 @@ const FILTERS = [
   { key: "Desserts", label: "Sweet" },
 ] as const;
 
-export function MenuSection() {
+export function MenuSection({ hideHeading }: { hideHeading?: boolean } = {}) {
   const root = useRef<HTMLElement>(null);
   const grid = useRef<HTMLDivElement>(null);
   const flipState = useRef<Flip.FlipState | null>(null);
@@ -64,12 +65,16 @@ export function MenuSection() {
   );
 
   return (
-    <section id="menu" ref={root} className="scroll-mt-20 bg-cream-100 py-24 md:py-32">
+    <section id="menu" ref={root} className={`scroll-mt-20 bg-cream-100 ${hideHeading ? "pb-24" : "py-24 md:py-32"}`}>
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div data-menu-head className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <p className="mb-4 text-sm font-semibold tracking-[0.2em] text-leaf-600 uppercase">The menu</p>
-            <h2 className="font-display text-[clamp(2.4rem,5vw,4.4rem)] leading-[0.95] font-medium tracking-[-0.03em]">What are you craving?</h2>
+            {!hideHeading && (
+              <>
+                <p className="mb-4 text-sm font-semibold tracking-[0.2em] text-leaf-600 uppercase">The menu</p>
+                <h2 className="font-display text-[clamp(2.4rem,5vw,4.4rem)] leading-[0.95] font-medium tracking-[-0.03em]">What are you craving?</h2>
+              </>
+            )}
           </div>
           <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter menu">
             {FILTERS.map((f) => (
@@ -107,7 +112,9 @@ export function MenuSection() {
                 </div>
                 <div className="flex items-start gap-2">
                   <DietDot diet={i.diet} />
-                  <h3 className="font-display text-xl leading-tight font-medium tracking-tight">{i.name}</h3>
+                  <h3 className="font-display text-xl leading-tight font-medium tracking-tight">
+                    {i.slug ? <Link href={`/menu/${i.slug}`} className="hover:text-leaf-700 hover:underline">{i.name}</Link> : i.name}
+                  </h3>
                 </div>
                 {i.nutrition && (i.nutrition.calories || i.nutrition.protein) ? (
                   <div className="mt-2 flex gap-1.5 text-[11px] font-semibold text-leaf-700">

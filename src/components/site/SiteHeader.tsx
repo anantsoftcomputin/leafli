@@ -2,26 +2,31 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { gsap, MOTION_OK, ScrollTrigger, useGSAP } from "@/lib/gsap";
 import { useAuth } from "@/components/AuthProvider";
 import { Logo } from "@/components/brand/Logo";
 import { useSite } from "./SiteContext";
+import { AccountMenu } from "./AccountMenu";
 
 const LINKS = [
-  { href: "/#bowls", label: "Bowls" },
-  { href: "/#promise", label: "Our promise" },
-  { href: "/#how", label: "How it works" },
-  { href: "/#menu", label: "Menu" },
+  { href: "/menu", label: "Menu" },
+  { href: "/plans", label: "Subscriptions" },
+  { href: "/blog", label: "Blog" },
+  { href: "/about", label: "About" },
 ];
 
-export function SiteHeader({ solid }: { solid?: boolean }) {
+export function SiteHeader({ solid: solidProp }: { solid?: boolean }) {
+  // Only the home page has a hero behind a transparent header.
+  const pathname = usePathname();
+  const solid = solidProp ?? pathname !== "/";
   const ref = useRef<HTMLElement>(null);
   const badge = useRef<HTMLSpanElement>(null);
   const cartBtn = useRef<HTMLButtonElement>(null);
   const mobile = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(!!solid);
-  const { user, isStaff } = useAuth();
+  const { user, isStaff, logout } = useAuth();
   const { count, setCartOpen, setCartTarget } = useSite();
 
   useEffect(() => setCartTarget(cartBtn.current), [setCartTarget]);
@@ -87,24 +92,14 @@ export function SiteHeader({ solid }: { solid?: boolean }) {
           </Link>
           <nav className="ml-6 hidden items-center gap-7 text-[15px] font-medium text-ink/75 lg:flex">
             {LINKS.map((l) => (
-              <Link key={l.href} href={l.href} className="group relative py-1 hover:text-ink">
+              <Link key={l.href} href={l.href} className="group relative py-1 hover:text-ink" prefetch>
                 {l.label}
                 <span className="absolute inset-x-0 -bottom-0.5 h-0.5 origin-left scale-x-0 rounded-full bg-lime-500 transition-transform duration-300 group-hover:scale-x-100" />
               </Link>
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
-            {isStaff && (
-              <Link href="/dashboard" className="hidden rounded-full px-3 py-2 text-sm font-medium text-ink/70 hover:bg-ink/5 sm:inline-flex">
-                Kitchen app
-              </Link>
-            )}
-            <Link
-              href={user ? "/account" : "/login?next=/"}
-              className="hidden rounded-full px-3 py-2 text-sm font-medium text-ink/70 hover:bg-ink/5 sm:inline-flex"
-            >
-              {user ? "My orders" : "Sign in"}
-            </Link>
+            <AccountMenu />
             <button
               ref={cartBtn}
               onClick={() => setCartOpen(true)}
@@ -143,9 +138,18 @@ export function SiteHeader({ solid }: { solid?: boolean }) {
                 {l.label}
               </Link>
             ))}
-            <Link href={user ? "/account" : "/login?next=/"} onClick={() => setOpen(false)} className="mt-6 text-lg text-lime-300">
-              {user ? "My orders →" : "Sign in →"}
-            </Link>
+            <div className="mt-8 flex flex-col gap-3 border-t border-white/15 pt-6 text-lg">
+              {user ? (
+                <>
+                  <Link href="/account" onClick={() => setOpen(false)} className="text-lime-300">My orders →</Link>
+                  <Link href="/account/subscriptions" onClick={() => setOpen(false)} className="text-lime-300">My subscriptions →</Link>
+                  {isStaff && <Link href="/admin" onClick={() => setOpen(false)} className="font-semibold text-lime-300">Admin dashboard →</Link>}
+                  <button onClick={async () => { setOpen(false); await logout(); }} className="text-left text-cream-50/70">Sign out</button>
+                </>
+              ) : (
+                <Link href="/login" onClick={() => setOpen(false)} className="text-lime-300">Sign in →</Link>
+              )}
+            </div>
           </nav>
           <p className="mt-auto font-display text-2xl text-lime-300 italic">Fresh bowls. Happy moods.</p>
         </div>

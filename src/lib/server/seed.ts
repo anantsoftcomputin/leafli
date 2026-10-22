@@ -3,7 +3,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { DEFAULT_SETTINGS } from "@/lib/billing";
 import { adminBucket } from "@/lib/firebase/admin";
-import { MENU_ITEMS, PREP_ITEMS, RAW_ITEMS, SUPPLIERS } from "@/lib/seed/sopData";
+import { MENU_ITEMS, PLANS, PREP_ITEMS, RAW_ITEMS, SUPPLIERS } from "@/lib/seed/sopData";
+import { SEED_POSTS } from "@/lib/seed/posts";
+import { renderMarkdown } from "@/lib/markdown";
 import { col } from "./inventory";
 import { recostPreps } from "./stockOps";
 
@@ -17,8 +19,8 @@ export function storageUrl(objectPath: string) {
 
 /** Upload one dish's photos to Storage (skips files already there unless `force`). */
 async function uploadDishPhotos(id: string, force: boolean) {
-  const out: { photo?: string; cutout?: string; uploaded: number } = { uploaded: 0 };
-  for (const [key, file] of [["photo", `${id}.webp`], ["cutout", `${id}-cutout.webp`]] as const) {
+  const out: { photo?: string; cutout?: string; og?: string; uploaded: number } = { uploaded: 0 };
+  for (const [key, file] of [["photo", `${id}.webp`], ["cutout", `${id}-cutout.webp`], ["og", `${id}-og.jpg`]] as const) {
     const local = path.join(ASSET_DIR, file);
     if (!fs.existsSync(local)) continue;
     const dest = `menu/${file}`;
@@ -26,7 +28,7 @@ async function uploadDishPhotos(id: string, force: boolean) {
     if (!exists || force) {
       await adminBucket().upload(local, {
         destination: dest,
-        metadata: { contentType: "image/webp", cacheControl: "public, max-age=31536000, immutable" },
+        metadata: { contentType: file.endsWith(".jpg") ? "image/jpeg" : "image/webp", cacheControl: "public, max-age=31536000, immutable" },
       });
       out.uploaded++;
     }
@@ -40,6 +42,8 @@ export interface SeedResult {
   items: number;
   menu: number;
   photosUploaded: number;
+  plans: number;
+  posts: number;
   recosted: number;
 }
 
@@ -48,7 +52,7 @@ export interface SeedResult {
  * Existing documents are left alone unless `overwrite`; stock levels are never touched.
  */
 export async function seedAll({ overwrite = false } = {}): Promise<SeedResult> {
-  const counts: SeedResult = { suppliers: 0, items: 0, menu: 0, photosUploaded: 0, recosted: 0 };
+  const counts: SeedResult = { suppliers: 0, items: 0, menu: 0, photosUploaded: 0, plans: 0, posts: 0, recosted: 0 };
 
   for (const s of SUPPLIERS) {
     const ref = col.suppliers().doc(s.id);
@@ -73,14 +77,41 @@ export async function seedAll({ overwrite = false } = {}): Promise<SeedResult> {
     const photos = await uploadDishPhotos(m.id, overwrite);
     counts.photosUploaded += photos.uploaded;
     const { id: _id, imageUrl: _ignored, ...rest } = m;
-    const images = { imageUrl: photos.cutout ?? null, photoUrl: photos.photo ?? null };
+    const images = { imageUrl: photos.cutout ?? null, photoUrl: photos.photo ?? null, ogImageUrl: photos.og ?? null };
     if (snap.exists && !overwrite) {
-      // Keep the manager's edits, but make sure the dish has its Storage photo.
-      if (!snap.get("imageUrl") && images.imageUrl) await ref.update(images);
+      // Keep the manager's edits, but fill in fields added since the dish was first seeded.
+      const missing: Record<string, unknown> = {};
+      if (!snap.get("imageUrl") && images.imageUrl) Object.assign(missing, images);
+      if (!snap.get("ogImageUrl") && images.ogImageUrl) missing.ogImageUrl = images.ogImageUrl;
+      if (!snap.get("slug") && m.slug) missing.slug = m.slug;
+      if (!snap.get("ingredients") && m.ingredients) missing.ingredients = m.ingredients;
+      if (!snap.get("nutrition") && m.nutrition) missing.nutrition = m.nutrition;
+      if (Object.keys(missing).length) await ref.update(missing);
       continue;
     }
     await ref.set({ ...rest, ...images }, { merge: true });
     counts.menu++;
+  }
+
+  const db = col.items().firestore;
+  for (const p of PLANS) {
+    const ref = db.collection("plans").doc(p.id);
+    if ((await ref.get()).exists && !overwrite) continue;
+    const { id: _id, ...rest } = p;
+    await ref.set({ ...rest, updatedAt: Date.now() });
+    counts.plans++;
+  }
+
+  // Starter blog posts — only created once (never overwritten, so edits are safe).
+  for (const sp of SEED_POSTS) {
+    const ref = db.collection("posts").doc(sp.slug);
+    if ((await ref.get()).exists) continue;
+    const { coverDish, daysAgo, ...rest } = sp;
+    const cover = storageUrl(`menu/${coverDish}.webp`);
+    const { wordCount, readingMinutes } = renderMarkdown(rest.content);
+    const ts = Date.now() - daysAgo * 86400000;
+    await ref.set({ ...rest, coverImage: cover, ogImage: storageUrl(`menu/${coverDish}-og.jpg`), twitterCard: "summary_large_image", schemaType: "BlogPosting", wordCount, readingMinutes, publishedAt: ts, createdAt: ts, updatedAt: ts });
+    counts.posts++;
   }
 
   const settings = col.settings();

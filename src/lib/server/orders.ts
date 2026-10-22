@@ -37,6 +37,8 @@ export interface CreateOrderInput {
   notes?: string;
   /** POS orders are accepted (and stock deducted) immediately. */
   autoAccept?: boolean;
+  /** Prepaid meal generated from a subscription. */
+  prepaid?: { subscriptionId: string; unitPrice: number };
 }
 
 /** Consumption recorded on the order so a cancellation can be reversed exactly. */
@@ -76,7 +78,7 @@ export async function createOrder(input: CreateOrderInput, actor: Actor) {
       const existing = await tx.get(orderRef);
       if (existing.exists) return { id: orderRef.id, duplicate: true, ...(existing.data() as Omit<Order, "id">) };
     }
-    if (!settings.acceptingOrders && input.source !== "pos")
+    if (!settings.acceptingOrders && input.source !== "pos" && !input.prepaid)
       throw new HttpError(409, "The kitchen is not accepting orders right now");
 
     const menuIds = [...new Set(input.lines.map((l) => l.menuItemId))];
@@ -96,7 +98,8 @@ export async function createOrder(input: CreateOrderInput, actor: Actor) {
     const isAggregator = input.source === "zomato";
     const dateKey = istDateKey();
     const orderCounter = await nextCounter(tx, `order-${dateKey}`);
-    const invoiceCounter = isAggregator ? null : await nextCounter(tx, `invoice-${financialYear()}`);
+    // Subscription meals were invoiced when the plan was bought — no second tax invoice.
+    const invoiceCounter = isAggregator || input.prepaid ? null : await nextCounter(tx, `invoice-${financialYear()}`);
 
     const req = requirementsFor(input.lines, menu);
     const stx = new StockTx(tx, actor);
@@ -106,8 +109,9 @@ export async function createOrder(input: CreateOrderInput, actor: Actor) {
     const lines: OrderLine[] = input.lines.map((l) => {
       const m = menu.get(l.menuItemId)!;
       // Server-side price. Aggregator orders carry the price the customer paid on Zomato.
-      const unitPrice =
-        isAggregator && l.unitPriceOverride != null
+      const unitPrice = input.prepaid
+        ? input.prepaid.unitPrice
+        : isAggregator && l.unitPriceOverride != null
           ? l.unitPriceOverride
           : (m.channelPrice?.[input.source] ?? m.price);
       const unitCost = round2(
@@ -131,6 +135,7 @@ export async function createOrder(input: CreateOrderInput, actor: Actor) {
         discount: input.discount,
         delivery: input.deliveryProvider === "porter" || input.deliveryProvider === "self",
         deliveryCharge: input.deliveryCharge,
+        prepaid: !!input.prepaid,
       },
       settings,
     );
@@ -170,6 +175,7 @@ export async function createOrder(input: CreateOrderInput, actor: Actor) {
         ...(status === "accepted" ? [{ status: "accepted" as const, at: now, by: actor.uid }] : []),
       ],
       stockDeducted: Boolean(input.autoAccept),
+      ...(input.prepaid ? { subscriptionId: input.prepaid.subscriptionId } : {}),
       consumption,
       delivery: { provider: input.deliveryProvider },
       ...(input.notes ? { notes: input.notes } : {}),

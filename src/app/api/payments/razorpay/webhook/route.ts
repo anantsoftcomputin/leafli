@@ -3,6 +3,7 @@ import { verifyWebhookSignature } from "@/lib/integrations/razorpay";
 import { HttpError, route } from "@/lib/server/http";
 import { col } from "@/lib/server/inventory";
 import { markOrderPaid } from "@/lib/server/orders";
+import { activateSubscription } from "@/lib/server/subscriptions";
 
 /**
  * Razorpay webhook (Dashboard → Settings → Webhooks):
@@ -21,6 +22,11 @@ export const POST = route(async (req: NextRequest) => {
   if (body.event !== "payment.captured" && body.event !== "order.paid") return { ok: true, ignored: body.event };
   const p = body.payload?.payment?.entity;
   if (!p?.order_id) return { ok: true, ignored: "no payment entity" };
+  // Subscription purchase
+  if (p.notes?.leafliSubscriptionId) {
+    await col.logs().add({ provider: "razorpay", direction: "in", event: body.event, subscriptionId: p.notes.leafliSubscriptionId, at: Date.now() });
+    return activateSubscription(p.notes.leafliSubscriptionId, { rzpOrderId: p.order_id, paymentId: p.id });
+  }
   let orderId = p.notes?.leafliOrderId;
   if (!orderId) {
     const q = await col.orders().where("payment.rzpOrderId", "==", p.order_id).limit(1).get();
