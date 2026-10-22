@@ -1,0 +1,64 @@
+rules_version = '2';
+
+// Leafli Firestore rules.
+// Anything that changes stock, money or order state is written ONLY by the
+// Next.js server (Admin SDK, which bypasses these rules) inside transactions.
+// Clients may read what their role allows and edit master data (menu, items,
+// suppliers, settings) — but never stock quantities.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function role() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    function isStaff() { return signedIn() && role() in ['admin', 'manager', 'kitchen', 'cashier']; }
+    function isManager() { return signedIn() && role() in ['admin', 'manager']; }
+    function isAdmin() { return signedIn() && role() == 'admin'; }
+    function untouched(keys) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(keys);
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isStaff());
+      // Profiles are created server-side; users may edit their name/addresses only.
+      allow update: if signedIn() && request.auth.uid == uid
+        && untouched(['role', 'uid', 'createdAt', 'email', 'phone']);
+    }
+
+    // Recipes and costs are internal. The storefront uses /api/public/menu.
+    match /menuItems/{id} {
+      allow read: if isStaff();
+      allow create, update: if isManager();
+      allow delete: if isAdmin();
+    }
+
+    match /items/{id} {
+      allow read: if isStaff();
+      allow create: if isManager() && request.resource.data.currentStock == 0;
+      allow update: if isManager() && untouched(['currentStock']);
+      allow delete: if isAdmin();
+    }
+
+    match /suppliers/{id} {
+      allow read: if isStaff();
+      allow write: if isManager();
+    }
+
+    match /orders/{id} {
+      allow read: if isStaff() || (signedIn() && resource.data.customerUid == request.auth.uid);
+      allow write: if false;
+    }
+
+    match /prepBatches/{id} { allow read: if isStaff(); allow write: if false; }
+    match /stockMovements/{id} { allow read: if isStaff(); allow write: if false; }
+    match /purchaseOrders/{id} { allow read: if isStaff(); allow write: if false; }
+    match /counters/{id} { allow read, write: if false; }
+    match /integrationLogs/{id} { allow read: if isManager(); allow write: if false; }
+    match /meta/{id} { allow read: if isStaff(); allow write: if false; }
+
+    match /settings/{id} {
+      allow read: if isStaff();
+      allow write: if isAdmin();
+    }
+  }
+}

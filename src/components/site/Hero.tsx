@@ -1,0 +1,146 @@
+"use client";
+
+import Link from "next/link";
+import { useRef } from "react";
+import { gsap, MOTION_OK, SplitText, useGSAP } from "@/lib/gsap";
+import { DishImage } from "./DishImage";
+import { Basil, Chilli, Lemon, Mango, Sesame, Tomato } from "./Garnish";
+
+const FLOATERS = [
+  { C: Basil, cls: "left-[4%] top-[18%] w-14 md:w-20", depth: 1.6, rot: -20 },
+  { C: Tomato, cls: "left-[44%] top-[10%] w-12 md:w-16", depth: 1.1, rot: 15 },
+  { C: Lemon, cls: "right-[3%] top-[16%] w-16 md:w-24", depth: 2.2, rot: 10 },
+  { C: Chilli, cls: "right-[8%] bottom-[12%] w-16 md:w-24", depth: 1.4, rot: -10 },
+  { C: Mango, cls: "left-[46%] bottom-[8%] w-10 md:w-14", depth: 2, rot: 20 },
+  { C: Sesame, cls: "left-[10%] bottom-[16%] w-12 md:w-16", depth: 0.8, rot: 0 },
+];
+
+export function Hero() {
+  const root = useRef<HTMLElement>(null);
+
+  useGSAP(
+    () => {
+      const q = gsap.utils.selector(root);
+      const mm = gsap.matchMedia();
+      mm.add(MOTION_OK, () => {
+        gsap.set(q("[data-reveal]"), { visibility: "visible" });
+        const split = SplitText.create(q("[data-headline]"), { type: "lines,words", mask: "lines", linesClass: "split-line" });
+        let introPlaying = false;
+        try {
+          introPlaying = !sessionStorage.getItem("leafli-intro-played");
+          sessionStorage.setItem("leafli-intro-played", "1");
+        } catch {}
+
+        // Starts while the intro curtain is lifting, so there's no dead time.
+        const tl = gsap.timeline({ delay: introPlaying ? 1.55 : 0.05 });
+        tl.from(split.words, { yPercent: 115, rotate: 4, stagger: 0.05, duration: 0.9, ease: "expo.out" })
+          .from(q("[data-underline]"), { drawSVG: "0%", duration: 0.7, ease: "power2.inOut" }, 0.45)
+          .from(q("[data-sub]"), { y: 24, opacity: 0, duration: 0.7 }, 0.3)
+          .fromTo(q("[data-cta] > *"), { y: 20, opacity: 0 }, { y: 0, opacity: 1, stagger: 0.06, duration: 0.6 }, 0.42)
+          .from(q("[data-chip]"), { y: 16, opacity: 0, stagger: 0.04, duration: 0.5 }, 0.5)
+          .from(q("[data-blob]"), { scale: 0.4, opacity: 0, duration: 1.3, ease: "elastic.out(1, 0.6)" }, 0)
+          .from(q("[data-hero-bowl]"), { scale: 0.6, rotate: -90, opacity: 0, duration: 1.2, ease: "expo.out" }, 0.05)
+          .from(q("[data-floater]"), { scale: 0, opacity: 0, stagger: 0.06, duration: 0.8, ease: "back.out(1.7)" }, 0.45);
+
+        // Bowl keeps turning slowly — like it's on a lazy susan.
+        gsap.to(q("[data-hero-bowl] img"), { rotate: 360, duration: 90, repeat: -1, ease: "none" });
+        // Floaters bob gently.
+        q("[data-floater]").forEach((el, i) =>
+          gsap.to(el, { y: "+=14", rotate: `+=${i % 2 ? 8 : -8}`, duration: 2.6 + i * 0.3, repeat: -1, yoyo: true, ease: "sine.inOut" }),
+        );
+
+        // Scroll: bowl drifts down & grows; copy lifts away.
+        gsap.to(q("[data-hero-bowl]"), { yPercent: 18, scale: 1.08, ease: "none", scrollTrigger: { trigger: root.current, start: "top top", end: "bottom top", scrub: true } });
+        gsap.to(q("[data-copy]"), { yPercent: -12, opacity: 0.2, ease: "none", scrollTrigger: { trigger: root.current, start: "top top", end: "bottom top", scrub: true } });
+        q("[data-floater]").forEach((el) => {
+          const d = Number(el.dataset.depth);
+          gsap.to(el, { yPercent: -60 * d, ease: "none", scrollTrigger: { trigger: root.current, start: "top top", end: "bottom top", scrub: true } });
+        });
+      });
+
+      // Pointer parallax (desktop, fine pointer only).
+      mm.add(`${MOTION_OK} and (pointer: fine)`, () => {
+        const items = q("[data-parallax]").map((el) => ({
+          d: Number(el.dataset.depth),
+          x: gsap.quickTo(el, "x", { duration: 0.9, ease: "power3" }),
+          y: gsap.quickTo(el, "y", { duration: 0.9, ease: "power3" }),
+        }));
+        const move = (e: PointerEvent) => {
+          const nx = e.clientX / window.innerWidth - 0.5;
+          const ny = e.clientY / window.innerHeight - 0.5;
+          items.forEach((it) => {
+            it.x(nx * 30 * it.d);
+            it.y(ny * 30 * it.d);
+          });
+        };
+        window.addEventListener("pointermove", move);
+        return () => window.removeEventListener("pointermove", move);
+      });
+      return () => mm.revert();
+    },
+    { scope: root },
+  );
+
+  return (
+    <section ref={root} className="grain relative overflow-hidden pt-28 pb-16 md:pt-32 lg:min-h-[100svh] lg:pb-24">
+      <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 sm:px-8 lg:grid-cols-[1.05fr_1fr]">
+        <div data-copy className="relative z-10">
+          <p data-reveal data-chip className="mb-6 inline-flex items-center gap-2 rounded-full border border-leaf-700/15 bg-white/60 px-3 py-1.5 text-xs font-semibold tracking-wide text-leaf-700 uppercase backdrop-blur">
+            <span className="size-1.5 animate-pulse rounded-full bg-lime-500" /> Cloud kitchen · Made fresh today
+          </p>
+          <h1 data-headline className="font-display text-[clamp(3.2rem,9vw,7.5rem)] leading-[0.92] font-medium tracking-[-0.035em] text-ink">
+            Fresh <em className="font-normal text-leaf-600 italic">bowls.</em>
+            <br />
+            Happy{" "}
+            <span className="relative inline-block">
+              moods.
+              <svg data-reveal className="absolute -bottom-[0.12em] left-0 w-full overflow-visible" viewBox="0 0 300 24" preserveAspectRatio="none" aria-hidden>
+                <path data-underline d="M4 16C60 6 140 4 296 12" stroke="#c9e665" strokeWidth="10" strokeLinecap="round" fill="none" />
+              </svg>
+            </span>
+          </h1>
+          <p data-reveal data-sub className="mt-7 max-w-md text-lg leading-relaxed text-ink/70">
+            Chef-made salads and bowls — crisp greens, dressings packed on the side, every portion weighed to the gram and delivered cold.
+          </p>
+          <div data-reveal data-cta className="mt-9 flex flex-wrap items-center gap-3">
+            <Link
+              href="#menu"
+              className="group inline-flex items-center gap-3 rounded-full bg-leaf-700 py-4 pr-4 pl-7 text-base font-semibold text-cream-50 shadow-xl shadow-leaf-900/20 transition-colors hover:bg-leaf-800"
+            >
+              Order a bowl
+              <span className="grid size-8 place-items-center rounded-full bg-lime-400 text-leaf-900 transition-transform duration-300 group-hover:translate-x-1 group-hover:-rotate-45">→</span>
+            </Link>
+            <Link href="#bowls" className="rounded-full px-6 py-4 text-base font-semibold text-leaf-700 transition-colors hover:bg-leaf-700/5">
+              Explore the bowls
+            </Link>
+          </div>
+          <ul className="mt-10 flex flex-wrap gap-2 text-sm text-ink/70">
+            {["Dressings on the side", "Weighed to the gram", "Kept below 4°C", "Allergens labelled"].map((t) => (
+              <li data-reveal data-chip key={t} className="rounded-full bg-white/70 px-3.5 py-1.5 ring-1 ring-ink/5">
+                {t}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="relative mx-auto aspect-square w-full max-w-[34rem]">
+          <div data-reveal data-blob data-parallax data-depth="0.4" className="absolute inset-[6%] rounded-[46%_54%_58%_42%/48%_42%_58%_52%] bg-lime-300" />
+          <div data-reveal data-blob data-parallax data-depth="0.7" className="absolute inset-[16%] translate-x-[8%] rounded-[58%_42%_44%_56%/52%_58%_42%_48%] bg-leaf-700/10" />
+          <div data-reveal data-hero-bowl data-parallax data-depth="1" className="absolute inset-[4%] drop-shadow-2xl">
+            <DishImage id="chicken-caesar" className="size-full" alt="Classic Chicken Caesar Salad, top view" priority />
+          </div>
+          <div data-reveal data-parallax data-depth="1.3" className="absolute -right-2 bottom-[10%] rotate-6 rounded-2xl bg-white px-4 py-3 shadow-xl">
+            <div className="text-[11px] font-semibold tracking-wide text-ink/50 uppercase">Today&apos;s favourite</div>
+            <div className="font-display text-lg font-medium">Classic Chicken Caesar</div>
+          </div>
+        </div>
+      </div>
+
+      {FLOATERS.map(({ C, cls, depth, rot }, i) => (
+        <div key={i} data-reveal data-floater data-parallax data-depth={depth} className={`pointer-events-none absolute hidden sm:block ${cls}`} style={{ rotate: `${rot}deg` }}>
+          <C className="w-full drop-shadow-lg" />
+        </div>
+      ))}
+    </section>
+  );
+}

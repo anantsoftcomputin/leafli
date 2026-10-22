@@ -1,26 +1,91 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Leafli brand tokens, sampled from the official logo:
+ *   forest green #255F30 (the "leafli" script) on chartreuse #BFCD30.
+ * Warm cream is the canvas; tomato / mango / beet accents come from the bowls.
+ */
+@theme {
+  --color-leaf-50: #eff5ef;
+  --color-leaf-100: #dbe9dc;
+  --color-leaf-200: #b6d2b9;
+  --color-leaf-300: #86b28c;
+  --color-leaf-500: #3a7a46;
+  --color-leaf-600: #2d6a39;
+  --color-leaf-700: #255f30;
+  --color-leaf-800: #1b4824;
+  --color-leaf-900: #12331a;
+  --color-leaf-950: #0a2010;
+
+  --color-lime-300: #dfe98a;
+  --color-lime-400: #bfcd30;
+  --color-lime-500: #a9b723;
+
+  --color-cream-50: #fffdf6;
+  --color-cream-100: #f9f6ea;
+  --color-cream-200: #f1ebd3;
+
+  --color-tomato: #ef5b3c;
+  --color-mango: #ffb43a;
+  --color-beet: #b4365e;
+  --color-ink: #10231a;
+
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  @apply bg-stone-50 text-stone-900 antialiased;
+}
+
+/* Public site canvas */
+.site {
+  @apply bg-cream-100 text-ink;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+}
+
+/* SplitText line masks */
+.split-line {
+  overflow: hidden;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+
+/* Grain overlay for a tactile, printed feel */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.06;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Hide content that GSAP will reveal, but only when JS + motion are available */
+@media (prefers-reduced-motion: no-preference) {
+  .js [data-reveal] {
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
 }

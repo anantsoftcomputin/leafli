@@ -1,6 +1,26 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ─────────────────────────────────────────────────────────────
+# Leafli Kitchen — files that must never reach GitHub
+# ─────────────────────────────────────────────────────────────
 
-# dependencies
+# ── Secrets & credentials ────────────────────────────────────
+# .env holds the Firebase service-account key, Razorpay, Porter
+# and Zomato secrets. Only the blank template is committed.
+.env
+.env.*
+!.env.example
+
+# Stray credential files (service-account JSON, keys, certs)
+*service-account*.json
+*serviceAccount*.json
+*-firebase-adminsdk-*.json
+*credentials*.json
+*.pem
+*.p12
+*.key
+*.crt
+.runtimeconfig.json
+
+# ── Dependencies ─────────────────────────────────────────────
 /node_modules
 /.pnp
 .pnp.*
@@ -10,32 +30,48 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
-
-# next.js
+# ── Next.js / build output ───────────────────────────────────
 /.next/
+/.next-verify/
 /out/
+/build/
+next-env.d.ts
+*.tsbuildinfo
 
-# production
-/build
+# ── Firebase CLI, emulators & App Hosting ────────────────────
+.firebase/
+*-debug.log
+firebase-export-*/
+emulator-data/
+.apphosting/
 
-# misc
-.DS_Store
-*.pem
+# ── Testing ──────────────────────────────────────────────────
+/coverage
+/test-results/
+/playwright-report/
 
-# debug
+# ── Logs ─────────────────────────────────────────────────────
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
+# ── Hosting providers ────────────────────────────────────────
 .vercel
+.netlify
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# ── Editors & OS ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+*.swp
+*.swo
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# ── Local AI-assistant settings (per machine) ────────────────
+.claude/settings.local.json

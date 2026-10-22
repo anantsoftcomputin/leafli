@@ -1,0 +1,46 @@
+# Firebase App Hosting config (deploys this Next.js app on Cloud Run).
+# Secrets are created with: firebase apphosting:secrets:set <NAME>
+runConfig:
+  minInstances: 1   # keep warm so webhooks from Zomato/Porter are answered fast
+  maxInstances: 4
+  memoryMiB: 1024
+
+env:
+  # Not truly secret (it ships to browsers), but kept out of git to avoid scanner alerts.
+  # Create once: firebase apphosting:secrets:set firebase-web-api-key
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    secret: firebase-web-api-key
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "leafli-243ae.firebaseapp.com"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: "leafli-243ae"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: "leafli-243ae.firebasestorage.app"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "455991305875"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:455991305875:web:814a7b518b0937e3064f66"
+    availability: [BUILD, RUNTIME]
+  - variable: ADMIN_EMAILS
+    value: jigarredesai@gmail.com
+  - variable: CORS_ALLOWED_ORIGINS
+    value: https://leafli.in,https://www.leafli.in
+  - variable: PORTER_BASE_URL
+    value: https://pfe-apigw-uat.porter.in
+  - variable: PORTER_API_KEY
+    secret: porter-api-key
+  - variable: PORTER_WEBHOOK_SECRET
+    secret: porter-webhook-secret
+  - variable: ZOMATO_WEBHOOK_SECRET
+    secret: zomato-webhook-secret
+  - variable: RAZORPAY_KEY_ID
+    secret: razorpay-key-id
+  - variable: RAZORPAY_KEY_SECRET
+    secret: razorpay-key-secret
+  - variable: RAZORPAY_WEBHOOK_SECRET
+    secret: razorpay-webhook-secret
