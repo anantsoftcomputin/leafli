@@ -14,7 +14,9 @@ const list = (v?: string) => (v ?? "").split(",").map((s) => s.trim().toLowerCas
 export const POST = route(async (req: NextRequest) => {
   const token = (req.headers.get("authorization") ?? "").replace(/^Bearer /, "");
   if (!token) throw new HttpError(401, "Sign in required");
-  const decoded = await adminAuth.verifyIdToken(token);
+  const decoded = await adminAuth.verifyIdToken(token).catch(() => {
+    throw new HttpError(401, "Session expired — please sign in again");
+  });
   const body = (await req.json().catch(() => ({}))) as { name?: string };
   const ref = adminDb.collection("users").doc(decoded.uid);
   const snap = await ref.get();
