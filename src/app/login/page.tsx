@@ -38,7 +38,15 @@ function friendly(e: unknown) {
   if (code.includes("account-exists-with-different-credential"))
     return "This email is already linked to Google — use “Continue with Google”.";
   if (code.includes("unauthorized-domain")) return "This domain isn't authorised for sign-in yet (Firebase → Authentication → Settings → Authorized domains).";
+  const msg = (e as Error).message ?? "";
+  // SMS region policy blocks this country (Firebase → Authentication → Settings → SMS region policy).
+  if (/region enabled/i.test(msg)) return "We can't send OTPs to this country. Please use an Indian (+91) mobile number, or sign in with Google or email.";
   if (code.includes("operation-not-allowed")) return "This sign-in method isn't enabled yet in Firebase Authentication.";
+  if (code.includes("captcha-check-failed") || code.includes("invalid-app-credential"))
+    return "Security check failed. Refresh the page and try again (disable ad-blockers for this site if it keeps happening).";
+  if (code.includes("quota-exceeded")) return "We've hit today's OTP limit. Please sign in with Google or email for now.";
+  if (code.includes("billing-not-enabled")) return "Phone sign-in isn't available right now. Please use Google or email.";
+  if (code.includes("code-expired")) return "That code has expired. Tap “Use a different number” and request a new one.";
   return (e as Error).message || "Something went wrong. Please try again.";
 }
 
