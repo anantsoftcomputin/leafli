@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { DishImage } from "@/components/site/DishImage";
 import { PageHero } from "@/components/site/PageShell";
 import { SubscribeForm } from "@/components/site/SubscribeForm";
+import { MobileBuyBar } from "@/components/site/MobileBuyBar";
 import { rupees } from "@/lib/costing";
 import { faqPage, graph, planProduct } from "@/lib/jsonld";
 import { getPlanBySlug, getPlans, getPublicMenu } from "@/lib/server/content";
@@ -44,7 +45,7 @@ export default async function PlanPage({ params }: { params: Promise<{ slug: str
         title={plan.name}
         intro={plan.description}
       >
-        <div className="mt-8 flex flex-wrap items-end gap-6">
+        <div id="plan-price" className="mt-8 flex flex-wrap items-end gap-6">
           <div>
             <span className="font-display text-5xl font-semibold text-leaf-700">{rupees(perMeal(plan.price, plan.meals))}</span>
             <span className="ml-2 text-ink/50">per bowl</span>
@@ -56,6 +57,13 @@ export default async function PlanPage({ params }: { params: Promise<{ slug: str
         </div>
       </PageHero>
 
+      <MobileBuyBar watch="plan-price">
+        <div>
+          <div className="text-sm font-semibold">{plan.name}</div>
+          <div className="text-xs text-ink/50">{rupees(perMeal(plan.price, plan.meals))}/bowl · {plan.meals} bowls</div>
+        </div>
+        <a href="#subscribe" className="tap rounded-full bg-leaf-700 px-5 py-3 text-sm font-semibold text-cream-50">Start plan</a>
+      </MobileBuyBar>
       <section className="mx-auto grid max-w-7xl gap-12 px-5 pb-24 sm:px-8 lg:grid-cols-[1fr_1.1fr]">
         <div>
           <h2 className="font-display text-2xl font-medium">What&apos;s included</h2>
@@ -89,7 +97,7 @@ export default async function PlanPage({ params }: { params: Promise<{ slug: str
             </>
           ) : null}
         </div>
-        <div className="lg:sticky lg:top-28 lg:self-start">
+        <div id="subscribe" className="scroll-mt-20 lg:sticky lg:top-28 lg:self-start">
           <SubscribeForm plan={plan} acceptsOnline={!!menu.razorpayKeyId} razorpayKeyId={menu.razorpayKeyId} gstRate={menu.gstRate} />
         </div>
       </section>

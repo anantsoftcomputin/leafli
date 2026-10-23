@@ -70,9 +70,9 @@ export function PromiseSection() {
         <h2 data-big className="max-w-5xl font-display text-[clamp(2rem,4.6vw,4rem)] leading-[1.05] font-medium tracking-[-0.025em]">
           We run our kitchen on written recipes, timers and thermometers — so your lunch is fresh, safe, and exactly as good as last time.
         </h2>
-        <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:mt-24 lg:grid-cols-4">
+        <div className="no-scrollbar -mx-5 mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-5 px-5 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 lg:mt-24 lg:grid-cols-4">
           {PROMISES.map((p) => (
-            <article key={p.title} data-reveal data-promise className={`flex flex-col rounded-[1.75rem] p-7 ${p.color}`}>
+            <article key={p.title} data-reveal data-promise className={`flex w-[80vw] shrink-0 snap-center flex-col rounded-[1.75rem] p-7 sm:w-auto ${p.color}`}>
               <div className="flex items-baseline gap-2">
                 <span data-count={p.stat} className="font-display text-6xl font-semibold tracking-tight tabular-nums">
                   {p.stat}

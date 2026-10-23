@@ -14,9 +14,9 @@ export default function SuppliersPage() {
   return (
     <>
       <PageHeader title="Suppliers" sub="Seeded with placeholder vendors by category — rename them and add phone numbers so POs can be sent on WhatsApp." actions={<Button onClick={() => setEdit("new")}>Add supplier</Button>} />
-      <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
+      <div className="overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-stone-900/[.06]">
         <table className="w-full text-sm">
-          <thead className="border-b border-stone-100 bg-stone-50"><tr><Th>Supplier</Th><Th>Contact</Th><Th>GSTIN</Th><Th className="text-right">Lead time</Th><Th className="text-right">Items</Th><Th /></tr></thead>
+          <thead className="border-b border-stone-100"><tr><Th>Supplier</Th><Th>Contact</Th><Th>GSTIN</Th><Th className="text-right">Lead time</Th><Th className="text-right">Items</Th><Th /></tr></thead>
           <tbody>
             {[...suppliers].sort((a, b) => a.name.localeCompare(b.name)).map((s) => (
               <tr key={s.id} className="border-b border-stone-50">

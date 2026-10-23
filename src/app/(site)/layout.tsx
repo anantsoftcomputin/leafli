@@ -1,5 +1,6 @@
 import { CartDrawer } from "@/components/site/CartDrawer";
 import { FloatingCart } from "@/components/site/FloatingCart";
+import { MobileTabBar } from "@/components/site/MobileTabBar";
 import { Footer } from "@/components/site/Footer";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteProvider } from "@/components/site/SiteContext";
@@ -12,7 +13,8 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   const [menu, settings] = await Promise.all([getPublicMenu().catch(() => null), getPublicSettings().catch(() => null)]);
   return (
     <SiteProvider initialMenu={menu}>
-      <div className="site flex min-h-screen flex-col overflow-x-clip">
+      {/* Bottom padding on phones keeps content clear of the tab bar. */}
+      <div className="site flex min-h-screen flex-col overflow-x-clip pb-[var(--tabbar-h)] lg:pb-0">
         <a href="#main" className="sr-only z-50 rounded bg-white px-3 py-2 focus:not-sr-only focus:fixed focus:top-2 focus:left-2">
           Skip to content
         </a>
@@ -21,6 +23,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         <Footer settings={settings} />
         <CartDrawer />
         <FloatingCart />
+        <MobileTabBar />
       </div>
     </SiteProvider>
   );

@@ -6,13 +6,14 @@ import { gsap, MOTION_OK, SplitText, useGSAP } from "@/lib/gsap";
 import { DishImage } from "./DishImage";
 import { Basil, Chilli, Lemon, Mango, Sesame, Tomato } from "./Garnish";
 
+// Mobile positions cluster around the bowl at the top; desktop positions frame the whole hero.
 const FLOATERS = [
-  { C: Basil, cls: "left-[4%] top-[18%] w-14 md:w-20", depth: 1.6, rot: -20 },
-  { C: Tomato, cls: "left-[44%] top-[10%] w-12 md:w-16", depth: 1.1, rot: 15 },
-  { C: Lemon, cls: "right-[3%] top-[16%] w-16 md:w-24", depth: 2.2, rot: 10 },
-  { C: Chilli, cls: "right-[8%] bottom-[12%] w-16 md:w-24", depth: 1.4, rot: -10 },
-  { C: Mango, cls: "left-[46%] bottom-[8%] w-10 md:w-14", depth: 2, rot: 20 },
-  { C: Sesame, cls: "left-[10%] bottom-[16%] w-12 md:w-16", depth: 0.8, rot: 0 },
+  { C: Basil, cls: "left-[3%] top-[11%] w-11 lg:left-[4%] lg:top-[18%] lg:w-20", depth: 1.6, rot: -20 },
+  { C: Tomato, cls: "right-[6%] top-[9%] w-10 lg:right-auto lg:left-[44%] lg:top-[10%] lg:w-16", depth: 1.1, rot: 15 },
+  { C: Lemon, cls: "right-[2%] top-[36%] w-14 lg:right-[3%] lg:top-[16%] lg:w-24", depth: 2.2, rot: 10 },
+  { C: Chilli, cls: "hidden lg:block right-[8%] bottom-[12%] w-24", depth: 1.4, rot: -10 },
+  { C: Mango, cls: "left-[4%] top-[38%] w-9 lg:top-auto lg:left-[46%] lg:bottom-[8%] lg:w-14", depth: 2, rot: 20 },
+  { C: Sesame, cls: "hidden lg:block left-[10%] bottom-[16%] w-16", depth: 0.8, rot: 0 },
 ];
 
 export function Hero() {
@@ -82,13 +83,13 @@ export function Hero() {
   );
 
   return (
-    <section ref={root} className="grain relative overflow-hidden pt-28 pb-16 md:pt-32 lg:min-h-[100svh] lg:pb-24">
-      <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 sm:px-8 lg:grid-cols-[1.05fr_1fr]">
-        <div data-copy className="relative z-10">
-          <p data-reveal data-chip className="mb-6 inline-flex items-center gap-2 rounded-full border border-leaf-700/15 bg-white/60 px-3 py-1.5 text-xs font-semibold tracking-wide text-leaf-700 uppercase backdrop-blur">
+    <section ref={root} className="grain relative overflow-hidden pt-20 pb-12 md:pt-32 lg:min-h-[100svh] lg:pb-24">
+      <div className="mx-auto grid max-w-7xl items-center gap-4 px-5 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:gap-10">
+        <div data-copy className="relative z-10 min-w-0">
+          <p data-reveal data-chip className="mb-5 inline-flex lg:mb-6 items-center gap-2 rounded-full border border-leaf-700/15 bg-white/60 px-3 py-1.5 text-xs font-semibold tracking-wide text-leaf-700 uppercase backdrop-blur">
             <span className="size-1.5 animate-pulse rounded-full bg-lime-500" /> Cloud kitchen · Made fresh today
           </p>
-          <h1 data-headline className="font-display text-[clamp(3.2rem,9vw,7.5rem)] leading-[0.92] font-medium tracking-[-0.035em] text-ink">
+          <h1 data-headline className="font-display text-[clamp(3.4rem,15vw,7.5rem)] leading-[0.9] font-medium tracking-[-0.035em] text-ink">
             Fresh <em className="font-normal text-leaf-600 italic">bowls.</em>
             <br />
             Happy{" "}
@@ -99,45 +100,45 @@ export function Hero() {
               </svg>
             </span>
           </h1>
-          <p data-reveal data-sub className="mt-7 max-w-md text-lg leading-relaxed text-ink/70">
+          <p data-reveal data-sub className="mt-5 max-w-md text-[1.05rem] leading-relaxed text-ink/70 lg:mt-7 lg:text-lg">
             Chef-made salads and bowls — crisp greens, dressings packed on the side, every portion weighed to the gram and delivered cold.
           </p>
-          <div data-reveal data-cta className="mt-9 flex flex-wrap items-center gap-3">
+          <div data-reveal data-cta className="mt-7 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 lg:mt-9">
             <Link
               href="#menu"
-              className="group inline-flex items-center gap-3 rounded-full bg-leaf-700 py-4 pr-4 pl-7 text-base font-semibold text-cream-50 shadow-xl shadow-leaf-900/20 transition-colors hover:bg-leaf-800"
+              className="tap group inline-flex items-center justify-between gap-3 rounded-full bg-leaf-700 py-3.5 pr-3.5 pl-7 text-base font-semibold text-cream-50 shadow-xl shadow-leaf-900/20 transition-colors hover:bg-leaf-800 sm:justify-start sm:py-4 sm:pr-4"
             >
               Order a bowl
               <span className="grid size-8 place-items-center rounded-full bg-lime-400 text-leaf-900 transition-transform duration-300 group-hover:translate-x-1 group-hover:-rotate-45">→</span>
             </Link>
-            <Link href="#bowls" className="rounded-full px-6 py-4 text-base font-semibold text-leaf-700 transition-colors hover:bg-leaf-700/5">
-              Explore the bowls
+            <Link href="/plans" className="tap rounded-full px-6 py-3.5 text-center text-base font-semibold text-leaf-700 ring-1 ring-leaf-700/20 transition-colors hover:bg-leaf-700/5 sm:py-4 sm:ring-0">
+              Subscribe &amp; save 22%
             </Link>
           </div>
-          <ul className="mt-10 flex flex-wrap gap-2 text-sm text-ink/70">
+          <ul className="no-scrollbar -mx-5 mt-7 flex gap-2 overflow-x-auto px-5 text-sm whitespace-nowrap text-ink/70 lg:mx-0 lg:mt-10 lg:flex-wrap lg:overflow-visible lg:px-0">
             {["Dressings on the side", "Weighed to the gram", "Kept below 4°C", "Allergens labelled"].map((t) => (
-              <li data-reveal data-chip key={t} className="rounded-full bg-white/70 px-3.5 py-1.5 ring-1 ring-ink/5">
+              <li data-reveal data-chip key={t} className="shrink-0 rounded-full bg-white/70 px-3.5 py-1.5 ring-1 ring-ink/5">
                 {t}
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="relative mx-auto aspect-square w-full max-w-[34rem]">
+        <div className="relative order-first mx-auto aspect-square w-[min(94vw,27rem)] lg:order-none lg:w-full lg:max-w-[34rem]">
           <div data-reveal data-blob data-parallax data-depth="0.4" className="absolute inset-[6%] rounded-[46%_54%_58%_42%/48%_42%_58%_52%] bg-lime-300" />
           <div data-reveal data-blob data-parallax data-depth="0.7" className="absolute inset-[16%] translate-x-[8%] rounded-[58%_42%_44%_56%/52%_58%_42%_48%] bg-leaf-700/10" />
           <div data-reveal data-hero-bowl data-parallax data-depth="1" className="absolute inset-[4%] drop-shadow-2xl">
             <DishImage id="chicken-caesar" className="size-full" alt="Classic Chicken Caesar Salad, top view" priority />
           </div>
-          <div data-reveal data-parallax data-depth="1.3" className="absolute -right-2 bottom-[10%] rotate-6 rounded-2xl bg-white px-4 py-3 shadow-xl">
-            <div className="text-[11px] font-semibold tracking-wide text-ink/50 uppercase">Today&apos;s favourite</div>
-            <div className="font-display text-lg font-medium">Classic Chicken Caesar</div>
+          <div data-reveal data-parallax data-depth="1.3" className="absolute right-0 bottom-[6%] rotate-6 rounded-2xl bg-white px-3 py-2 shadow-xl lg:-right-2 lg:bottom-[10%] lg:px-4 lg:py-3">
+            <div className="text-[10px] font-semibold tracking-wide text-ink/50 uppercase lg:text-[11px]">Today&apos;s favourite</div>
+            <div className="font-display text-base font-medium lg:text-lg">Classic Chicken Caesar</div>
           </div>
         </div>
       </div>
 
       {FLOATERS.map(({ C, cls, depth, rot }, i) => (
-        <div key={i} data-reveal data-floater data-parallax data-depth={depth} className={`pointer-events-none absolute hidden sm:block ${cls}`} style={{ rotate: `${rot}deg` }}>
+        <div key={i} data-reveal data-floater data-parallax data-depth={depth} className={`pointer-events-none absolute z-[1] ${cls}`} style={{ rotate: `${rot}deg` }}>
           <C className="w-full drop-shadow-lg" />
         </div>
       ))}

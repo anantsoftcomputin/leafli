@@ -27,7 +27,7 @@ export function AccountMenu() {
 
   if (!user) {
     return (
-      <Link href="/login" className="hidden rounded-full px-3 py-2 text-sm font-medium text-ink/70 hover:bg-ink/5 sm:inline-flex">
+      <Link href="/login" className="hidden rounded-full px-3 py-2 text-sm font-medium text-ink/70 hover:bg-ink/5 lg:inline-flex">
         Sign in
       </Link>
     );
@@ -44,7 +44,7 @@ export function AccountMenu() {
   }
 
   return (
-    <div ref={ref} className="relative hidden sm:block">
+    <div ref={ref} className="relative hidden lg:block">
       <button
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"

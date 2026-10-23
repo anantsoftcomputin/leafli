@@ -55,21 +55,45 @@ export function CartDrawer() {
     };
   }, [cartOpen, mounted, setCartOpen]);
 
+  // Desktop: side panel sliding in from the right. Phones: bottom sheet sliding up.
   useGSAP(
     () => {
       if (!mounted || !panel.current) return;
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const desktop = window.matchMedia("(min-width: 1024px)").matches;
+      const axis = desktop ? "xPercent" : "yPercent";
       if (cartOpen) {
+        gsap.set(panel.current, { y: 0 });
         gsap.fromTo(shade.current, { opacity: 0 }, { opacity: 1, duration: reduce ? 0 : 0.4 });
-        gsap.fromTo(panel.current, { xPercent: 100 }, { xPercent: 0, duration: reduce ? 0 : 0.65, ease: "expo.out" });
-        if (!reduce) gsap.from(panel.current.querySelectorAll("[data-line]"), { x: 40, opacity: 0, stagger: 0.05, delay: 0.15, duration: 0.5 });
+        gsap.fromTo(panel.current, { [axis]: 100 }, { [axis]: 0, duration: reduce ? 0 : 0.6, ease: "expo.out" });
+        if (!reduce) gsap.from(panel.current.querySelectorAll("[data-line]"), { [desktop ? "x" : "y"]: 30, opacity: 0, stagger: 0.05, delay: 0.15, duration: 0.5 });
       } else {
         gsap.to(shade.current, { opacity: 0, duration: reduce ? 0 : 0.3 });
-        gsap.to(panel.current, { xPercent: 100, duration: reduce ? 0 : 0.45, ease: "power3.in", onComplete: () => { setMounted(false); setStep("bag"); } });
+        gsap.to(panel.current, { [axis]: 100, y: desktop ? 0 : undefined, duration: reduce ? 0 : 0.4, ease: "power3.in", onComplete: () => { setMounted(false); setStep("bag"); } });
       }
     },
     { dependencies: [cartOpen, mounted] },
   );
+
+  // Drag the sheet's handle down to dismiss (phones).
+  const drag = useRef<{ y0: number; dy: number } | null>(null);
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (window.matchMedia("(min-width: 1024px)").matches) return;
+    drag.current = { y0: e.clientY, dy: 0 };
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!drag.current || !panel.current) return;
+    drag.current.dy = Math.max(0, e.clientY - drag.current.y0);
+    gsap.set(panel.current, { y: drag.current.dy });
+  };
+  const onPointerUp = () => {
+    if (!drag.current || !panel.current) return;
+    const { dy } = drag.current;
+    drag.current = null;
+    if (dy > 110) setCartOpen(false);
+    else gsap.to(panel.current, { y: 0, duration: 0.4, ease: "elastic.out(1, 0.8)" });
+  };
 
   if (!mounted) return null;
 
@@ -126,8 +150,27 @@ export function CartDrawer() {
   return (
     <div className="fixed inset-0 z-50" role="dialog" aria-modal aria-label="Your bowl">
       <div ref={shade} className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={() => setCartOpen(false)} />
-      <div ref={panel} className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-cream-50 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-ink/5 px-6 py-5">
+      <div
+        ref={panel}
+        className="absolute inset-x-0 bottom-0 flex max-h-[92svh] flex-col rounded-t-[2rem] bg-cream-50 pb-[env(safe-area-inset-bottom)] shadow-2xl lg:inset-x-auto lg:inset-y-0 lg:right-0 lg:max-h-none lg:w-full lg:max-w-md lg:rounded-none lg:pb-0"
+      >
+        <div
+          className="flex touch-none justify-center pt-3 pb-1 lg:hidden"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          aria-hidden
+        >
+          <span className="h-1.5 w-12 rounded-full bg-ink/15" />
+        </div>
+        <div
+          className="flex touch-none items-center justify-between border-b border-ink/5 px-6 pt-2 pb-4 lg:touch-auto lg:py-5"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+        >
           <div>
             <h2 className="font-display text-2xl font-medium">{step === "bag" ? "Your bowl" : "Almost there"}</h2>
             <p className="text-sm text-ink/50">{count} item{count === 1 ? "" : "s"}</p>

@@ -51,17 +51,18 @@ export default function OrdersPage() {
       {loading ? (
         <p className="text-sm text-stone-500">Loading…</p>
       ) : view === "board" ? (
-        <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-5">
+        <div className="no-scrollbar -mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0 xl:grid-cols-5">
           {COLUMNS.map((c) => {
             const col = shown.filter((o) => o.status === c.key).sort((a, b) => a.createdAt - b.createdAt);
             return (
-              <div key={c.key} className="rounded-xl bg-stone-100 p-2">
-                <div className="flex items-center justify-between px-2 py-1 text-xs font-semibold text-stone-600">
-                  {c.label} <span>{col.length}</span>
+              <div key={c.key} className="w-[82vw] shrink-0 snap-start rounded-2xl md:w-auto bg-stone-200/40 p-2 ring-1 ring-stone-900/[.04]">
+                <div className="flex items-center justify-between px-2 pt-1 pb-2 text-xs font-semibold tracking-wide text-stone-500 uppercase">
+                  {c.label}
+                  <span className={`grid min-w-6 place-items-center rounded-full px-1.5 text-[11px] leading-6 ${col.length ? "bg-white text-stone-800 shadow-sm" : "text-stone-400"}`}>{col.length}</span>
                 </div>
                 <div className="space-y-2">
                   {col.map((o) => (
-                    <div key={o.id} className={cx("rounded-lg border bg-white p-3 text-sm", o.status === "new" ? "border-sky-300" : "border-stone-200")}>
+                    <div key={o.id} className={cx("rounded-xl bg-white p-3 text-sm shadow-[0_1px_2px_rgba(16,35,26,.05)] ring-1", o.status === "new" ? "ring-2 ring-lime-500" : "ring-stone-900/[.06]")}>
                       <div className="flex items-center justify-between gap-2">
                         <Link href={`/admin/orders/${o.id}`} className="font-semibold hover:underline">{o.orderNo}</Link>
                         <SourceBadge source={o.source} />
@@ -94,9 +95,9 @@ export default function OrdersPage() {
       ) : shown.length === 0 ? (
         <Empty>No orders yet.</Empty>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
+        <div className="overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-stone-900/[.06]">
           <table className="w-full text-sm">
-            <thead className="border-b border-stone-100 bg-stone-50">
+            <thead className="border-b border-stone-100">
               <tr><Th>Order</Th><Th>Channel</Th><Th>Customer</Th><Th>Items</Th><Th className="text-right">Total</Th><Th className="text-right">Food cost</Th><Th>Status</Th><Th>Placed</Th></tr>
             </thead>
             <tbody>

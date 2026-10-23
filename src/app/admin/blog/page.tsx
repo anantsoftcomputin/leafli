@@ -23,9 +23,9 @@ export default function BlogAdmin() {
       ) : !sorted.length ? (
         <Empty>No posts yet. Write your first article.</Empty>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
+        <div className="overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-stone-900/[.06]">
           <table className="w-full text-sm">
-            <thead className="border-b border-stone-100 bg-stone-50">
+            <thead className="border-b border-stone-100">
               <tr><Th>Title</Th><Th>Status</Th><Th>SEO</Th><Th>Focus keyword</Th><Th>Updated</Th><Th /></tr>
             </thead>
             <tbody>

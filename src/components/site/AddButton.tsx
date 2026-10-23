@@ -33,7 +33,7 @@ export function AddButton({ item, accent = "#1f4d33", size = "md" }: { item: Pub
     if (cartTarget) gsap.fromTo(cartTarget, { scale: 1 }, { scale: 1.12, yoyo: true, repeat: 1, duration: 0.15, delay: 0.7 });
   }
 
-  const pad = size === "sm" ? "h-10 text-sm" : "h-12 text-[15px]";
+  const pad = size === "sm" ? "h-9 text-sm sm:h-10" : "h-12 text-[15px]";
   if (disabled) return <span className={`inline-flex items-center rounded-full px-4 text-sm font-semibold opacity-60 ${pad}`}>Sold out</span>;
   if (!menu.acceptingOrders && qty === 0)
     return <span className={`inline-flex items-center rounded-full px-4 text-sm font-semibold opacity-70 ${pad}`}>Opening soon</span>;

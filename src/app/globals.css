@@ -38,7 +38,20 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
 }
+
+/* Height of the mobile bottom tab bar (incl. iPhone home-indicator area). */
+:root {
+  --tabbar-h: calc(68px + env(safe-area-inset-bottom));
+}
+
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Press feedback for touch targets */
+.tap { transition: transform 0.15s var(--ease-spring); }
+.tap:active { transform: scale(0.96); }
 
 body {
   @apply bg-stone-50 text-stone-900 antialiased;
@@ -110,3 +123,11 @@ body {
 .prose-leafli th { @apply bg-cream-200 px-4 py-2 font-semibold text-ink; }
 .prose-leafli td { @apply border-t border-ink/5 px-4 py-2; }
 .prose-leafli code { @apply rounded bg-ink/5 px-1.5 py-0.5 text-[0.9em]; }
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0); }
+  15% { transform: rotate(14deg); }
+  30% { transform: rotate(-12deg); }
+  45% { transform: rotate(8deg); }
+  60% { transform: rotate(-4deg); }
+}

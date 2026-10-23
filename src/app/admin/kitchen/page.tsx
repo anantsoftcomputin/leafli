@@ -67,7 +67,7 @@ export default function KitchenPage() {
           {tickets.map((o) => {
             const mins = Math.floor((now - o.createdAt) / 60000);
             return (
-              <div key={o.id} className={cx("rounded-xl border-2 bg-white p-4", mins > 20 ? "border-red-300" : mins > 10 ? "border-amber-300" : "border-stone-200")}>
+              <div key={o.id} className={cx("rounded-2xl bg-white p-4 shadow-sm ring-2", mins > 20 ? "ring-red-400" : mins > 10 ? "ring-amber-400" : "ring-stone-900/[.06]")}>
                 <div className="mb-2 flex items-center justify-between">
                   <Link href={`/admin/orders/${o.id}`} className="text-lg font-bold">{o.orderNo.slice(-3)}</Link>
                   <div className="flex items-center gap-2">

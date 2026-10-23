@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { DietDot } from "@/components/DietDot";
 import { JsonLd } from "@/components/JsonLd";
 import { AddButton } from "@/components/site/AddButton";
+import { MobileBuyBar } from "@/components/site/MobileBuyBar";
 import { DISH_THEME } from "@/components/site/DishArt";
 import { DishImage } from "@/components/site/DishImage";
 import { Breadcrumbs } from "@/components/site/PageShell";
@@ -51,19 +52,19 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
   return (
     <main>
       <JsonLd data={graph(menuItem(d))} />
-      <section className="pt-28 pb-16 md:pt-36" style={{ background: theme.bg }}>
-        <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 sm:px-8 lg:grid-cols-2">
+      <section className="pt-20 pb-12 md:pt-36 md:pb-16" style={{ background: theme.bg }}>
+        <div className="mx-auto grid max-w-7xl items-center gap-6 px-5 sm:px-8 lg:grid-cols-2 lg:gap-12">
           <div>
             <Breadcrumbs items={[{ name: "Menu", path: "/menu" }, { name: d.name, path: `/menu/${d.slug}` }]} />
-            <p className="mt-8 text-sm font-semibold tracking-[0.2em] uppercase" style={{ color: theme.fg }}>{theme.tag || d.category}</p>
-            <h1 className="mt-3 font-display text-[clamp(2.4rem,5.5vw,4.6rem)] leading-[0.95] font-medium tracking-[-0.03em]" style={{ color: theme.fg }}>{d.name}</h1>
+            <p className="mt-5 text-sm font-semibold tracking-[0.2em] uppercase lg:mt-8" style={{ color: theme.fg }}>{theme.tag || d.category}</p>
+            <h1 className="mt-3 font-display text-[clamp(2.4rem,10vw,4.6rem)] leading-[0.95] font-medium tracking-[-0.03em]" style={{ color: theme.fg }}>{d.name}</h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink/70">{d.description}</p>
             <div className="mt-6 flex flex-wrap items-center gap-2 text-sm font-semibold">
               <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5"><DietDot diet={d.diet} />{DIET_LABEL[d.diet]}</span>
               {d.nutrition?.calories ? <span className="rounded-full bg-white/70 px-3 py-1.5">{d.nutrition.calories} kcal</span> : null}
               {d.nutrition?.protein ? <span className="rounded-full bg-white/70 px-3 py-1.5">{d.nutrition.protein} g protein</span> : null}
             </div>
-            <div className="mt-10 flex flex-wrap items-center gap-5">
+            <div id="dish-buy" className="mt-10 flex flex-wrap items-center gap-5">
               <span className="font-display text-4xl font-semibold" style={{ color: theme.fg }}>{rupees(d.price)}</span>
               <AddButton item={d} accent={theme.fg} />
             </div>
@@ -73,12 +74,19 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
               </p>
             )}
           </div>
-          <div className="mx-auto w-full max-w-lg">
+          <div className="order-first mx-auto w-[min(86vw,22rem)] lg:order-none lg:w-full lg:max-w-lg">
             <DishImage id={d.id} src={d.imageUrl} alt={`${d.name} — top view of the bowl`} priority className="w-full drop-shadow-[0_30px_40px_rgba(0,0,0,.2)]" />
           </div>
         </div>
       </section>
 
+      <MobileBuyBar watch="dish-buy">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-semibold">{d.name}</div>
+          <div className="font-display text-lg font-semibold" style={{ color: theme.fg }}>{rupees(d.price)}</div>
+        </div>
+        <AddButton item={d} accent={theme.fg} />
+      </MobileBuyBar>
       <section className="mx-auto grid max-w-7xl gap-10 px-5 py-20 sm:px-8 md:grid-cols-3">
         <div>
           <h2 className="font-display text-2xl font-medium">What&apos;s in it</h2>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { gsap, MOTION_OK, SplitText, useGSAP } from "@/lib/gsap";
 import { rupees as inr } from "@/lib/costing";
 import { DietDot } from "@/components/DietDot";
@@ -18,6 +18,14 @@ export function BowlsShowcase() {
   const root = useRef<HTMLElement>(null);
   const { menu } = useSite();
   const bowls = menu.items;
+  const scroller = useRef<HTMLDivElement>(null);
+  const [slide, setSlide] = useState(0);
+  const onScroll = () => {
+    const el = scroller.current;
+    const card = el?.querySelector<HTMLElement>("[data-card]");
+    if (!el || !card) return;
+    setSlide(Math.round(el.scrollLeft / (card.offsetWidth + 20)));
+  };
 
   useGSAP(
     () => {
@@ -83,7 +91,7 @@ export function BowlsShowcase() {
           </h2>
           <p className="hidden max-w-xs text-sm text-ink/60 md:block">Every dressing travels in its own sealed cup. You toss, you taste, it crunches.</p>
         </div>
-        <div className="snap-x snap-mandatory overflow-x-auto px-5 pb-4 sm:px-8 lg:overflow-visible lg:pb-0">
+        <div ref={scroller} onScroll={onScroll} className="no-scrollbar snap-x snap-mandatory overflow-x-auto scroll-px-5 px-5 pb-4 sm:px-8 lg:overflow-visible lg:pb-0">
           <div data-track className="flex w-max gap-5 lg:gap-8 lg:pl-[max(2rem,calc((100vw-80rem)/2+2rem))]">
             {bowls.map((b, i) => {
               const t = DISH_THEME[b.id] ?? DISH_THEME["chicken-caesar"]!;
@@ -118,6 +126,12 @@ export function BowlsShowcase() {
               );
             })}
           </div>
+        </div>
+        <div className="mt-4 flex items-center justify-center gap-2 lg:hidden" aria-hidden>
+          {bowls.map((b, i) => (
+            <span key={b.id} className={`h-2 rounded-full transition-all duration-300 ${i === slide ? "w-6 bg-leaf-700" : "w-2 bg-ink/15"}`} />
+          ))}
+          <span className="ml-2 text-xs font-medium text-ink/40">swipe →</span>
         </div>
         <div className="mx-auto mt-10 hidden h-1 w-full max-w-7xl px-8 lg:block">
           <div className="h-full overflow-hidden rounded-full bg-ink/10">

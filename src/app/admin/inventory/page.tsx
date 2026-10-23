@@ -82,7 +82,7 @@ export default function InventoryPage() {
       />
       <ErrorText>{err}</ErrorText>
       <div className="mb-3 flex flex-wrap gap-2">
-        <Input placeholder="Search items or categories" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-xs" />
+        <Input placeholder="Search items or categories" value={q} onChange={(e) => setQ(e.target.value)} className="w-full sm:w-72" />
         <Select value={kind} onChange={(e) => setKind(e.target.value as typeof kind)} className="w-40">
           <option value="all">All items</option>
           <option value="raw">Raw materials</option>
@@ -92,9 +92,9 @@ export default function InventoryPage() {
           <input type="checkbox" checked={onlyLow} onChange={(e) => setOnlyLow(e.target.checked)} /> Low stock only
         </label>
       </div>
-      <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
+      <div className="overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-stone-900/[.06]">
         <table className="w-full text-sm">
-          <thead className="border-b border-stone-100 bg-stone-50">
+          <thead className="border-b border-stone-100">
             <tr>
               <Th>Item</Th><Th>Category</Th><Th className="text-right">In stock</Th><Th className="text-right">Reorder at</Th>
               <Th className="text-right">Cost / unit</Th><Th className="text-right">Value</Th>{counting && <Th>Counted</Th>}<Th />

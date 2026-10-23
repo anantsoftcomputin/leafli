@@ -38,7 +38,7 @@ export function FloatingCart() {
       ref={ref}
       onClick={() => setCartOpen(true)}
       style={{ visibility: "hidden" }}
-      className="fixed bottom-5 left-1/2 z-30 flex w-[min(26rem,calc(100%-2rem))] items-center justify-between rounded-full bg-leaf-700 py-2.5 pr-2.5 pl-6 text-cream-50 shadow-2xl shadow-leaf-900/30 transition-colors hover:bg-leaf-800"
+      className="fixed bottom-5 left-1/2 z-30 hidden lg:flex w-[min(26rem,calc(100%-2rem))] items-center justify-between rounded-full bg-leaf-700 py-2.5 pr-2.5 pl-6 text-cream-50 shadow-2xl shadow-leaf-900/30 transition-colors hover:bg-leaf-800"
       aria-label={`View bowl, ${count} items`}
     >
       <span className="font-semibold">

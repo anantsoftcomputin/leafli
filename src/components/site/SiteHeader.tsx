@@ -29,7 +29,13 @@ export function SiteHeader({ solid: solidProp }: { solid?: boolean }) {
   const { user, isStaff, logout } = useAuth();
   const { count, setCartOpen, setCartTarget } = useSite();
 
-  useEffect(() => setCartTarget(cartBtn.current), [setCartTarget]);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const apply = () => mq.matches && setCartTarget(cartBtn.current);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, [setCartTarget]);
 
   // Hide on scroll down, reveal on scroll up; go solid after the hero top.
   useGSAP(
@@ -86,9 +92,9 @@ export function SiteHeader({ solid: solidProp }: { solid?: boolean }) {
         ref={ref}
         className={`fixed inset-x-0 top-0 z-40 transition-[background,box-shadow] duration-300 ${scrolled ? "bg-cream-100/85 shadow-[0_1px_0_rgba(16,35,26,.08)] backdrop-blur-xl" : ""}`}
       >
-        <div className="mx-auto flex h-18 max-w-7xl items-center gap-6 px-5 sm:px-8">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-8 lg:h-18">
           <Link href="/" aria-label="Leafli home" className="shrink-0">
-            <Logo className="h-14" />
+            <Logo className="h-11 lg:h-14" />
           </Link>
           <nav className="ml-6 hidden items-center gap-7 text-[15px] font-medium text-ink/75 lg:flex">
             {LINKS.map((l) => (
@@ -103,7 +109,7 @@ export function SiteHeader({ solid: solidProp }: { solid?: boolean }) {
             <button
               ref={cartBtn}
               onClick={() => setCartOpen(true)}
-              className="group relative inline-flex items-center gap-2 rounded-full bg-leaf-700 py-2.5 pr-4 pl-3.5 text-sm font-semibold text-cream-50 shadow-lg shadow-leaf-900/15 transition hover:bg-leaf-800 active:scale-95"
+              className="group relative hidden items-center gap-2 rounded-full bg-leaf-700 py-2.5 pr-4 pl-3.5 text-sm font-semibold text-cream-50 shadow-lg shadow-leaf-900/15 transition hover:bg-leaf-800 active:scale-95 lg:inline-flex"
               aria-label={`Open cart, ${count} items`}
             >
               <svg viewBox="0 0 24 24" className="size-5 transition-transform group-hover:-rotate-12" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
@@ -115,7 +121,7 @@ export function SiteHeader({ solid: solidProp }: { solid?: boolean }) {
                 {count}
               </span>
             </button>
-            <button className="grid size-10 place-items-center rounded-full hover:bg-ink/5 lg:hidden" onClick={() => setOpen(true)} aria-label="Open menu">
+            <button className="tap grid size-11 place-items-center rounded-full bg-ink/5 lg:hidden" onClick={() => setOpen(true)} aria-label="Open menu">
               <svg viewBox="0 0 24 24" className="size-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
                 <path d="M4 8h16M4 16h10" />
               </svg>
@@ -125,7 +131,7 @@ export function SiteHeader({ solid: solidProp }: { solid?: boolean }) {
       </header>
 
       {open && (
-        <div ref={mobile} className="fixed inset-0 z-50 flex flex-col bg-leaf-800 px-6 pt-5 pb-10 text-cream-50 lg:hidden" role="dialog" aria-modal>
+        <div ref={mobile} className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-leaf-800 px-6 pt-5 pb-[calc(2.5rem+env(safe-area-inset-bottom))] text-cream-50 lg:hidden" role="dialog" aria-modal>
           <div className="flex items-center justify-between">
             <Logo tone="light" className="h-16" />
             <button className="grid size-11 place-items-center rounded-full bg-white/10" onClick={() => setOpen(false)} aria-label="Close menu">
@@ -151,7 +157,12 @@ export function SiteHeader({ solid: solidProp }: { solid?: boolean }) {
               )}
             </div>
           </nav>
-          <p className="mt-auto font-display text-2xl text-lime-300 italic">Fresh bowls. Happy moods.</p>
+          <nav aria-label="More" className="mt-8 grid grid-cols-2 gap-2 text-sm">
+            {[["Blog", "/blog"], ["FAQs", "/faq"], ["Contact", "/contact"], ["Refunds", "/refunds"]].map(([l, h]) => (
+              <Link key={h} href={h} onClick={() => setOpen(false)} className="rounded-2xl bg-white/8 px-4 py-3 text-cream-50/85">{l}</Link>
+            ))}
+          </nav>
+          <p className="mt-auto pt-6 font-display text-2xl text-lime-300 italic">Fresh bowls. Happy moods.</p>
         </div>
       )}
     </>

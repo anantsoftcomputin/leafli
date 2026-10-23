@@ -43,9 +43,9 @@ export default function MenuPage() {
           ))}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
+        <div className="overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-stone-900/[.06]">
           <table className="w-full text-sm">
-            <thead className="border-b border-stone-100 bg-stone-50"><tr><Th>Prep</Th><Th>SOP</Th><Th className="text-right">Batch yield</Th><Th className="text-right">Cost / unit</Th><Th className="text-right">Batch cost</Th><Th>Shelf life</Th><Th /></tr></thead>
+            <thead className="border-b border-stone-100"><tr><Th>Prep</Th><Th>SOP</Th><Th className="text-right">Batch yield</Th><Th className="text-right">Cost / unit</Th><Th className="text-right">Batch cost</Th><Th>Shelf life</Th><Th /></tr></thead>
             <tbody>
               {items.filter((i) => i.kind === "prep").sort((a, b) => a.name.localeCompare(b.name)).map((p) => (
                 <tr key={p.id} className="border-b border-stone-50">
