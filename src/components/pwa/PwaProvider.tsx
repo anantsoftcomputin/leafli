@@ -44,7 +44,7 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
   const [isStandalone, setStandalone] = useState(false);
   const [isIOS, setIOS] = useState(false);
   const [push, setPush] = useState<PushState>("unsupported");
-  const [iosHelp, setIosHelp] = useState(false);
+  const [guide, setGuide] = useState(false);
   const reloading = useRef(false);
 
   // ── Register the service worker and watch for updates ──
@@ -124,10 +124,7 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
     return outcome;
   }, [deferred]);
 
-  const openInstall = useCallback(() => {
-    if (deferred) void install();
-    else setIosHelp(true);
-  }, [deferred, install]);
+  const openInstall = useCallback(() => setGuide(true), []);
 
   const enablePush = useCallback(async (): Promise<PushState> => {
     if (!reg || !VAPID) {
@@ -162,7 +159,16 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
   return (
     <Ctx.Provider value={{ canInstall: !!deferred, isIOS, isStandalone, install, openInstall, push, enablePush, disablePush, sendTestPush }}>
       {children}
-      {iosHelp && <IosInstallSheet onClose={() => setIosHelp(false)} isIOS={isIOS} />}
+      {guide && (
+        <InstallGuide
+          canInstall={!!deferred}
+          onInstall={async () => {
+            const r = await install();
+            if (r === "accepted") setGuide(false);
+          }}
+          onClose={() => setGuide(false)}
+        />
+      )}
       {waiting && (
         <div role="status" className="fixed inset-x-3 top-3 z-[90] mx-auto flex max-w-md items-center gap-3 rounded-2xl bg-leaf-950 p-3 pl-4 text-sm text-cream-50 shadow-2xl sm:top-auto sm:bottom-6">
           <RefreshCw className="size-4 shrink-0 text-lime-300" />
@@ -188,41 +194,108 @@ export function usePwa() {
   return v;
 }
 
-/** iPhone/iPad have no install prompt — show the three taps instead. */
-function IosInstallSheet({ onClose, isIOS }: { onClose: () => void; isIOS: boolean }) {
-  const steps = isIOS
-    ? [
-        { icon: <ShareIcon />, text: <>Tap <b>Share</b> in Safari&apos;s toolbar</> },
-        { icon: <span className="text-xl leading-none">＋</span>, text: <>Choose <b>Add to Home Screen</b></> },
-        { icon: <span className="font-bold">✓</span>, text: <>Tap <b>Add</b> — Leafli appears on your home screen</> },
-      ]
-    : [
-        { icon: <span className="font-bold">⋮</span>, text: <>Open your browser menu</> },
-        { icon: <span className="text-xl leading-none">＋</span>, text: <>Choose <b>Install app</b> or <b>Add to Home screen</b></> },
-        { icon: <span className="font-bold">✓</span>, text: <>Confirm — Leafli appears with your other apps</> },
-      ];
+type Platform = "ios-safari" | "ios-other" | "android-chrome" | "android-samsung" | "android-other" | "desktop";
+
+function detectPlatform(): Platform {
+  const ua = navigator.userAgent;
+  const ios = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (ios) return /CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua) ? "ios-other" : "ios-safari";
+  if (/android/i.test(ua)) return /SamsungBrowser/i.test(ua) ? "android-samsung" : /Chrome/i.test(ua) ? "android-chrome" : "android-other";
+  return "desktop";
+}
+
+const STEPS: Record<Platform, { icon: React.ReactNode; text: React.ReactNode }[]> = {
+  "ios-safari": [
+    { icon: <ShareIcon />, text: <>Tap the <b>Share</b> button at the bottom of Safari</> },
+    { icon: <PlusSquare />, text: <>Scroll and tap <b>Add to Home Screen</b></> },
+    { icon: <span className="font-bold">✓</span>, text: <>Tap <b>Add</b> — Leafli appears on your home screen</> },
+  ],
+  "ios-other": [
+    { icon: <ShareIcon />, text: <>Tap the <b>Share</b> icon in the address bar</> },
+    { icon: <PlusSquare />, text: <>Choose <b>Add to Home Screen</b></> },
+    { icon: <span className="font-bold">✓</span>, text: <>Tap <b>Add</b>. (Using Safari? It works there too.)</> },
+  ],
+  "android-chrome": [
+    { icon: <span className="text-xl leading-none font-bold">⋮</span>, text: <>Tap the <b>⋮ menu</b> at the top right</> },
+    { icon: <PlusSquare />, text: <>Tap <b>Install app</b> (or <b>Add to Home screen</b>)</> },
+    { icon: <span className="font-bold">✓</span>, text: <>Tap <b>Install</b> — Leafli joins your apps</> },
+  ],
+  "android-samsung": [
+    { icon: <span className="text-lg leading-none font-bold">☰</span>, text: <>Tap the <b>☰ menu</b> at the bottom right</> },
+    { icon: <PlusSquare />, text: <>Tap <b>Add page to</b> → <b>Home screen</b></> },
+    { icon: <span className="font-bold">✓</span>, text: <>Tap <b>Add</b> — Leafli joins your apps</> },
+  ],
+  "android-other": [
+    { icon: <span className="text-xl leading-none font-bold">⋮</span>, text: <>Open your browser menu</> },
+    { icon: <PlusSquare />, text: <>Choose <b>Install app</b> or <b>Add to Home screen</b></> },
+    { icon: <span className="font-bold">✓</span>, text: <>Confirm — Leafli joins your apps</> },
+  ],
+  desktop: [
+    { icon: <PlusSquare />, text: <>Click the <b>install icon</b> at the right end of the address bar</> },
+    { icon: <span className="font-bold">✓</span>, text: <>Click <b>Install</b> — Leafli opens in its own window</> },
+  ],
+};
+
+const PERKS = ["One-tap ordering", "Live order tracking", "Order alerts", "Works offline"];
+
+/** "Install the Leafli app" sheet: native button when the browser supports it, otherwise exact steps. */
+export function InstallGuide({ canInstall, onInstall, onClose }: { canInstall: boolean; onInstall: () => void; onClose: () => void }) {
+  const [platform, setPlatform] = useState<Platform>("desktop");
+  useEffect(() => setPlatform(detectPlatform()), []);
+  const steps = STEPS[platform];
   return (
-    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-ink/40 backdrop-blur-[2px] sm:items-center" onClick={onClose} role="dialog" aria-modal aria-label="Install Leafli">
+    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-ink/45 backdrop-blur-[2px] sm:items-center" onClick={onClose} role="dialog" aria-modal aria-label="Install the Leafli app">
       <div className="w-full max-w-md rounded-t-[2rem] bg-cream-50 p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl sm:rounded-[2rem]" onClick={(e) => e.stopPropagation()}>
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-ink/15 sm:hidden" />
+        <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-ink/15 sm:hidden" />
         <div className="flex items-center gap-4">
-          <img src="/icons/icon-192.png" alt="" className="size-16 rounded-2xl shadow-lg" />
+          <img src="/icons/icon-192.png" alt="" className="size-16 rounded-2xl shadow-lg ring-1 ring-ink/5" />
           <div>
-            <h2 className="font-display text-2xl">Install Leafli</h2>
-            <p className="text-sm text-ink/60">One tap to order, live tracking and alerts.</p>
+            <h2 className="font-display text-2xl leading-tight">Install the Leafli app</h2>
+            <p className="text-sm text-ink/60">Free · takes 10 seconds · no app store needed</p>
           </div>
         </div>
-        <ol className="mt-6 space-y-3">
-          {steps.map((s, i) => (
-            <li key={i} className="flex items-center gap-4 rounded-2xl bg-white p-3 ring-1 ring-ink/5">
-              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-lime-300 text-leaf-900">{s.icon}</span>
-              <span className="text-[15px] text-ink/80">{s.text}</span>
+        <ul className="mt-5 grid grid-cols-2 gap-2 text-sm">
+          {PERKS.map((p) => (
+            <li key={p} className="flex items-center gap-2 rounded-xl bg-lime-300/40 px-3 py-2 font-medium text-leaf-900">
+              <span className="text-leaf-700">✓</span>
+              {p}
             </li>
           ))}
-        </ol>
-        <button onClick={onClose} className="tap mt-6 w-full rounded-full bg-leaf-700 py-3.5 font-semibold text-cream-50">Got it</button>
+        </ul>
+        {canInstall ? (
+          <button onClick={onInstall} className="tap mt-6 w-full rounded-full bg-leaf-700 py-4 text-base font-semibold text-cream-50 shadow-lg shadow-leaf-900/20">
+            Install now
+          </button>
+        ) : (
+          <>
+            <p className="mt-6 text-xs font-semibold tracking-wider text-ink/50 uppercase">How to install</p>
+            <ol className="mt-2 space-y-2.5">
+              {steps.map((s, i) => (
+                <li key={i} className="flex items-center gap-4 rounded-2xl bg-white p-3 ring-1 ring-ink/5">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-leaf-700 text-cream-50">{s.icon}</span>
+                  <span className="text-[15px] leading-snug text-ink/80">
+                    <span className="mr-1 font-semibold text-leaf-700">{i + 1}.</span>
+                    {s.text}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
+        <button onClick={onClose} className="tap mt-3 w-full rounded-full py-3 text-sm font-semibold text-ink/55 hover:bg-ink/5">
+          {canInstall ? "Not now" : "Got it"}
+        </button>
       </div>
     </div>
+  );
+}
+
+function PlusSquare() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+      <rect x="4" y="4" width="16" height="16" rx="4" />
+      <path d="M12 8v8M8 12h8" />
+    </svg>
   );
 }
 

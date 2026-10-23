@@ -264,6 +264,9 @@ export interface BusinessSettings {
   porterEnabled: boolean;
   zomatoEnabled: boolean;
   invoiceFooter: string;
+  /** Public review pages linked from the testimonials section. */
+  googleReviewUrl?: string;
+  zomatoUrl?: string;
 }
 
 export const ORDER_FLOW: OrderStatus[] = [
@@ -395,6 +398,10 @@ export interface Testimonial {
   location?: string;
   source?: "google" | "zomato" | "instagram" | "direct";
   published: boolean;
+  /** Submitted by a customer on the site and waiting for approval. */
+  pending?: boolean;
+  uid?: string | null;
+  orderId?: string | null;
   sortOrder: number;
   createdAt: number;
 }

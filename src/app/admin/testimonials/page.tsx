@@ -9,16 +9,48 @@ import { Badge, Button, Empty, ErrorText, Field, Input, Modal, PageHeader, Selec
 export default function TestimonialsAdmin() {
   const { data } = useLive<Testimonial>("testimonials");
   const [edit, setEdit] = useState<Partial<Testimonial> | null>(null);
-  const items = [...data].sort((a, b) => a.sortOrder - b.sortOrder);
+  const pending = data.filter((t) => t.pending).sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+  const items = data.filter((t) => !t.pending).sort((a, b) => a.sortOrder - b.sortOrder);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  async function decide(t: Testimonial, published: boolean) {
+    setBusyId(t.id);
+    try {
+      await api("/api/admin/testimonials", { ...t, published, sortOrder: published ? items.length : t.sortOrder });
+    } finally {
+      setBusyId(null);
+    }
+  }
   return (
     <>
       <PageHeader
         title="Testimonials"
-        sub="Real quotes from real customers only — copy them from Google or Zomato reviews, or messages (with permission). Published ones appear on the home page."
+        sub="Customer reviews from the website land here for approval. You can also add real quotes from Google or Zomato reviews (with permission). Published ones are the highlight of the home page."
         actions={<Button onClick={() => setEdit({ rating: 5, published: true, source: "google", sortOrder: items.length })}>Add testimonial</Button>}
       />
+      {pending.length > 0 && (
+        <section className="mb-8 rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-200">
+          <h2 className="mb-3 font-semibold">Waiting for approval ({pending.length})</h2>
+          <div className="grid gap-3 md:grid-cols-2">
+            {pending.map((t) => (
+              <div key={t.id} className="rounded-xl bg-white p-4 ring-1 ring-stone-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-amber-500">{"★".repeat(t.rating)}<span className="text-stone-300">{"★".repeat(5 - t.rating)}</span></span>
+                  <span className="text-xs text-stone-500">{t.createdAt ? new Date(t.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : ""}</span>
+                </div>
+                <p className="mt-2 text-sm">“{t.quote}”</p>
+                <p className="mt-2 text-xs text-stone-500">{t.name}{t.location && ` · ${t.location}`}{t.dish && ` · ${t.dish}`} · verified customer</p>
+                <div className="mt-3 flex gap-2">
+                  <Button onClick={() => decide(t, true)} loading={busyId === t.id}>Approve &amp; publish</Button>
+                  <Button variant="ghost" onClick={() => decide(t, false)} disabled={busyId === t.id}>Hide</Button>
+                  <Button variant="ghost" onClick={() => setEdit(t)}>Edit</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
       {!items.length ? (
-        <Empty>No testimonials yet. The home page section stays hidden until you publish one.</Empty>
+        <Empty>No published testimonials yet. The home page shows a “Be our first review” invitation until you publish one.</Empty>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {items.map((t) => (

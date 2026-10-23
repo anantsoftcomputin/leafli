@@ -37,6 +37,8 @@ export default async function Home() {
       <Intro />
       <Hero />
       <Marquee />
+      {/* Social proof is the highlight — straight after the hero */}
+      <Testimonials items={testimonials} googleUrl={settings?.googleReviewUrl} zomatoUrl={settings?.zomatoUrl} />
       <BowlsShowcase />
       <PromiseSection />
 
@@ -61,7 +63,6 @@ export default async function Home() {
 
       <HowItWorks />
       <MenuSection />
-      {testimonials.length > 0 && <Testimonials items={testimonials} />}
 
       {posts.length > 0 && (
         <section className="bg-cream-50 py-24 md:py-32" aria-labelledby="blog-h">

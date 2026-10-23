@@ -5,44 +5,53 @@ import { Download, X } from "lucide-react";
 import { gsap } from "@/lib/gsap";
 import { usePwa } from "./PwaProvider";
 
-const KEY = "leafli-install-dismissed";
-const VISITS = "leafli-visits";
+const SNOOZE = "leafli-install-snooze";
+const SEEN = "leafli-install-guide-seen";
 
 /**
- * "Get the Leafli app" card for phones. Appears after ~25s or on a return visit,
- * never when already installed, and stays hidden for 14 days once dismissed.
+ * Install nudges for phones:
+ *  - first visit: after a few seconds, open the "Install the Leafli app" guide
+ *  - later visits: a compact banner that opens the same guide
+ * Never shown inside the installed app; "x" snoozes for 3 days.
  */
 export function InstallBanner() {
-  const { canInstall, isIOS, isStandalone, openInstall } = usePwa();
-  const [show, setShow] = useState(false);
+  const { canInstall, isStandalone, openInstall } = usePwa();
+  const [banner, setBanner] = useState(false);
 
   useEffect(() => {
-    if (isStandalone || (!canInstall && !isIOS)) return;
-    let visits = 1;
+    if (isStandalone) return;
+    const phone = window.matchMedia("(pointer: coarse)").matches && window.innerWidth < 1024;
+    if (!phone && !canInstall) return;
+    let snoozed = false;
+    let seen = false;
     try {
-      const until = Number(localStorage.getItem(KEY) || 0);
-      if (until > Date.now()) return;
-      // Count one visit per browser session.
-      visits = Number(localStorage.getItem(VISITS) || 0);
-      if (!sessionStorage.getItem(VISITS)) {
-        visits += 1;
-        localStorage.setItem(VISITS, String(visits));
-        sessionStorage.setItem(VISITS, "1");
-      }
+      snoozed = Number(localStorage.getItem(SNOOZE) || 0) > Date.now();
+      seen = localStorage.getItem(SEEN) === "1";
     } catch {}
-    const t = setTimeout(() => setShow(true), visits > 1 ? 4000 : 25000);
+    if (snoozed) return;
+    const t = setTimeout(
+      () => {
+        if (!seen && phone) {
+          openInstall();
+          try {
+            localStorage.setItem(SEEN, "1");
+          } catch {}
+        } else setBanner(true);
+      },
+      seen ? 8000 : 5000,
+    );
     return () => clearTimeout(t);
-  }, [canInstall, isIOS, isStandalone]);
+  }, [isStandalone, canInstall, openInstall]);
 
   useEffect(() => {
-    if (show) gsap.fromTo("[data-install-banner]", { y: 120, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "expo.out" });
-  }, [show]);
+    if (banner) gsap.fromTo("[data-install-banner]", { y: 120, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "expo.out" });
+  }, [banner]);
 
-  if (!show || isStandalone) return null;
-  const dismiss = () => {
-    setShow(false);
+  if (!banner || isStandalone) return null;
+  const snooze = () => {
+    setBanner(false);
     try {
-      localStorage.setItem(KEY, String(Date.now() + 14 * 86400000));
+      localStorage.setItem(SNOOZE, String(Date.now() + 3 * 86400000));
     } catch {}
   };
 
@@ -55,14 +64,14 @@ export function InstallBanner() {
       </div>
       <button
         onClick={() => {
+          setBanner(false);
           openInstall();
-          setShow(false);
         }}
         className="tap flex items-center gap-1.5 rounded-full bg-lime-400 px-3.5 py-2 text-sm font-bold text-leaf-900"
       >
         <Download className="size-4" /> Install
       </button>
-      <button onClick={dismiss} className="grid size-8 place-items-center rounded-full text-cream-50/60 hover:bg-white/10" aria-label="Not now">
+      <button onClick={snooze} className="grid size-8 place-items-center rounded-full text-cream-50/60 hover:bg-white/10" aria-label="Not now">
         <X className="size-4" />
       </button>
     </div>

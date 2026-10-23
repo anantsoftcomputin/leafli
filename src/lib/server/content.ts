@@ -35,7 +35,7 @@ export interface PublicMenu {
   items: PublicDish[];
 }
 
-export type PublicSettings = Pick<BusinessSettings, "name" | "legalName" | "gstin" | "fssai" | "phone" | "email" | "address" | "acceptingOrders">;
+export type PublicSettings = Pick<BusinessSettings, "name" | "legalName" | "gstin" | "fssai" | "phone" | "email" | "address" | "acceptingOrders" | "googleReviewUrl" | "zomatoUrl">;
 
 export const getSettingsCached = unstable_cache(
   async (): Promise<BusinessSettings> => {
@@ -48,7 +48,7 @@ export const getSettingsCached = unstable_cache(
 
 export async function getPublicSettings(): Promise<PublicSettings> {
   const s = await getSettingsCached();
-  return { name: s.name, legalName: s.legalName, gstin: s.gstin, fssai: s.fssai, phone: s.phone, email: s.email, address: s.address, acceptingOrders: s.acceptingOrders };
+  return { name: s.name, legalName: s.legalName, gstin: s.gstin, fssai: s.fssai, phone: s.phone, email: s.email, address: s.address, acceptingOrders: s.acceptingOrders, googleReviewUrl: s.googleReviewUrl, zomatoUrl: s.zomatoUrl };
 }
 
 const toDish = (id: string, m: Omit<MenuItem, "id">): PublicDish => ({

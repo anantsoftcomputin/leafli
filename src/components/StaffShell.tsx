@@ -37,13 +37,13 @@ import { cx } from "@/components/ui";
 import { useLive } from "@/lib/hooks";
 import { istDate } from "@/lib/site";
 import { isDue } from "@/lib/subscriptions";
-import { awaitingPayment, type Order, type Role, type StockItem, type Subscription } from "@/lib/types";
+import { awaitingPayment, type Order, type Role, type StockItem, type Subscription, type Testimonial } from "@/lib/types";
 
 const ALL: Role[] = ["admin", "manager", "kitchen", "cashier"];
 const MGR: Role[] = ["admin", "manager"];
 
 type Icon = typeof LayoutDashboard;
-type BadgeKey = "newOrders" | "openTickets" | "lowStock" | "subsDue";
+type BadgeKey = "newOrders" | "openTickets" | "lowStock" | "subsDue" | "reviews";
 export interface NavItem {
   href: string;
   label: string;
@@ -67,7 +67,7 @@ export const NAV: NavItem[] = [
   { href: "/admin/plans", label: "Plans", roles: MGR, icon: Sparkles, group: "Menu & pricing" },
   { href: "/admin/food-cost", label: "Food cost", roles: MGR, icon: Percent, group: "Menu & pricing" },
   { href: "/admin/blog", label: "Blog & SEO", roles: MGR, icon: PenLine, group: "Growth" },
-  { href: "/admin/testimonials", label: "Testimonials", roles: MGR, icon: MessageSquareQuote, group: "Growth" },
+  { href: "/admin/testimonials", label: "Testimonials", roles: MGR, icon: MessageSquareQuote, group: "Growth", badge: "reviews" },
   { href: "/admin/settings", label: "Settings", roles: ["admin"], icon: Settings, group: "Settings" },
 ];
 
@@ -83,6 +83,7 @@ function useBadges(enabled: boolean): Record<BadgeKey, number> & { ready: boolea
   const { data: open, loading: openLoading } = useLive<Order>(enabled ? "orders" : null, [where("status", "in", ["new", "accepted", "preparing"])], "open");
   const { data: items } = useLive<StockItem>(enabled ? "items" : null);
   const { data: subs } = useLive<Subscription>(enabled ? "subscriptions" : null, [where("status", "==", "active")], "active");
+  const { data: pendingReviews } = useLive<Testimonial>(enabled ? "testimonials" : null, [where("pending", "==", true)], "pending");
   return useMemo(() => {
     const live = open.filter((o) => !awaitingPayment(o));
     const today = istDate();
@@ -91,9 +92,10 @@ function useBadges(enabled: boolean): Record<BadgeKey, number> & { ready: boolea
       openTickets: live.filter((o) => o.status !== "new").length,
       lowStock: items.filter((i) => i.active !== false && i.currentStock <= i.reorderLevel).length,
       subsDue: subs.filter((s) => isDue(s, today)).length,
+      reviews: pendingReviews.length,
       ready: !openLoading,
     };
-  }, [open, items, subs, openLoading]);
+  }, [open, items, subs, pendingReviews, openLoading]);
 }
 
 /** Short chime for new orders (no audio file needed). */

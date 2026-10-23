@@ -67,6 +67,8 @@ function BusinessCard() {
         <Field label="Packaging charge / order (₹)" hint="Not applied to Zomato orders"><Input type="number" value={f.packagingChargePerOrder} onChange={num("packagingChargePerOrder")} /></Field>
         <Field label="Default delivery charge (₹)"><Input type="number" value={f.defaultDeliveryCharge} onChange={num("defaultDeliveryCharge")} /></Field>
         <Field label="Zomato commission %" hint="For margin reporting"><Input type="number" value={f.zomatoCommissionPct} onChange={num("zomatoCommissionPct")} /></Field>
+        <Field label="Google review link" hint="From your Google Business Profile → Ask for reviews"><Input value={f.googleReviewUrl ?? ""} placeholder="https://g.page/r/…/review" onChange={(e) => set("googleReviewUrl", e.target.value)} /></Field>
+        <Field label="Zomato page link"><Input value={f.zomatoUrl ?? ""} placeholder="https://www.zomato.com/…" onChange={(e) => set("zomatoUrl", e.target.value)} /></Field>
         <div className="sm:col-span-2"><Field label="Invoice footer"><Input value={f.invoiceFooter} onChange={(e) => set("invoiceFooter", e.target.value)} /></Field></div>
         <label className="flex items-center gap-2 text-sm sm:col-span-2 lg:col-span-4">
           <input type="checkbox" checked={f.acceptingOrders} onChange={(e) => set("acceptingOrders", e.target.checked)} />

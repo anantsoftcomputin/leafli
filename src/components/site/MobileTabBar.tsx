@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BookOpen, Home, ShoppingBag, Sparkles, User } from "lucide-react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { useAuth } from "@/components/AuthProvider";
@@ -22,6 +22,8 @@ export function MobileTabBar() {
   const pill = useRef<HTMLSpanElement>(null);
   const bowl = useRef<HTMLButtonElement>(null);
   const badge = useRef<HTMLSpanElement>(null);
+  const [tapped, setTapped] = useState<string | null>(null);
+  useEffect(() => setTapped(null), [path]);
 
   const left: Tab[] = [
     { href: "/", label: "Home", icon: Home, match: (p) => p === "/" },
@@ -53,7 +55,7 @@ export function MobileTabBar() {
       const b = bar.current!.getBoundingClientRect();
       gsap.to(pill.current, { x: r.left - b.left + r.width / 2 - 20, opacity: 1, duration: 0.5, ease: "elastic.out(1, 0.75)" });
     },
-    { dependencies: [path, user?.uid], scope: bar },
+    { dependencies: [path, tapped, user?.uid], scope: bar },
   );
 
   useGSAP(
@@ -64,7 +66,7 @@ export function MobileTabBar() {
   );
 
   const item = (t: Tab) => {
-    const active = t.match(path);
+    const active = tapped ? tapped === t.href : t.match(path);
     const Icon = t.icon;
     return (
       <Link
@@ -72,10 +74,12 @@ export function MobileTabBar() {
         href={t.href}
         data-active={active}
         aria-current={active ? "page" : undefined}
-        className={`tap flex flex-1 flex-col items-center justify-center gap-1 pt-2 pb-1 text-[11px] font-semibold ${active ? "text-leaf-800" : "text-ink/45"}`}
+        onClick={() => !t.match(path) && setTapped(t.href)}
+        className={`tap relative flex flex-1 flex-col items-center justify-center gap-1 pt-2 pb-1 text-[11px] font-semibold ${active ? "text-leaf-800" : "text-ink/45"}`}
       >
         <Icon className="size-[22px]" strokeWidth={active ? 2.4 : 1.8} />
         {t.label}
+        <PendingDot />
       </Link>
     );
   };
@@ -108,4 +112,11 @@ export function MobileTabBar() {
       </div>
     </nav>
   );
+}
+
+/** Small spinner under a tab while its page is loading (Next.js link status). */
+function PendingDot() {
+  const { pending } = useLinkStatus();
+  if (!pending) return null;
+  return <span aria-hidden className="absolute top-1.5 right-[calc(50%-18px)] size-2.5 animate-spin rounded-full border-[1.5px] border-leaf-700 border-t-transparent" />;
 }

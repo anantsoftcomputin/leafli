@@ -13,6 +13,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { LeafMark } from "@/components/brand/Logo";
 import { DishImage } from "@/components/site/DishImage";
 import { PushOptIn } from "@/components/pwa/PushOptIn";
+import { ReviewModal } from "@/components/site/ReviewModal";
 
 const LABEL: Record<string, { t: string; d: string }> = {
   new: { t: "Order placed", d: "We've got it — the kitchen is reviewing your order." },
@@ -116,6 +117,8 @@ function Track({ id }: { id: string }) {
         </div>
       )}
 
+      {o.status === "delivered" && <RateOrder order={o} />}
+
       {awaitingPayment(o) && (
         <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-[1.5rem] bg-mango/20 px-6 py-5">
           <div>
@@ -185,6 +188,26 @@ export default function TrackOrder({ params }: { params: Promise<{ id: string }>
       <Suspense>
         <Track id={id} />
       </Suspense>
+    </div>
+  );
+}
+
+/** After delivery: one tap on a star opens the review form pre-filled with that rating. */
+function RateOrder({ order }: { order: Order }) {
+  const [rating, setRating] = useState(0);
+  const [hover, setHover] = useState(0);
+  return (
+    <div className="mt-8 rounded-[1.5rem] bg-leaf-800 px-6 py-6 text-cream-50">
+      <p className="font-display text-2xl">How was your bowl?</p>
+      <p className="mt-1 text-sm text-cream-50/65">Your review is featured on our home page once approved.</p>
+      <div className="mt-4 flex gap-1" onPointerLeave={() => setHover(0)}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button key={n} aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`} onPointerEnter={() => setHover(n)} onClick={() => setRating(n)} className="tap p-1">
+            <svg viewBox="0 0 24 24" className={`size-9 transition-colors ${(hover || rating) >= n ? "fill-mango" : "fill-white/15"}`}><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z" /></svg>
+          </button>
+        ))}
+      </div>
+      {rating > 0 && <ReviewModal initialRating={rating} dish={order.lines[0]?.name} orderId={order.id} onClose={() => setRating(0)} />}
     </div>
   );
 }

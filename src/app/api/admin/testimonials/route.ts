@@ -22,7 +22,7 @@ export const POST = route(async (req: NextRequest) => {
   const col = adminDb.collection("testimonials");
   const ref = b.id ? col.doc(b.id) : col.doc();
   const { id: _id, ...data } = b;
-  await ref.set({ ...JSON.parse(JSON.stringify(data)), ...(b.id ? {} : { createdAt: Date.now() }) }, { merge: true });
+  await ref.set({ ...JSON.parse(JSON.stringify(data)), pending: false, ...(b.id ? {} : { createdAt: Date.now() }) }, { merge: true });
   refreshPublic("testimonials");
   return { id: ref.id };
 });
