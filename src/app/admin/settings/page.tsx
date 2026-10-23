@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { doc, getDocs, collection, query, setDoc, where } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { api } from "@/lib/api";
@@ -9,7 +9,7 @@ import { DEFAULT_SETTINGS } from "@/lib/billing";
 import type { BusinessSettings, Role, UserProfile } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 import { AddressForm } from "@/components/AddressForm";
-import { Badge, Button, Card, ErrorText, Field, Input, PageHeader, Select, Td, Th } from "@/components/ui";
+import { Badge, Button, Card, ErrorText, Field, Input, PageHeader, Select, Td, Textarea, Th } from "@/components/ui";
 
 export default function SettingsPage() {
   return (
@@ -19,6 +19,7 @@ export default function SettingsPage() {
         <BusinessCard />
         <TeamCard />
         <IntegrationsCard />
+        <PushCard />
         <SeedCard />
       </div>
     </>
@@ -240,6 +241,89 @@ function SeedCard() {
       </div>
       {msg && <p className="mt-2 text-sm text-leaf-700">{msg}</p>}
       <ErrorText>{err}</ErrorText>
+    </Card>
+  );
+}
+
+function PushCard() {
+  const [stats, setStats] = useState<{ configured: boolean; devices: number; customers: number; staff: number } | null>(null);
+  const [f, setF] = useState({ audience: "customers" as "customers" | "staff" | "everyone", title: "", body: "", url: "/menu" });
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const load = useCallback(() => {
+    api<{ configured: boolean; devices: number; customers: number; staff: number }>("/api/admin/push").then(setStats).catch((e) => setErr(e.message));
+  }, []);
+  useEffect(() => load(), [load]);
+
+  async function send() {
+    if (!confirm(`Send this notification to ${f.audience === "customers" ? `${stats?.customers ?? 0} customer device(s)` : f.audience === "staff" ? `${stats?.staff ?? 0} staff device(s)` : `${stats?.devices ?? 0} device(s)`}?`)) return;
+    setBusy(true);
+    setErr(null);
+    setMsg(null);
+    try {
+      const r = await api<{ sent: number; failed: number }>("/api/admin/push", f);
+      setMsg(`Delivered to ${r.sent} device(s)${r.failed ? `, ${r.failed} unreachable (removed)` : ""}.`);
+      setF({ ...f, title: "", body: "" });
+      load();
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card title="Push notifications" description="Customers who turned on notifications get order updates automatically. Use this for announcements.">
+      {stats && !stats.configured && <ErrorText>Push keys (VAPID) are missing on the server.</ErrorText>}
+      <div className="mb-5 grid grid-cols-3 gap-3 text-center">
+        {[["Devices", stats?.devices], ["Customers", stats?.customers], ["Staff", stats?.staff]].map(([l, v]) => (
+          <div key={l as string} className="rounded-xl bg-stone-50 p-3">
+            <div className="text-2xl font-semibold">{v ?? "–"}</div>
+            <div className="text-xs text-stone-500">{l}</div>
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Send to">
+            <Select value={f.audience} onChange={(e) => setF({ ...f, audience: e.target.value as typeof f.audience })}>
+              <option value="customers">Customers</option>
+              <option value="staff">Staff</option>
+              <option value="everyone">Everyone</option>
+            </Select>
+          </Field>
+          <Field label="Opens page" hint="e.g. /menu, /plans/monthly-green, /blog/…">
+            <Input value={f.url} onChange={(e) => setF({ ...f, url: e.target.value })} />
+          </Field>
+          <div className="sm:col-span-2">
+            <Field label={`Title (${f.title.length}/60)`}>
+              <Input maxLength={60} value={f.title} placeholder="New: Mango Sprout Bowl is back 🥭" onChange={(e) => setF({ ...f, title: e.target.value })} />
+            </Field>
+          </div>
+          <div className="sm:col-span-2">
+            <Field label={`Message (${f.body.length}/160)`}>
+              <Textarea rows={2} maxLength={160} value={f.body} placeholder="Only this week — order before 11 am for lunch delivery." onChange={(e) => setF({ ...f, body: e.target.value })} />
+            </Field>
+          </div>
+          <div className="sm:col-span-2 flex items-center gap-3">
+            <Button onClick={send} loading={busy} disabled={f.title.length < 2 || f.body.length < 2}>Send notification</Button>
+            {msg && <span className="text-sm text-leaf-700">{msg}</span>}
+          </div>
+          <div className="sm:col-span-2"><ErrorText>{err}</ErrorText></div>
+        </div>
+        <div>
+          <div className="mb-2 text-xs font-semibold text-stone-500">Preview</div>
+          <div className="flex gap-3 rounded-2xl bg-stone-100 p-3">
+            <img src="/icons/icon-192.png" alt="" className="size-10 rounded-lg" />
+            <div className="min-w-0 text-sm">
+              <div className="flex justify-between gap-2"><b className="truncate">{f.title || "Notification title"}</b><span className="text-xs text-stone-400">now</span></div>
+              <div className="line-clamp-2 text-stone-600">{f.body || "Your message appears here."}</div>
+            </div>
+          </div>
+          <p className="mt-2 text-xs text-stone-500">Keep announcements occasional and useful — too many and people turn notifications off.</p>
+        </div>
+      </div>
     </Card>
   );
 }

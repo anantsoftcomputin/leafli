@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import { usePwa } from "@/components/pwa/PwaProvider";
 
 /** Signed-in menu in the site header: account links, admin (staff) and sign out. */
 export function AccountMenu() {
   const { user, profile, isStaff, logout } = useAuth();
+  const { isStandalone, openInstall } = usePwa();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -68,6 +70,11 @@ export function AccountMenu() {
               <Link role="menuitem" href="/admin" className={`${item} font-semibold text-leaf-700`} onClick={() => setOpen(false)}>Admin dashboard →</Link>
             )}
           </div>
+          {!isStandalone && (
+            <div className="mt-1 border-t border-ink/5 pt-1">
+              <button role="menuitem" onClick={() => { setOpen(false); openInstall(); }} className={`${item} w-full text-left`}>Install the app</button>
+            </div>
+          )}
           <div className="mt-1 border-t border-ink/5 pt-1">
             <button role="menuitem" onClick={signOut} className={`${item} w-full text-left text-tomato`}>Sign out</button>
           </div>

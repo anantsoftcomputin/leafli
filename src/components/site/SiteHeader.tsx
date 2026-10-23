@@ -8,6 +8,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { Logo } from "@/components/brand/Logo";
 import { useSite } from "./SiteContext";
 import { AccountMenu } from "./AccountMenu";
+import { usePwa } from "@/components/pwa/PwaProvider";
 
 const LINKS = [
   { href: "/menu", label: "Menu" },
@@ -27,6 +28,7 @@ export function SiteHeader({ solid: solidProp }: { solid?: boolean }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(!!solid);
   const { user, isStaff, logout } = useAuth();
+  const { isStandalone, openInstall } = usePwa();
   const { count, setCartOpen, setCartTarget } = useSite();
 
   useEffect(() => {
@@ -157,7 +159,13 @@ export function SiteHeader({ solid: solidProp }: { solid?: boolean }) {
               )}
             </div>
           </nav>
-          <nav aria-label="More" className="mt-8 grid grid-cols-2 gap-2 text-sm">
+          {!isStandalone && (
+            <button onClick={() => { setOpen(false); openInstall(); }} className="mt-8 flex items-center gap-3 rounded-2xl bg-lime-400 px-4 py-3 text-left text-leaf-900">
+              <img src="/icons/icon-192.png" alt="" className="size-10 rounded-xl" />
+              <span className="flex-1"><b className="block">Install the Leafli app</b><span className="text-xs">Faster ordering & live alerts</span></span>
+            </button>
+          )}
+          <nav aria-label="More" className="mt-4 grid grid-cols-2 gap-2 text-sm">
             {[["Blog", "/blog"], ["FAQs", "/faq"], ["Contact", "/contact"], ["Refunds", "/refunds"]].map(([l, h]) => (
               <Link key={h} href={h} onClick={() => setOpen(false)} className="rounded-2xl bg-white/8 px-4 py-3 text-cream-50/85">{l}</Link>
             ))}

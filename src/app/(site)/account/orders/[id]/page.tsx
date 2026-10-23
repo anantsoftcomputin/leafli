@@ -12,6 +12,7 @@ import { useSite } from "@/components/site/SiteContext";
 import { useAuth } from "@/components/AuthProvider";
 import { LeafMark } from "@/components/brand/Logo";
 import { DishImage } from "@/components/site/DishImage";
+import { PushOptIn } from "@/components/pwa/PushOptIn";
 
 const LABEL: Record<string, { t: string; d: string }> = {
   new: { t: "Order placed", d: "We've got it — the kitchen is reviewing your order." },
@@ -108,6 +109,12 @@ function Track({ id }: { id: string }) {
         </h1>
         <p className="mt-3 text-lg text-ink/60">{o.status === "cancelled" ? "If you were charged, it will be refunded." : LABEL[o.status]?.d}</p>
       </div>
+
+      {o.status !== "cancelled" && o.status !== "delivered" && (
+        <div className="mt-8">
+          <PushOptIn variant="order" />
+        </div>
+      )}
 
       {awaitingPayment(o) && (
         <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-[1.5rem] bg-mango/20 px-6 py-5">

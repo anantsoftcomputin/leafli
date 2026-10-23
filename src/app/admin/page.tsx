@@ -24,6 +24,8 @@ import { AreaChart, BarList, compact, Meter, ShareBar, Sparkline } from "@/compo
 import { useAuth } from "@/components/AuthProvider";
 import { SourceBadge, StatusBadge, timeAgo } from "@/components/OrderBits";
 import { Badge, Card, cx, Empty, Stat } from "@/components/ui";
+import { usePwa } from "@/components/pwa/PwaProvider";
+import { PushOptIn } from "@/components/pwa/PushOptIn";
 import { inr, rupees } from "@/lib/costing";
 import { useItems, useLive, useMenu } from "@/lib/hooks";
 import { startOfDay, summarize } from "@/lib/reports";
@@ -36,6 +38,7 @@ const pctChange = (now: number, before: number) => (before > 0 ? ((now - before)
 
 export default function Dashboard() {
   const { profile } = useAuth();
+  const { push } = usePwa();
   const [range, setRange] = useState<7 | 30>(7);
   const since = useMemo(() => startOfDay(new Date(Date.now() - 29 * DAY)), []);
   const { data: orders, loading } = useLive<Order>("orders", [where("createdAt", ">=", since)], String(since));
@@ -101,6 +104,8 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+
+      {push !== "subscribed" && push !== "unsupported" && <PushOptIn variant="staff" tone="admin" />}
 
       {/* KPI tiles — today vs yesterday, 14-day sparklines */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">

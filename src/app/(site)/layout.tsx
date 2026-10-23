@@ -1,6 +1,7 @@
 import { CartDrawer } from "@/components/site/CartDrawer";
 import { FloatingCart } from "@/components/site/FloatingCart";
 import { MobileTabBar } from "@/components/site/MobileTabBar";
+import { InstallBanner } from "@/components/pwa/InstallBanner";
 import { Footer } from "@/components/site/Footer";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteProvider } from "@/components/site/SiteContext";
@@ -24,6 +25,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         <CartDrawer />
         <FloatingCart />
         <MobileTabBar />
+        <InstallBanner />
       </div>
     </SiteProvider>
   );

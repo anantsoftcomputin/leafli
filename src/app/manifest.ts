@@ -1,17 +1,33 @@
 import type { MetadataRoute } from "next";
 
+/** Web app manifest: what the phone uses for the installed icon, name, splash and shortcuts. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: "/",
     name: "Leafli — Fresh bowls. Happy moods.",
     short_name: "Leafli",
-    description: "Order chef-made salads and manage your Leafli subscription.",
-    start_url: "/",
+    description: "Order chef-made salads, track deliveries live and manage your Leafli subscription.",
+    start_url: "/?source=pwa",
+    scope: "/",
     display: "standalone",
+    display_override: ["standalone", "minimal-ui"],
+    orientation: "portrait",
     background_color: "#f9f6ea",
-    theme_color: "#bfcd30",
+    theme_color: "#255f30",
+    lang: "en-IN",
+    dir: "ltr",
+    categories: ["food", "health", "lifestyle"],
+    prefer_related_applications: false,
     icons: [
-      { src: "/icon.png", sizes: "600x600", type: "image/png" },
-      { src: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+      { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/icons/maskable-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
+      { src: "/icons/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+    ],
+    shortcuts: [
+      { name: "Order a bowl", short_name: "Menu", url: "/menu?source=shortcut", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
+      { name: "My orders", short_name: "Orders", url: "/account?source=shortcut", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
+      { name: "My subscriptions", short_name: "Plans", url: "/account/subscriptions?source=shortcut", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
     ],
   };
 }

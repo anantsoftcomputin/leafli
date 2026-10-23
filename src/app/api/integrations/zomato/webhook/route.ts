@@ -3,6 +3,7 @@ import { normalizeZomatoOrder, verifyZomatoSignature } from "@/lib/integrations/
 import { HttpError, route, type Actor } from "@/lib/server/http";
 import { col } from "@/lib/server/inventory";
 import { createOrder } from "@/lib/server/orders";
+import { notifyNewOrder } from "@/lib/server/push";
 import type { MenuItem } from "@/lib/types";
 
 const SYSTEM: Actor = { uid: "system:zomato", role: "admin", name: "Zomato" };
@@ -54,5 +55,6 @@ export const POST = route(async (req: NextRequest) => {
     },
     SYSTEM,
   );
+  if (!order.duplicate) await notifyNewOrder(order);
   return { ok: true, orderId: order.id, orderNo: order.orderNo, duplicate: order.duplicate };
 });

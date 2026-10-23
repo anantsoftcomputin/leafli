@@ -14,6 +14,7 @@ import type {
 } from "@/lib/types";
 import { pushZomatoStatus } from "@/lib/integrations/zomato";
 import { refundPayment } from "@/lib/integrations/razorpay";
+import { notifyNewOrder, notifyOrderStatus } from "./push";
 import { awaitingPayment } from "@/lib/types";
 import { HttpError, type Actor } from "./http";
 import { col, financialYear, istDateKey, nextCounter, StockTx } from "./inventory";
@@ -266,6 +267,9 @@ export async function setOrderStatus(orderId: string, to: OrderStatus, actor: Ac
     }
   }
 
+  // Tell the customer (if they ordered online) — failures never break the status change.
+  if (result.status === to) await notifyOrderStatus(result as Order, to);
+
   if (result.source === "zomato" && result.externalId) {
     try {
       await pushZomatoStatus(result.externalId, to, reason);
@@ -291,6 +295,10 @@ export async function markOrderPaid(orderId: string, rzpOrderId: string, payment
       "payment.paidAt": Date.now(),
       updatedAt: Date.now(),
     });
-    return { alreadyPaid: false };
+    return { alreadyPaid: false, order: { ...o, id: orderId } };
+  }).then(async (r) => {
+    // A paid online order is the moment it becomes real for the kitchen.
+    if (!r.alreadyPaid && "order" in r && r.order) await notifyNewOrder(r.order);
+    return { alreadyPaid: r.alreadyPaid };
   });
 }

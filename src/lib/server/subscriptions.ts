@@ -16,6 +16,7 @@ import type { Address, DietPref, MenuItem, Plan, Subscription } from "@/lib/type
 import { HttpError, type Actor } from "./http";
 import { col, financialYear, nextCounter } from "./inventory";
 import { createOrder, getSettings } from "./orders";
+import { notifyUser } from "./push";
 
 const subs = () => col.orders().firestore.collection("subscriptions");
 const plans = () => col.orders().firestore.collection("plans");
@@ -93,7 +94,7 @@ export async function createSubscription(input: NewSubscriptionInput, actor: Act
 /** Activate after payment (Razorpay verify/webhook, or a manager confirming cash/UPI). Idempotent. */
 export async function activateSubscription(subId: string, payment: { rzpOrderId: string; paymentId: string } | null) {
   const ref = subs().doc(subId);
-  return ref.firestore.runTransaction(async (tx) => {
+  const r = await ref.firestore.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists) throw new HttpError(404, "Subscription not found");
     const s = snap.data() as Subscription;
@@ -108,8 +109,16 @@ export async function activateSubscription(subId: string, payment: { rzpOrderId:
       ...(payment ? { "payment.paymentId": payment.paymentId, "payment.paidAt": Date.now() } : {}),
       updatedAt: Date.now(),
     });
-    return { alreadyActive: false };
+    return { alreadyActive: false, customerUid: s.customerUid, planName: s.planName, startDate: s.startDate };
   });
+  if (!r.alreadyActive && "customerUid" in r && r.customerUid)
+    await notifyUser(r.customerUid, {
+      title: `${r.planName} is active 🎉`,
+      body: `Your first bowl arrives ${new Date(`${r.startDate}T00:00:00Z`).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short", timeZone: "UTC" })}. Pick your bowls anytime.`,
+      url: `/account/subscriptions/${subId}`,
+      tag: `sub-${subId}`,
+    });
+  return { alreadyActive: r.alreadyActive };
 }
 
 export type CustomerAction =

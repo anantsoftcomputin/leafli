@@ -1,7 +1,12 @@
 import path from "node:path";
 import type { NextConfig } from "next";
 
+// A new version on every deploy (Netlify sets COMMIT_REF) — the service worker uses it
+// to detect updates and to version its caches.
+const APP_VERSION = (process.env.COMMIT_REF || process.env.NEXT_PUBLIC_APP_VERSION || Date.now().toString(36)).slice(0, 12);
+
 const nextConfig: NextConfig = {
+  env: { NEXT_PUBLIC_APP_VERSION: APP_VERSION },
   // Lets a verification build run without clobbering a running `next dev` (`npm run verify`).
   distDir: process.env.NEXT_DIST_DIR || ".next",
   // Pin the workspace root (a lockfile higher up the tree confuses Next's inference).

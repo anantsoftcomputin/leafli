@@ -67,6 +67,9 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Push subscriptions are managed only by the server.
+    match /pushSubscriptions/{id} { allow read, write: if false; }
+
     match /settings/{id} {
       allow read: if isStaff();
       allow write: if isAdmin();

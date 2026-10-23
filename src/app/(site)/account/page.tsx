@@ -10,6 +10,8 @@ import { useLive } from "@/lib/hooks";
 import type { Order, OrderStatus } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 import { DishImage } from "@/components/site/DishImage";
+import { PushOptIn } from "@/components/pwa/PushOptIn";
+import { InstallAppCard } from "@/components/pwa/InstallAppCard";
 
 const LABEL: Record<OrderStatus, string> = {
   new: "Placed",
@@ -54,6 +56,10 @@ export default function AccountPage() {
           <Link href="/account/subscriptions" className="rounded-full bg-lime-300 px-5 py-2.5 text-sm font-semibold text-leaf-900">My subscriptions →</Link>
           <button onClick={async () => { await logout(); router.push("/"); }} className="rounded-full px-5 py-2.5 text-sm font-semibold text-ink/60 ring-1 ring-ink/15 hover:bg-ink/5">Sign out</button>
         </div>
+      </div>
+      <div className="mt-8 grid gap-3 sm:grid-cols-2">
+        <PushOptIn variant="account" />
+        <InstallAppCard />
       </div>
       {!loadingOrders && orders.length === 0 ? (
         <div className="mt-12 rounded-[2rem] bg-white p-10 text-center ring-1 ring-ink/5">

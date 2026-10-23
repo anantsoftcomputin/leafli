@@ -36,6 +36,7 @@
     ".next-verify/types/**/*.ts"
   ],
   "exclude": [
+    ".next-verify",
     "node_modules"
   ]
 }

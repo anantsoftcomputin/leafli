@@ -3,6 +3,7 @@ import { z } from "zod";
 import { preflight, withCors } from "@/lib/server/cors";
 import { HttpError, requireUser, route, STAFF } from "@/lib/server/http";
 import { createOrder } from "@/lib/server/orders";
+import { notifyNewOrder } from "@/lib/server/push";
 import { col } from "@/lib/server/inventory";
 import { createRazorpayOrder, razorpayConfigured, razorpayKeyId } from "@/lib/integrations/razorpay";
 
@@ -92,5 +93,7 @@ export const POST = route(async (req: NextRequest) => {
       }),
     );
   }
+  // Pay-later website orders are live straight away: alert the kitchen.
+  if (!order.duplicate && order.status === "new") await notifyNewOrder(order);
   return withCors(req, Response.json(order));
 });
