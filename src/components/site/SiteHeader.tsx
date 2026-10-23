@@ -39,21 +39,12 @@ export function SiteHeader({ solid: solidProp }: { solid?: boolean }) {
     return () => mq.removeEventListener("change", apply);
   }, [setCartTarget]);
 
-  // Hide on scroll down, reveal on scroll up; go solid after the hero top.
+  // The header stays pinned; it turns into frosted glass once the page scrolls.
   useGSAP(
     () => {
-      const show = gsap.quickTo(ref.current, "yPercent", { duration: 0.35, ease: "power2.out" });
-      ScrollTrigger.create({
-        start: 0,
-        end: "max",
-        onUpdate: (self) => {
-          setScrolled(solid || self.scroll() > 24);
-          if (self.scroll() < 120) show(0);
-          else show(self.direction === 1 ? -110 : 0);
-        },
-      });
+      ScrollTrigger.create({ start: 0, end: "max", onUpdate: (self) => setScrolled(solid || self.scroll() > 24) });
     },
-    { scope: ref },
+    { scope: ref, dependencies: [solid] },
   );
 
   // Bounce the badge whenever the cart count changes.

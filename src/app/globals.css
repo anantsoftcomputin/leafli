@@ -43,7 +43,12 @@ html {
 
 /* Height of the mobile bottom tab bar (incl. iPhone home-indicator area). */
 :root {
-  --tabbar-h: calc(68px + env(safe-area-inset-bottom));
+  --tabbar-h: calc(74px + env(safe-area-inset-bottom));
+  /* Where bars pinned above the tab bar sit right now (it hides on scroll down). */
+  --tabbar-live: var(--tabbar-h);
+}
+html[data-tabbar-hidden] {
+  --tabbar-live: env(safe-area-inset-bottom);
 }
 
 .no-scrollbar { scrollbar-width: none; }

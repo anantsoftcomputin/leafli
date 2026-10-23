@@ -28,7 +28,7 @@ export function MobileBuyBar({ watch, children }: { watch: string; children: Rea
     <div
       ref={bar}
       style={{ visibility: "hidden", transform: "translateY(140%)" }}
-      className="fixed inset-x-3 bottom-[calc(var(--tabbar-h)+10px)] z-30 flex items-center justify-between gap-3 rounded-[1.4rem] bg-white/95 p-2.5 pl-4 shadow-2xl shadow-leaf-900/20 ring-1 ring-ink/5 backdrop-blur lg:hidden"
+      className="fixed inset-x-3 bottom-[calc(var(--tabbar-live)+10px)] transition-[bottom] duration-400 z-30 flex items-center justify-between gap-3 rounded-[1.4rem] bg-white/95 p-2.5 pl-4 shadow-2xl shadow-leaf-900/20 ring-1 ring-ink/5 backdrop-blur lg:hidden"
     >
       {children}
     </div>

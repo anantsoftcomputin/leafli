@@ -6,8 +6,8 @@ import { rupees } from "@/lib/costing";
 import { useSite } from "./SiteContext";
 
 /**
- * Sticky "View bowl" pill. The header hides while scrolling down, so once
- * something is in the bowl this keeps checkout one tap away.
+ * Sticky "View bowl" pill on desktop: once something is in the bowl this keeps
+ * checkout one tap away while scrolling.
  */
 export function FloatingCart() {
   const ref = useRef<HTMLButtonElement>(null);

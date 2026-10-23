@@ -56,7 +56,7 @@ export function InstallBanner() {
   };
 
   return (
-    <div data-install-banner className="fixed inset-x-3 bottom-[calc(var(--tabbar-h)+10px)] z-30 flex items-center gap-3 rounded-[1.4rem] bg-leaf-800 p-3 text-cream-50 shadow-2xl shadow-leaf-900/30 lg:right-6 lg:bottom-6 lg:left-auto lg:w-96">
+    <div data-install-banner className="fixed inset-x-3 bottom-[calc(var(--tabbar-live)+10px)] transition-[bottom] duration-400 z-30 flex items-center gap-3 rounded-[1.4rem] bg-leaf-800 p-3 text-cream-50 shadow-2xl shadow-leaf-900/30 lg:right-6 lg:bottom-6 lg:left-auto lg:w-96">
       <img src="/icons/icon-192.png" alt="" className="size-12 rounded-xl" />
       <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold">Get the Leafli app</div>

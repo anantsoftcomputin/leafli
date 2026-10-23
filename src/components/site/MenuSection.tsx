@@ -77,7 +77,7 @@ export function MenuSection({ hideHeading }: { hideHeading?: boolean } = {}) {
             )}
           </div>
         </div>
-        <div className="no-scrollbar sticky top-0 z-20 mt-4 lg:mt-8 -mx-5 flex w-[calc(100%+2.5rem)] gap-2 overflow-x-auto bg-cream-100/90 px-5 py-3 backdrop-blur sm:mx-0 sm:w-auto sm:flex-wrap sm:overflow-visible sm:bg-transparent sm:p-0 sm:backdrop-blur-none" role="tablist" aria-label="Filter menu">
+        <div className="no-scrollbar sticky top-16 z-20 lg:top-18 mt-4 lg:mt-8 -mx-5 flex w-[calc(100%+2.5rem)] gap-2 overflow-x-auto bg-cream-100/90 px-5 py-3 backdrop-blur sm:mx-0 sm:w-auto sm:flex-wrap sm:overflow-visible sm:bg-transparent sm:p-0 sm:backdrop-blur-none" role="tablist" aria-label="Filter menu">
           {FILTERS.map((f) => (
             <button
               key={f.key}
