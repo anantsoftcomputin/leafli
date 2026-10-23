@@ -11,8 +11,8 @@ import { useSite } from "./SiteContext";
 type Tab = { href: string; label: string; icon: typeof Home; match: (p: string) => boolean };
 
 /**
- * Floating bottom navigation for phones: a dark glass pill where the active tab
- * expands to show its label, plus a lime "Bowl" button with the live item count.
+ * Floating bottom navigation for phones: a dark glass pill with labelled tabs (the
+ * active one gets a lime indicator), plus a lime "Bowl" button with the live item count.
  * It tucks away while scrolling down and comes back on scroll up, at the top
  * and at the end of the page.
  */
@@ -86,7 +86,7 @@ export function MobileTabBar() {
       aria-label="Primary"
       className={`no-print fixed inset-x-3 bottom-[calc(10px+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md items-center gap-2 transition-[translate,opacity] duration-400 ease-[cubic-bezier(.2,.8,.2,1)] lg:hidden ${hidden ? "pointer-events-none translate-y-[calc(100%+24px)] opacity-0" : ""}`}
     >
-      <div className="flex h-16 min-w-0 flex-1 items-center gap-1 rounded-full bg-leaf-950/88 p-1.5 shadow-[0_12px_40px_-8px_rgba(10,32,16,.55)] ring-1 ring-white/10 backdrop-blur-xl backdrop-saturate-150">
+      <div className="flex h-16 min-w-0 flex-1 items-center gap-0.5 rounded-full bg-leaf-950/88 px-2 shadow-[0_12px_40px_-8px_rgba(10,32,16,.55)] ring-1 ring-white/10 backdrop-blur-xl backdrop-saturate-150">
         {tabs.map((t) => {
           const active = tapped ? tapped === t.href : t.match(path);
           const Icon = t.icon;
@@ -94,15 +94,15 @@ export function MobileTabBar() {
             <Link
               key={t.label}
               href={t.href}
-              aria-label={t.label}
               aria-current={active ? "page" : undefined}
               data-active={active}
               onClick={() => !t.match(path) && setTapped(t.href)}
-              style={{ flexGrow: active ? 2.2 : 1 }}
-              className={`tap relative flex h-full min-w-0 basis-0 items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold transition-[flex-grow,background-color,color] duration-400 ease-[cubic-bezier(.2,.8,.2,1)] ${active ? "bg-lime-400 text-leaf-950" : "text-cream-50/60 active:bg-white/10"}`}
+              className={`tap relative flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors duration-300 ${active ? "text-lime-300" : "text-cream-50/65"}`}
             >
-              <Icon className="size-[21px] shrink-0" strokeWidth={active ? 2.3 : 1.8} />
-              <span className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-400 ${active ? "max-w-20 opacity-100" : "max-w-0 opacity-0"}`}>{t.label}</span>
+              <span className={`grid h-7 w-12 place-items-center rounded-full transition-[background-color,color,scale] duration-300 ${active ? "scale-100 bg-lime-400 text-leaf-950" : "scale-95"}`}>
+                <Icon className="size-[20px]" strokeWidth={active ? 2.3 : 1.8} />
+              </span>
+              <span className="max-w-full truncate leading-[1.25]">{t.label}</span>
               <PendingDot />
             </Link>
           );
@@ -129,5 +129,5 @@ export function MobileTabBar() {
 function PendingDot() {
   const { pending } = useLinkStatus();
   if (!pending) return null;
-  return <span aria-hidden className="absolute top-1.5 right-2 size-2.5 animate-spin rounded-full border-[1.5px] border-current border-t-transparent" />;
+  return <span aria-hidden className="absolute top-1 right-[calc(50%-30px)] size-2.5 animate-spin rounded-full border-[1.5px] border-current border-t-transparent" />;
 }
