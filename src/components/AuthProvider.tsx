@@ -12,6 +12,8 @@ interface AuthState {
   profile: UserProfile | null;
   loading: boolean;
   isStaff: boolean;
+  /** Set when sign-in worked but our server couldn't create/load the profile. */
+  setupError: string | null;
   logout: () => Promise<void>;
 }
 
@@ -20,6 +22,7 @@ const Ctx = createContext<AuthState>({
   profile: null,
   loading: true,
   isStaff: false,
+  setupError: null,
   logout: async () => {},
 });
 
@@ -27,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [setupError, setSetupError] = useState<string | null>(null);
 
   useEffect(() => {
     let unsubProfile: (() => void) | undefined;
@@ -38,16 +42,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
         return;
       }
-      try {
-        // Ensures the profile exists (and grants admin to configured owners).
-        await api("/api/auth/bootstrap", { name: u.displayName ?? undefined });
-      } catch (e) {
-        console.error("bootstrap failed", e);
+      setSetupError(null);
+      let bootstrapped = false;
+      // Ensures the profile exists (and grants admin to configured owners). Retry once for cold starts.
+      for (let attempt = 0; attempt < 2 && !bootstrapped; attempt++) {
+        try {
+          await api("/api/auth/bootstrap", { name: u.displayName ?? undefined });
+          bootstrapped = true;
+        } catch (e) {
+          console.error("bootstrap failed", e);
+          if (attempt === 1) setSetupError("You're signed in, but we couldn't set up your account just now. Please try again in a minute.");
+          else await new Promise((r) => setTimeout(r, 1200));
+        }
       }
-      unsubProfile = onSnapshot(doc(db, "users", u.uid), (s) => {
-        setProfile(s.exists() ? (s.data() as UserProfile) : null);
-        setLoading(false);
-      });
+      unsubProfile = onSnapshot(
+        doc(db, "users", u.uid),
+        (s) => {
+          setProfile(s.exists() ? (s.data() as UserProfile) : null);
+          setLoading(false);
+        },
+        () => setLoading(false),
+      );
     });
     return () => {
       unsub();
@@ -62,6 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profile,
         loading,
         isStaff: !!profile && STAFF_ROLES.includes(profile.role),
+        setupError,
         logout: () => signOut(auth),
       }}
     >

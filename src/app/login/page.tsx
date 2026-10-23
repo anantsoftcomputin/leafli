@@ -54,7 +54,7 @@ type Method = "phone" | "email";
 type EmailMode = "signin" | "signup" | "reset";
 
 function LoginInner() {
-  const { user, profile, isStaff, loading } = useAuth();
+  const { user, profile, isStaff, loading, setupError, logout } = useAuth();
   const router = useRouter();
   const next = useSearchParams().get("next");
   const [method, setMethod] = useState<Method>("phone");
@@ -135,14 +135,18 @@ function LoginInner() {
     }
   }
 
+  const verifying = useRef(false);
   async function verifyOtp(value = code) {
-    if (!confirm || value.length !== 6) return;
+    // The code auto-submits on the 6th digit; ignore a second submit (Enter / button) — it would fail with a 400.
+    if (!confirm || value.length !== 6 || verifying.current) return;
+    verifying.current = true;
     reset();
     setBusy("verify");
     try {
       await confirm.confirm(value);
     } catch (e) {
       setErr(friendly(e));
+      verifying.current = false;
     } finally {
       setBusy(null);
     }
@@ -292,7 +296,14 @@ function LoginInner() {
             </form>
           )}
 
-          {info && <p role="status" className="mt-4 rounded-2xl bg-lime-300/50 px-4 py-3 text-sm text-leaf-800">{info}</p>}
+          {user && setupError && (
+            <div role="alert" className="mt-4 rounded-2xl bg-tomato/10 px-4 py-3 text-sm text-tomato">
+              {setupError}{" "}
+              <button className="font-semibold underline" onClick={() => location.reload()}>Retry</button> ·{" "}
+              <button className="underline" onClick={() => logout()}>Sign out</button>
+            </div>
+          )}
+                    {info && <p role="status" className="mt-4 rounded-2xl bg-lime-300/50 px-4 py-3 text-sm text-leaf-800">{info}</p>}
           {err && <p role="alert" className="mt-4 rounded-2xl bg-tomato/10 px-4 py-3 text-sm text-tomato">{err}</p>}
           <p className="mt-10 text-xs text-ink/40">By continuing you agree to receive order updates on this number or email.</p>
           <div id="recaptcha" />

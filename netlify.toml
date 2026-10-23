@@ -1,0 +1,9 @@
+# Netlify build settings for the Leafli Next.js app.
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # firebase-admin → jwks-rsa → jose 6 is ESM-only; Node 22.12+ can require() it.
+  # Server functions also need Node 22: site env AWS_LAMBDA_JS_RUNTIME=nodejs22.x
+  NODE_VERSION = "22"
