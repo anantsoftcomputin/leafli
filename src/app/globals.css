@@ -131,3 +131,8 @@ body {
   45% { transform: rotate(8deg); }
   60% { transform: rotate(-4deg); }
 }
+
+@keyframes hero-progress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
