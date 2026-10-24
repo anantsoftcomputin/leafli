@@ -7,3 +7,6 @@
   # firebase-admin → jwks-rsa → jose 6 is ESM-only; Node 22.12+ can require() it.
   # Server functions also need Node 22: site env AWS_LAMBDA_JS_RUNTIME=nodejs22.x
   NODE_VERSION = "22"
+  # These are public (mail server name and the From address shown in every email), not secrets;
+  # SMTP_PASS and the API keys stay scanned.
+  SECRETS_SCAN_OMIT_KEYS = "SMTP_HOST,SMTP_PORT,SMTP_USER,EMAIL_FROM,STAFF_ALERT_EMAILS"
