@@ -26,6 +26,7 @@ import {
   RefreshCw,
   Search,
   Mail,
+  MessageCircle,
   Settings,
   Sparkles,
   Truck,
@@ -70,6 +71,7 @@ export const NAV: NavItem[] = [
   { href: "/admin/blog", label: "Blog & SEO", roles: MGR, icon: PenLine, group: "Growth" },
   { href: "/admin/testimonials", label: "Testimonials", roles: MGR, icon: MessageSquareQuote, group: "Growth", badge: "reviews" },
   { href: "/admin/emails", label: "Emails", roles: MGR, icon: Mail, group: "Settings" },
+  { href: "/admin/whatsapp", label: "WhatsApp", roles: MGR, icon: MessageCircle, group: "Settings" },
   { href: "/admin/settings", label: "Settings", roles: ["admin"], icon: Settings, group: "Settings" },
 ];
 

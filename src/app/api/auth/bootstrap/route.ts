@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase/admin";
 import { HttpError, route } from "@/lib/server/http";
 import type { Role } from "@/lib/types";
-import { emailWelcome } from "@/lib/server/email/notify";
+import { onWelcome } from "@/lib/server/notifications";
 
 const list = (v?: string) => (v ?? "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
 
@@ -40,7 +40,7 @@ export const POST = route(async (req: NextRequest) => {
       createdAt: Date.now(),
     };
     await ref.set(profile);
-    if (profile.role === "customer") await emailWelcome(profile);
+    if (profile.role === "customer") await onWelcome(profile);
     return profile;
   }
   const data = snap.data()!;

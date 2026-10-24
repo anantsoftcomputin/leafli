@@ -17,7 +17,7 @@ import { HttpError, type Actor } from "./http";
 import { col, financialYear, nextCounter } from "./inventory";
 import { createOrder, getSettings } from "./orders";
 import { notifyUser } from "./push";
-import { emailSubscriptionActive, emailSubscriptionChanged, emailSubscriptionCreated, emailSubscriptionEndingSoon, emailSubscriptionFinished } from "./email/notify";
+import { onSubscriptionActive, onSubscriptionChanged, onSubscriptionCreated, onSubscriptionEndingSoon, onSubscriptionFinished } from "./notifications";
 
 const subs = () => col.orders().firestore.collection("subscriptions");
 const plans = () => col.orders().firestore.collection("plans");
@@ -32,6 +32,7 @@ export interface NewSubscriptionInput {
   customer: { name: string; phone: string };
   paymentMode: "online" | "offline";
   notes?: string;
+  notify?: { whatsapp: boolean };
 }
 
 export async function createSubscription(input: NewSubscriptionInput, actor: Actor & { email?: string | null }) {
@@ -79,6 +80,7 @@ export async function createSubscription(input: NewSubscriptionInput, actor: Act
     paymentMode: input.paymentMode,
     paymentStatus: "pending",
     ...(input.notes ? { notes: input.notes } : {}),
+    ...(input.notify ? { notify: input.notify } : {}),
     createdAt: now,
     updatedAt: now,
   };
@@ -95,7 +97,7 @@ export async function createSubscription(input: NewSubscriptionInput, actor: Act
     await ref.update({ payment: { provider: "razorpay", rzpOrderId: rzp.id } });
     return { id: ref.id, total: t.total, checkout: { keyId: razorpayKeyId(), rzpOrderId: rzp.id, amount: rzp.amount, currency: rzp.currency } };
   }
-  await emailSubscriptionCreated(ref.id);
+  await onSubscriptionCreated(ref.id);
   return { id: ref.id, total: t.total };
 }
 
@@ -133,7 +135,7 @@ export async function activateSubscription(
       url: `/account/subscriptions/${subId}`,
       tag: `sub-${subId}`,
     });
-  if (!r.alreadyActive) await emailSubscriptionActive(subId);
+  if (!r.alreadyActive) await onSubscriptionActive(subId);
   return { alreadyActive: r.alreadyActive, stray: r.stray };
 }
 
@@ -191,8 +193,8 @@ export async function updateSubscription(subId: string, action: CustomerAction, 
       break;
   }
   await ref.update(patch);
-  if (action.type === "pause" || action.type === "cancel") await emailSubscriptionChanged(subId, action.type === "pause" ? "paused" : "cancelled");
-  if (action.type === "resume") await emailSubscriptionChanged(subId, "resumed");
+  if (action.type === "pause" || action.type === "cancel") await onSubscriptionChanged(subId, action.type === "pause" ? "paused" : "cancelled");
+  if (action.type === "resume") await onSubscriptionChanged(subId, "resumed");
   return { ok: true };
 }
 
@@ -210,7 +212,7 @@ export async function generateSubscriptionOrders(date: string, actor: Actor, men
     const s = { ...(doc.data() as Subscription), id: doc.id };
     if (s.endDate < date && mealsRemaining(s) > 0 && s.status === "active") {
       await doc.ref.update({ status: "expired", updatedAt: Date.now() });
-      await emailSubscriptionFinished(s.id, true);
+      await onSubscriptionFinished(s.id, true);
       continue;
     }
     if (!isDue(s, date)) continue;
@@ -248,8 +250,8 @@ export async function generateSubscriptionOrders(date: string, actor: Actor, men
       });
       return fresh.mealsTotal - used;
     });
-    if (left === 0) await emailSubscriptionFinished(s.id, false);
-    else if (left === 2) await emailSubscriptionEndingSoon(s.id, left);
+    if (left === 0) await onSubscriptionFinished(s.id, false);
+    else if (left === 2) await onSubscriptionEndingSoon(s.id, left);
     if (!order.duplicate) created.push(order.orderNo);
   }
   return { date, created, skipped };

@@ -139,3 +139,44 @@ sends a test and lists recent sends. `npm run emails:render <dir>` writes them a
 Zomato orders and daily subscription meals don't email the customer. Emails never block an order or payment:
 failures are logged in `emailLog` and shown on the Emails page. Phone-OTP customers can add an email at checkout
 (saved as `contactEmail` on their profile).
+
+## WhatsApp (official Cloud API by Meta)
+
+No middleman: messages go straight to `graph.facebook.com`. You pay Meta per delivered message (order/plan updates are
+the cheap **utility** category, and free inside a 24-hour window after the customer messages you).
+
+Code: [`src/lib/integrations/whatsapp.ts`](../src/lib/integrations/whatsapp.ts) (API),
+[`src/lib/server/whatsapp/templates.ts`](../src/lib/server/whatsapp/templates.ts) (all 15 messages),
+[`src/lib/server/whatsapp/notify.ts`](../src/lib/server/whatsapp/notify.ts) (when they go out). Email and WhatsApp fire
+from the same events via [`src/lib/server/notifications.ts`](../src/lib/server/notifications.ts).
+
+**One-time setup**
+
+1. **Meta Business** — business.facebook.com → Settings → Business info → *Start verification* (GST certificate etc.).
+2. **App** — developers.facebook.com → My apps → Create app → *Business* → add **WhatsApp**. Under WhatsApp → API Setup,
+   add your business phone number (not logged into the WhatsApp app) and verify it by SMS/call. Copy the
+   **Phone number ID** and **WhatsApp Business Account ID**.
+3. **Permanent token** — Business settings → Users → System users → Add (admin) → Assign assets: the app and the WhatsApp
+   account (full control) → *Generate token* with `whatsapp_business_messaging` and `whatsapp_business_management`.
+4. **Payment method** — WhatsApp Manager → Account tools → Payment methods (needed to message beyond the free tier).
+5. **Env on Netlify** — `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_BUSINESS_ACCOUNT_ID`, `WHATSAPP_ACCESS_TOKEN`,
+   `WHATSAPP_APP_SECRET` (App settings → Basic), `WHATSAPP_VERIFY_TOKEN`, `STAFF_WHATSAPP_NUMBERS`. Redeploy.
+6. **Webhook** — app → WhatsApp → Configuration → Callback URL `https://<domain>/api/integrations/whatsapp/webhook`,
+   Verify token = `WHATSAPP_VERIFY_TOKEN` → Verify and save → subscribe to **messages**.
+7. **Templates** — Admin → WhatsApp → *Submit to Meta*. Review takes minutes to a day; status shows on the same page.
+   Then send yourself a test.
+
+**Who gets what**
+
+| Event | Message |
+| --- | --- |
+| Order live (pay-later placed / online paid) | Customer: confirmed + track button · Team: new order |
+| Ready (pickup) / out for delivery / delivered / cancelled | Customer |
+| Staff send a payment link | Customer (Pay now button → Razorpay) |
+| Refund started / processed | Customer |
+| Refund fails | Team |
+| Plan reserved / active / paused / resumed / cancelled / 2 left / finished / expired | Customer |
+
+Customers are messaged only if they ticked **"updates on WhatsApp"** at checkout or plan sign-up (Meta requires opt-in).
+Replying **STOP** opts a number out, **START** opts back in. Customer replies appear in Admin → WhatsApp, where staff can
+answer from the business number within 24 hours of the customer's last message.

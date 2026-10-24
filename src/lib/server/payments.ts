@@ -14,7 +14,7 @@ import { HttpError, type Actor } from "./http";
 import { col } from "./inventory";
 import { markOrderPaid } from "./orders";
 import { activateSubscription } from "./subscriptions";
-import { emailPaymentLink, emailRefundCompleted, emailRefundStarted, emailStaffIssue } from "./email/notify";
+import { onPaymentLink, onRefundCompleted, onRefundStarted, onStaffIssue } from "./notifications";
 
 /**
  * Everything that moves money through Razorpay, in one place:
@@ -168,7 +168,7 @@ export async function refund(t: PayTarget, amount: number | null, reason: string
     by: actor.uid,
     at: Date.now(),
   });
-  await emailRefundStarted(t, { refundId: r.id, amount: amt, full, reason });
+  await onRefundStarted(t, { refundId: r.id, amount: amt, full, reason });
   return { refundId: r.id, amount: amt, refundedAmount: total, full };
 }
 
@@ -187,9 +187,9 @@ export async function applyRefundEvent(r: RzpRefund, event: "refund.processed" |
   const pay = (snap.data() as Order | Subscription).payment;
   // Only the latest refund drives the badge; older ones are history in the Razorpay dashboard.
   if (pay?.refundId && pay.refundId !== r.id) return { ignored: "older refund" };
-  if (event === "refund.processed") await emailRefundCompleted(t, { refundId: r.id, amount: r.amount / 100 });
+  if (event === "refund.processed") await onRefundCompleted(t, { refundId: r.id, amount: r.amount / 100 });
   else
-    await emailStaffIssue({
+    await onStaffIssue({
       key: `refund-failed-${r.id}`,
       title: "A Razorpay refund failed",
       detail: `Refund ${r.id} of ₹${r.amount / 100} failed. Retry it from the ${t.kind} page or refund from the Razorpay dashboard.`,
@@ -234,6 +234,6 @@ export async function sendPaymentLink(orderId: string, actor: Actor, siteUrl: st
     expireBy: Math.floor(Date.now() / 1000) + 7 * 24 * 3600,
   });
   await ref.update({ paymentLink: { id: link.id, url: link.short_url, createdAt: Date.now(), by: actor.uid }, updatedAt: Date.now() });
-  await emailPaymentLink(orderId, link.short_url);
+  await onPaymentLink(orderId, link.short_url);
   return { url: link.short_url, reused: false };
 }

@@ -28,6 +28,7 @@ export function CartDrawer() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState(true);
   const [address, setAddress] = useState<Address>(emptyAddress);
   const [notes, setNotes] = useState("");
   const [payMode, setPayMode] = useState<"online" | "pay_later">("online");
@@ -123,6 +124,7 @@ export function CartDrawer() {
         paymentMode: online ? "online" : "pay_later",
         deliveryProvider: mode,
         notes: notes || undefined,
+        notify: { whatsapp },
       });
       if (profile && email.trim() && !profile.email && profile.contactEmail !== email.trim())
         await updateDoc(doc(db, "users", profile.uid), { contactEmail: email.trim() }).catch(() => {});
@@ -231,6 +233,10 @@ export function CartDrawer() {
               <input className={field} placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
               <input className={field} placeholder="Mobile number" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" />
               <input className={field} type="email" placeholder="Email for your receipt (optional)" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+              <label className="flex items-start gap-3 rounded-2xl bg-cream-100 px-4 py-3 text-sm ring-1 ring-ink/10">
+                <input type="checkbox" className="mt-0.5 size-4 accent-leaf-700" checked={whatsapp} onChange={(e) => setWhatsapp(e.target.checked)} />
+                <span>Send my order updates on <b>WhatsApp</b> to this number. <span className="text-ink/50">Reply STOP anytime.</span></span>
+              </label>
               {mode === "porter" && <AddressForm value={address} onChange={setAddress} allowGeo />}
               <input className={field} placeholder="Anything for the kitchen? (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
               <fieldset className="space-y-2">

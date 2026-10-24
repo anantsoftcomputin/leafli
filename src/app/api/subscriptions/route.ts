@@ -24,6 +24,7 @@ const schema = z.object({
   customer: z.object({ name: z.string().min(1).max(80), phone: z.string().min(10).max(16), email: z.union([z.email(), z.literal("")]).optional() }),
   paymentMode: z.enum(["online", "offline"]),
   notes: z.string().max(300).optional(),
+  notify: z.object({ whatsapp: z.boolean() }).optional(),
 });
 
 /** A signed-in customer buys a plan. Online → returns Razorpay checkout details. */

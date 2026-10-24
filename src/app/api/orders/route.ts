@@ -4,7 +4,7 @@ import { preflight, withCors } from "@/lib/server/cors";
 import { HttpError, requireUser, route, STAFF } from "@/lib/server/http";
 import { createOrder, setOrderStatus } from "@/lib/server/orders";
 import { notifyNewOrder } from "@/lib/server/push";
-import { emailOrderLive } from "@/lib/server/email/notify";
+import { onOrderLive } from "@/lib/server/notifications";
 import { col } from "@/lib/server/inventory";
 import { createRazorpayOrder, razorpayConfigured, razorpayKeyId } from "@/lib/integrations/razorpay";
 
@@ -45,6 +45,8 @@ const schema = z.object({
   deliveryProvider: z.enum(["porter", "zomato", "self", "pickup"]),
   deliveryCharge: z.number().nonnegative().optional(),
   notes: z.string().max(500).optional(),
+  /** Customer ticked "send me updates on WhatsApp". */
+  notify: z.object({ whatsapp: z.boolean() }).optional(),
 });
 
 export const OPTIONS = preflight;
@@ -105,7 +107,7 @@ export const POST = route(async (req: NextRequest) => {
   // Pay-later website orders are live straight away: alert the kitchen.
   if (!order.duplicate && order.status === "new") {
     await notifyNewOrder(order);
-    await emailOrderLive(order.id);
+    await onOrderLive(order.id);
   }
   return withCors(req, Response.json(order));
 });

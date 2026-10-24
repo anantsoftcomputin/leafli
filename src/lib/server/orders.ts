@@ -15,7 +15,7 @@ import type {
 import { pushZomatoStatus } from "@/lib/integrations/zomato";
 import { cancelPaymentLink, refundPayment } from "@/lib/integrations/razorpay";
 import { notifyNewOrder, notifyOrderStatus } from "./push";
-import { emailOrderLive, emailOrderStatus, emailStaffIssue } from "./email/notify";
+import { onOrderLive, onOrderStatus, onStaffIssue } from "./notifications";
 import { awaitingPayment } from "@/lib/types";
 import { HttpError, type Actor } from "./http";
 import { col, financialYear, istDateKey, nextCounter, StockTx } from "./inventory";
@@ -41,6 +41,7 @@ export interface CreateOrderInput {
   autoAccept?: boolean;
   /** Prepaid meal generated from a subscription. */
   prepaid?: { subscriptionId: string; unitPrice: number };
+  notify?: { whatsapp: boolean };
 }
 
 /** Consumption recorded on the order so a cancellation can be reversed exactly. */
@@ -181,6 +182,7 @@ export async function createOrder(input: CreateOrderInput, actor: Actor) {
       consumption,
       delivery: { provider: input.deliveryProvider },
       ...(input.notes ? { notes: input.notes } : {}),
+      ...(input.notify ? { notify: input.notify } : {}),
       dateKey,
       createdAt: now,
       updatedAt: now,
@@ -273,7 +275,7 @@ export async function setOrderStatus(orderId: string, to: OrderStatus, actor: Ac
     } catch (e) {
       await col.orders().doc(orderId).update({ "payment.refundError": String((e as Error).message) });
       await col.logs().add({ provider: "razorpay", direction: "out", orderId, error: String(e), at: Date.now() });
-      await emailStaffIssue({ key: `refund-${orderId}`, title: `Refund failed for ${o.orderNo}`, detail: `Cancelled order ${o.orderNo} (${o.customer.name}) could not be refunded automatically: ${(e as Error).message}. Retry from the order page or refund from the Razorpay dashboard.`, url: `/admin/orders/${orderId}` });
+      await onStaffIssue({ key: `refund-${orderId}`, title: `Refund failed for ${o.orderNo}`, detail: `Cancelled order ${o.orderNo} (${o.customer.name}) could not be refunded automatically: ${(e as Error).message}. Retry from the order page or refund from the Razorpay dashboard.`, url: `/admin/orders/${orderId}` });
     }
   }
   // An unpaid payment link must not stay payable once the order is gone.
@@ -283,7 +285,7 @@ export async function setOrderStatus(orderId: string, to: OrderStatus, actor: Ac
   // Tell the customer (if they ordered online) — failures never break the status change.
   if (result.status === to) {
     await notifyOrderStatus(result as Order, to);
-    await emailOrderStatus(orderId, to);
+    await onOrderStatus(orderId, to);
   }
 
   if (result.source === "zomato" && result.externalId) {
@@ -329,7 +331,7 @@ export async function markOrderPaid(
     // A paid online order is the moment it becomes real for the kitchen (link payments were already live).
     if (!r.alreadyPaid && "order" in r && r.order && !opts.viaLink) {
       await notifyNewOrder(r.order);
-      await emailOrderLive(orderId);
+      await onOrderLive(orderId);
     }
     return { alreadyPaid: r.alreadyPaid, stray: r.stray };
   });

@@ -26,6 +26,7 @@ export function SubscribeForm({ plan, acceptsOnline, razorpayKeyId, gstRate }: {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState(true);
   const [address, setAddress] = useState<Address>(emptyAddress);
   const [notes, setNotes] = useState("");
   const [pay, setPay] = useState<"online" | "offline">(acceptsOnline ? "online" : "offline");
@@ -67,6 +68,7 @@ export function SubscribeForm({ plan, acceptsOnline, razorpayKeyId, gstRate }: {
         diet,
         address,
         customer: { name: name.trim(), phone: `+91${phone.replace(/\D/g, "").slice(-10)}`, email: email.trim() },
+        notify: { whatsapp },
         paymentMode: pay,
         notes: notes || undefined,
       });
@@ -150,6 +152,10 @@ export function SubscribeForm({ plan, acceptsOnline, razorpayKeyId, gstRate }: {
             {!profile?.email && (
               <input className={`${field} sm:col-span-2`} type="email" placeholder="Email for your invoice & reminders (optional)" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             )}
+            <label className="flex items-start gap-3 rounded-2xl bg-cream-100 px-4 py-3 text-sm ring-1 ring-ink/10 sm:col-span-2">
+              <input type="checkbox" className="mt-0.5 size-4 accent-leaf-700" checked={whatsapp} onChange={(e) => setWhatsapp(e.target.checked)} />
+              <span>Send plan updates and reminders on <b>WhatsApp</b> to this number. <span className="text-ink/50">Reply STOP anytime.</span></span>
+            </label>
           </div>
           <AddressForm value={address} onChange={setAddress} allowGeo />
           <input className={field} placeholder="Delivery note (gate, floor, office desk…) — optional" value={notes} onChange={(e) => setNotes(e.target.value)} />

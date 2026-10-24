@@ -218,6 +218,8 @@ export interface Order {
   subscriptionId?: string | null;
   /** Online payment details (Razorpay). */
   payment?: RazorpayPayment;
+  /** Channels the customer opted into for updates. */
+  notify?: { whatsapp?: boolean };
   /** Razorpay payment link sent by staff for a pay-later / phone order. */
   paymentLink?: { id: string; url: string; createdAt: number; by: string };
   status: OrderStatus;
@@ -362,6 +364,7 @@ export interface Subscription {
   paymentMode: "online" | "offline";
   paymentStatus: "pending" | "paid" | "refunded";
   payment?: RazorpayPayment;
+  notify?: { whatsapp?: boolean };
   invoiceNo?: string;
   notes?: string;
   createdAt: number;

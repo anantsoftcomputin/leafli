@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { emailOrderLive } from "@/lib/server/email/notify";
+import { onOrderLive } from "@/lib/server/notifications";
 import { normalizeZomatoOrder, verifyZomatoSignature } from "@/lib/integrations/zomato";
 import { HttpError, route, type Actor } from "@/lib/server/http";
 import { col } from "@/lib/server/inventory";
@@ -58,7 +58,7 @@ export const POST = route(async (req: NextRequest) => {
   );
   if (!order.duplicate) {
     await notifyNewOrder(order);
-    await emailOrderLive(order.id);
+    await onOrderLive(order.id);
   }
   return { ok: true, orderId: order.id, orderNo: order.orderNo, duplicate: order.duplicate };
 });

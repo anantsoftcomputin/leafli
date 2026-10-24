@@ -8,6 +8,7 @@ process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ??= "demo-leafli";
 process.env.RAZORPAY_KEY_ID = "rzp_test_dummy";
 process.env.RAZORPAY_KEY_SECRET = "test_secret";
 process.env.RAZORPAY_WEBHOOK_SECRET = "hook_secret";
+process.env.WHATSAPP_APP_SECRET = "wa_secret";
 
 async function main() {
   const { adminDb } = await import("../src/lib/firebase/admin");
@@ -189,6 +190,28 @@ async function main() {
   assert.equal(codDoc.paymentMode, "online");
   assert.equal(codDoc.payment.method, "upi");
   ok("stray payments flagged for refund, failure reasons recorded, payment-link payments settle pay-later orders");
+
+  // ---- WhatsApp: numbers, webhook signatures, template rules Meta enforces
+  const wa = await import("../src/lib/integrations/whatsapp");
+  const { WA_TEMPLATES } = await import("../src/lib/server/whatsapp/templates");
+  assert.equal(wa.waNumber("+91 98765-43210"), "919876543210");
+  assert.equal(wa.waNumber("09876543210"), "919876543210");
+  assert.equal(wa.waNumber("9876543210"), "919876543210");
+  assert.equal(wa.waNumber("12345"), null);
+  const waBody = JSON.stringify({ entry: [] });
+  const waSig = `sha256=${crypto.createHmac("sha256", "wa_secret").update(waBody).digest("hex")}`;
+  assert.ok(wa.verifySignature(waBody, waSig), "Meta webhook signature accepted");
+  assert.ok(!wa.verifySignature(waBody + " ", waSig), "altered Meta webhook rejected");
+  for (const t of Object.values(WA_TEMPLATES)) {
+    const vars = [...new Set([...t.body.matchAll(/\{\{(\d+)\}\}/g)].map((m) => Number(m[1])))].sort((a, b) => a - b);
+    assert.deepEqual(vars, vars.map((_, i) => i + 1), `${t.name}: variables numbered 1..n`);
+    assert.equal(vars.length, t.example.length, `${t.name}: one example per variable`);
+    assert.ok(!/^\s*\{\{/.test(t.body) && !/\}\}\s*[.!]?\s*$/.test(t.body), `${t.name}: body can't start or end with a variable`);
+    assert.ok(!/\}\}\s*\{\{/.test(t.body), `${t.name}: no adjacent variables`);
+    assert.ok(/^[a-z0-9_]{1,512}$/.test(t.name), `${t.name}: valid template name`);
+    if ("button" in t) assert.ok(t.button.example.startsWith(t.button.base), `${t.name}: button example matches base URL`);
+  }
+  ok(`WhatsApp: number formatting, webhook signatures, ${Object.keys(WA_TEMPLATES).length} templates follow Meta's rules`);
 
   // ---- Subscriptions: buy → activate → daily kitchen orders
   const start = addDays(istDate(), 1);
