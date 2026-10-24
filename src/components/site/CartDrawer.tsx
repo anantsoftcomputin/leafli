@@ -27,6 +27,7 @@ export function CartDrawer() {
   const [mode, setMode] = useState<"porter" | "pickup">("porter");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [address, setAddress] = useState<Address>(emptyAddress);
   const [notes, setNotes] = useState("");
   const [payMode, setPayMode] = useState<"online" | "pay_later">("online");
@@ -41,6 +42,7 @@ export function CartDrawer() {
     if (!profile) return;
     setName((n) => n || profile.name || "");
     setPhone((p) => p || (profile.phone ?? "").replace("+91", ""));
+    setEmail((e) => e || profile.email || profile.contactEmail || "");
     if (profile.addresses?.[0]) setAddress((a) => (a.line1 ? a : profile.addresses![0]!));
   }, [profile]);
 
@@ -108,6 +110,7 @@ export function CartDrawer() {
     setErr(null);
     if (!name.trim()) return setErr("Please add your name");
     if (phone.replace(/\D/g, "").length < 10) return setErr("Please add a 10-digit mobile number");
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setErr("That email doesn't look right");
     if (mode === "porter" && (!address.line1 || !/^\d{6}$/.test(address.pincode) || !address.city)) return setErr("Please complete your delivery address");
     if (mode === "porter" && address.lat == null) return setErr("Tap “Use my location” so the rider can find you");
     setBusy(true);
@@ -115,12 +118,14 @@ export function CartDrawer() {
       const online = payMode === "online" && !!menu.razorpayKeyId;
       const order = await api<{ id: string; orderNo: string; checkout?: Omit<CheckoutArgs, "orderId" | "orderNo"> }>("/api/orders", {
         source: "website",
-        customer: { name, phone: `+91${phone.replace(/\D/g, "").slice(-10)}`, email: profile?.email ?? undefined, address: mode === "porter" ? address : null },
+        customer: { name, phone: `+91${phone.replace(/\D/g, "").slice(-10)}`, email: email.trim() || undefined, address: mode === "porter" ? address : null },
         lines: lines.map((l) => ({ menuItemId: l.item.id, qty: l.qty })),
         paymentMode: online ? "online" : "pay_later",
         deliveryProvider: mode,
         notes: notes || undefined,
       });
+      if (profile && email.trim() && !profile.email && profile.contactEmail !== email.trim())
+        await updateDoc(doc(db, "users", profile.uid), { contactEmail: email.trim() }).catch(() => {});
       if (mode === "porter" && profile && !profile.addresses?.some((a) => a.line1 === address.line1))
         await updateDoc(doc(db, "users", profile.uid), { addresses: arrayUnion(JSON.parse(JSON.stringify(address))) }).catch(() => {});
       clear();
@@ -131,7 +136,7 @@ export function CartDrawer() {
           ...order.checkout,
           orderId: order.id,
           orderNo: order.orderNo,
-          prefill: { name, email: profile?.email ?? undefined, contact: phone.replace(/\D/g, "").slice(-10) },
+          prefill: { name, email: email.trim() || undefined, contact: phone.replace(/\D/g, "").slice(-10) },
         }).catch(() => "dismissed" as const);
         router.push(`/account/orders/${order.id}${result === "paid" ? "?placed=1" : ""}`);
         return;
@@ -225,6 +230,7 @@ export function CartDrawer() {
               </div>
               <input className={field} placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
               <input className={field} placeholder="Mobile number" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" />
+              <input className={field} type="email" placeholder="Email for your receipt (optional)" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
               {mode === "porter" && <AddressForm value={address} onChange={setAddress} allowGeo />}
               <input className={field} placeholder="Anything for the kitchen? (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
               <fieldset className="space-y-2">

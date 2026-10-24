@@ -113,3 +113,29 @@ Server code: [`src/lib/integrations/razorpay.ts`](../src/lib/integrations/razorp
 
 Webhook events are de-duplicated by `x-razorpay-event-id`. Events we can't match are logged and acknowledged
 with 200, so Razorpay never disables the webhook over them.
+
+## Email (support@leafli.in)
+
+Sent over SMTP through GoDaddy (`smtpout.secureserver.net`, port 465, SSL) as **support@leafli.in**. leafli.in's
+DNS has SPF `-all` and DMARC `p=reject`, so mail **must** go through GoDaddy — any other sender is rejected.
+
+Env: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`, `STAFF_ALERT_EMAILS` (set the same on Netlify).
+
+Code: [`src/lib/server/email/`](../src/lib/server/email/) — `send.ts` (SMTP, log, de-dupe), `layout.ts` (brand blocks),
+`templates.ts` (every email), `notify.ts` (which email goes when). Admin → **Emails** previews every template,
+sends a test and lists recent sends. `npm run emails:render <dir>` writes them all to HTML files.
+
+| When | Who gets it |
+| --- | --- |
+| First sign-in with an email | Customer — welcome |
+| Order goes live (pay-later placed / online paid) | Customer — receipt; team — new-order alert |
+| Ready (pickup) / out for delivery / delivered / cancelled | Customer |
+| Staff send a payment link | Customer |
+| Manager refund started / refund processed | Customer |
+| Auto-refund or Razorpay refund fails | Team |
+| Plan reserved (offline) / active (paid) | Customer (with invoice); team alert |
+| Plan paused / resumed / cancelled / 2 bowls left / finished / expired | Customer |
+
+Zomato orders and daily subscription meals don't email the customer. Emails never block an order or payment:
+failures are logged in `emailLog` and shown on the Emails page. Phone-OTP customers can add an email at checkout
+(saved as `contactEmail` on their profile).

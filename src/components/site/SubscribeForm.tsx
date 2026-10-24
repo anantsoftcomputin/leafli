@@ -25,6 +25,7 @@ export function SubscribeForm({ plan, acceptsOnline, razorpayKeyId, gstRate }: {
   const [diet, setDiet] = useState<DietPref>("veg");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [address, setAddress] = useState<Address>(emptyAddress);
   const [notes, setNotes] = useState("");
   const [pay, setPay] = useState<"online" | "offline">(acceptsOnline ? "online" : "offline");
@@ -35,6 +36,7 @@ export function SubscribeForm({ plan, acceptsOnline, razorpayKeyId, gstRate }: {
     if (!profile) return;
     setName((n) => n || profile.name || "");
     setPhone((p) => p || (profile.phone ?? "").replace("+91", ""));
+    setEmail((e) => e || profile.email || profile.contactEmail || "");
     if (profile.addresses?.[0]) setAddress((a) => (a.line1 ? a : profile.addresses![0]!));
   }, [profile]);
 
@@ -64,7 +66,7 @@ export function SubscribeForm({ plan, acceptsOnline, razorpayKeyId, gstRate }: {
         slot,
         diet,
         address,
-        customer: { name: name.trim(), phone: `+91${phone.replace(/\D/g, "").slice(-10)}` },
+        customer: { name: name.trim(), phone: `+91${phone.replace(/\D/g, "").slice(-10)}`, email: email.trim() },
         paymentMode: pay,
         notes: notes || undefined,
       });
@@ -75,7 +77,7 @@ export function SubscribeForm({ plan, acceptsOnline, razorpayKeyId, gstRate }: {
           orderNo: plan.name,
           description: `${plan.name} — ${plan.meals} bowls`,
           verifyPath: `/api/subscriptions/${r.id}/verify`,
-          prefill: { name, email: profile?.email ?? undefined, contact: phone.replace(/\D/g, "").slice(-10) },
+          prefill: { name, email: email.trim() || undefined, contact: phone.replace(/\D/g, "").slice(-10) },
         }).catch(() => "dismissed" as const);
         router.push(`/account/subscriptions/${r.id}${res === "paid" ? "?welcome=1" : ""}`);
       } else {
@@ -145,6 +147,9 @@ export function SubscribeForm({ plan, acceptsOnline, razorpayKeyId, gstRate }: {
           <div className="grid gap-3 sm:grid-cols-2">
             <input className={field} placeholder="Your name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
             <input className={field} placeholder="Mobile number" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            {!profile?.email && (
+              <input className={`${field} sm:col-span-2`} type="email" placeholder="Email for your invoice & reminders (optional)" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            )}
           </div>
           <AddressForm value={address} onChange={setAddress} allowGeo />
           <input className={field} placeholder="Delivery note (gate, floor, office desk…) — optional" value={notes} onChange={(e) => setNotes(e.target.value)} />

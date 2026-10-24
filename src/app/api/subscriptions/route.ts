@@ -21,7 +21,7 @@ const schema = z.object({
     lat: z.number().optional(),
     lng: z.number().optional(),
   }),
-  customer: z.object({ name: z.string().min(1).max(80), phone: z.string().min(10).max(16) }),
+  customer: z.object({ name: z.string().min(1).max(80), phone: z.string().min(10).max(16), email: z.union([z.email(), z.literal("")]).optional() }),
   paymentMode: z.enum(["online", "offline"]),
   notes: z.string().max(300).optional(),
 });
@@ -30,6 +30,7 @@ const schema = z.object({
 export const POST = route(async (req: NextRequest) => {
   const actor = await requireUser(req);
   const input = schema.parse(await req.json());
-  const email = ((await adminDb.collection("users").doc(actor.uid).get()).get("email") as string | null) ?? null;
+  const user = await adminDb.collection("users").doc(actor.uid).get();
+  const email = (user.get("email") as string | null) || input.customer.email || (user.get("contactEmail") as string | null) || null;
   return createSubscription(input, { ...actor, email });
 });

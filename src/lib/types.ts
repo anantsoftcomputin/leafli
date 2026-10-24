@@ -23,6 +23,8 @@ export interface UserProfile {
   uid: string;
   name: string;
   email?: string | null;
+  /** Email a phone-OTP customer gave at checkout, for receipts. */
+  contactEmail?: string | null;
   phone?: string | null;
   role: Role;
   addresses?: Address[];

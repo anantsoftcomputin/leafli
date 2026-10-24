@@ -17,6 +17,7 @@ import { HttpError, type Actor } from "./http";
 import { col, financialYear, nextCounter } from "./inventory";
 import { createOrder, getSettings } from "./orders";
 import { notifyUser } from "./push";
+import { emailSubscriptionActive, emailSubscriptionChanged, emailSubscriptionCreated, emailSubscriptionEndingSoon, emailSubscriptionFinished } from "./email/notify";
 
 const subs = () => col.orders().firestore.collection("subscriptions");
 const plans = () => col.orders().firestore.collection("plans");
@@ -94,6 +95,7 @@ export async function createSubscription(input: NewSubscriptionInput, actor: Act
     await ref.update({ payment: { provider: "razorpay", rzpOrderId: rzp.id } });
     return { id: ref.id, total: t.total, checkout: { keyId: razorpayKeyId(), rzpOrderId: rzp.id, amount: rzp.amount, currency: rzp.currency } };
   }
+  await emailSubscriptionCreated(ref.id);
   return { id: ref.id, total: t.total };
 }
 
@@ -131,6 +133,7 @@ export async function activateSubscription(
       url: `/account/subscriptions/${subId}`,
       tag: `sub-${subId}`,
     });
+  if (!r.alreadyActive) await emailSubscriptionActive(subId);
   return { alreadyActive: r.alreadyActive, stray: r.stray };
 }
 
@@ -188,6 +191,8 @@ export async function updateSubscription(subId: string, action: CustomerAction, 
       break;
   }
   await ref.update(patch);
+  if (action.type === "pause" || action.type === "cancel") await emailSubscriptionChanged(subId, action.type === "pause" ? "paused" : "cancelled");
+  if (action.type === "resume") await emailSubscriptionChanged(subId, "resumed");
   return { ok: true };
 }
 
@@ -205,6 +210,7 @@ export async function generateSubscriptionOrders(date: string, actor: Actor, men
     const s = { ...(doc.data() as Subscription), id: doc.id };
     if (s.endDate < date && mealsRemaining(s) > 0 && s.status === "active") {
       await doc.ref.update({ status: "expired", updatedAt: Date.now() });
+      await emailSubscriptionFinished(s.id, true);
       continue;
     }
     if (!isDue(s, date)) continue;
@@ -230,9 +236,9 @@ export async function generateSubscriptionOrders(date: string, actor: Actor, men
       },
       actor,
     );
-    await doc.ref.firestore.runTransaction(async (tx) => {
+    const left = await doc.ref.firestore.runTransaction(async (tx) => {
       const fresh = (await tx.get(doc.ref)).data() as Subscription;
-      if (fresh.fulfilled?.[date]) return;
+      if (fresh.fulfilled?.[date]) return null;
       const used = fresh.mealsUsed + 1;
       tx.update(doc.ref, {
         [`fulfilled.${date}`]: order.id,
@@ -240,7 +246,10 @@ export async function generateSubscriptionOrders(date: string, actor: Actor, men
         status: used >= fresh.mealsTotal ? "completed" : fresh.status,
         updatedAt: Date.now(),
       });
+      return fresh.mealsTotal - used;
     });
+    if (left === 0) await emailSubscriptionFinished(s.id, false);
+    else if (left === 2) await emailSubscriptionEndingSoon(s.id, left);
     if (!order.duplicate) created.push(order.orderNo);
   }
   return { date, created, skipped };

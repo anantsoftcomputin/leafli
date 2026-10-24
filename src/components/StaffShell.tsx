@@ -25,6 +25,7 @@ import {
   Receipt,
   RefreshCw,
   Search,
+  Mail,
   Settings,
   Sparkles,
   Truck,
@@ -68,6 +69,7 @@ export const NAV: NavItem[] = [
   { href: "/admin/food-cost", label: "Food cost", roles: MGR, icon: Percent, group: "Menu & pricing" },
   { href: "/admin/blog", label: "Blog & SEO", roles: MGR, icon: PenLine, group: "Growth" },
   { href: "/admin/testimonials", label: "Testimonials", roles: MGR, icon: MessageSquareQuote, group: "Growth", badge: "reviews" },
+  { href: "/admin/emails", label: "Emails", roles: MGR, icon: Mail, group: "Settings" },
   { href: "/admin/settings", label: "Settings", roles: ["admin"], icon: Settings, group: "Settings" },
 ];
 
