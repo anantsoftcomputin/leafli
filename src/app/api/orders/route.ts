@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { preflight, withCors } from "@/lib/server/cors";
 import { HttpError, requireUser, route, STAFF } from "@/lib/server/http";
-import { createOrder } from "@/lib/server/orders";
+import { createOrder, setOrderStatus } from "@/lib/server/orders";
 import { notifyNewOrder } from "@/lib/server/push";
 import { col } from "@/lib/server/inventory";
 import { createRazorpayOrder, razorpayConfigured, razorpayKeyId } from "@/lib/integrations/razorpay";
@@ -83,7 +83,15 @@ export const POST = route(async (req: NextRequest) => {
   );
   // Online payment: open a Razorpay order for the server-computed total.
   if (input.paymentMode === "online" && !order.duplicate) {
-    const rzp = await createRazorpayOrder(order.total, order.orderNo, { leafliOrderId: order.id, orderNo: order.orderNo });
+    let rzp;
+    try {
+      rzp = await createRazorpayOrder(order.total, order.orderNo, { leafliOrderId: order.id, orderNo: order.orderNo });
+    } catch (e) {
+      // Don't leave an order that can never be paid; the customer just tries again.
+      await setOrderStatus(order.id, "cancelled", actor, "Online payment could not be started").catch(() => {});
+      await col.logs().add({ provider: "razorpay", direction: "out", orderId: order.id, error: String(e), at: Date.now() });
+      throw new HttpError(502, "We couldn't start the online payment. Please try again or choose pay on delivery.");
+    }
     await col.orders().doc(order.id).update({ payment: { provider: "razorpay", rzpOrderId: rzp.id } });
     return withCors(
       req,

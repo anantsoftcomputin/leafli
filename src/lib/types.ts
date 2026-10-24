@@ -215,7 +215,9 @@ export interface Order {
   /** Set when the order is a prepaid meal from a subscription. */
   subscriptionId?: string | null;
   /** Online payment details (Razorpay). */
-  payment?: { provider: "razorpay"; rzpOrderId: string; paymentId?: string; paidAt?: number; refundId?: string; refundError?: string };
+  payment?: RazorpayPayment;
+  /** Razorpay payment link sent by staff for a pay-later / phone order. */
+  paymentLink?: { id: string; url: string; createdAt: number; by: string };
   status: OrderStatus;
   statusHistory: { status: OrderStatus; at: number; by: string }[];
   stockDeducted: boolean;
@@ -277,6 +279,23 @@ export const ORDER_FLOW: OrderStatus[] = [
   "dispatched",
   "delivered",
 ];
+
+export interface RazorpayPayment {
+  provider: "razorpay";
+  rzpOrderId: string;
+  paymentId?: string;
+  paidAt?: number;
+  /** upi / card / netbanking / wallet … as reported by Razorpay. */
+  method?: string;
+  /** Last failed attempt, so the customer and staff can see why. */
+  lastError?: string;
+  lastErrorAt?: number;
+  /** Most recent refund; refundedAmount is the running total in rupees. */
+  refundId?: string;
+  refundStatus?: "pending" | "processed" | "failed";
+  refundedAmount?: number;
+  refundError?: string;
+}
 
 /** Online orders stay out of the kitchen until Razorpay confirms payment. */
 export const awaitingPayment = (o: Pick<Order, "paymentMode" | "paymentStatus" | "status">) =>
@@ -340,7 +359,7 @@ export interface Subscription {
   total: number;
   paymentMode: "online" | "offline";
   paymentStatus: "pending" | "paid" | "refunded";
-  payment?: { provider: "razorpay"; rzpOrderId: string; paymentId?: string; paidAt?: number };
+  payment?: RazorpayPayment;
   invoiceNo?: string;
   notes?: string;
   createdAt: number;

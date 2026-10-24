@@ -84,7 +84,13 @@ export async function createSubscription(input: NewSubscriptionInput, actor: Act
   await ref.set(sub);
 
   if (input.paymentMode === "online") {
-    const rzp = await createRazorpayOrder(t.total, `SUB-${ref.id.slice(0, 12)}`, { leafliSubscriptionId: ref.id, plan: plan.name });
+    let rzp;
+    try {
+      rzp = await createRazorpayOrder(t.total, `SUB-${ref.id.slice(0, 12)}`, { leafliSubscriptionId: ref.id, plan: plan.name });
+    } catch (e) {
+      await ref.update({ status: "cancelled", notes: `Online payment could not be started: ${(e as Error).message}`.slice(0, 500) });
+      throw new HttpError(502, "We couldn't start the online payment. Please try again in a moment.");
+    }
     await ref.update({ payment: { provider: "razorpay", rzpOrderId: rzp.id } });
     return { id: ref.id, total: t.total, checkout: { keyId: razorpayKeyId(), rzpOrderId: rzp.id, amount: rzp.amount, currency: rzp.currency } };
   }
@@ -92,24 +98,31 @@ export async function createSubscription(input: NewSubscriptionInput, actor: Act
 }
 
 /** Activate after payment (Razorpay verify/webhook, or a manager confirming cash/UPI). Idempotent. */
-export async function activateSubscription(subId: string, payment: { rzpOrderId: string; paymentId: string } | null) {
+export async function activateSubscription(
+  subId: string,
+  payment: { rzpOrderId: string; paymentId: string; method?: string } | null,
+) {
   const ref = subs().doc(subId);
   const r = await ref.firestore.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists) throw new HttpError(404, "Subscription not found");
     const s = snap.data() as Subscription;
     if (payment && s.payment?.rzpOrderId !== payment.rzpOrderId) throw new HttpError(400, "Payment does not belong to this subscription");
-    if (s.paymentStatus === "paid") return { alreadyActive: true };
+    if (payment && s.payment?.paymentId === payment.paymentId) return { alreadyActive: true, stray: false };
+    // Paid twice, or paid after it was cancelled: the caller refunds this payment.
+    if (s.paymentStatus !== "pending" || s.status === "cancelled") return { alreadyActive: true, stray: Boolean(payment) };
     const counter = await nextCounter(tx, `invoice-${financialYear()}`);
     tx.set(counter.ref, { value: counter.value }, { merge: true });
     tx.update(ref, {
       status: s.status === "pending_payment" ? "active" : s.status,
       paymentStatus: "paid",
       invoiceNo: `LF/${financialYear()}/${String(counter.value).padStart(5, "0")}`,
-      ...(payment ? { "payment.paymentId": payment.paymentId, "payment.paidAt": Date.now() } : {}),
+      ...(payment
+        ? { "payment.paymentId": payment.paymentId, "payment.paidAt": Date.now(), ...(payment.method ? { "payment.method": payment.method } : {}) }
+        : {}),
       updatedAt: Date.now(),
     });
-    return { alreadyActive: false, customerUid: s.customerUid, planName: s.planName, startDate: s.startDate };
+    return { alreadyActive: false, stray: false, customerUid: s.customerUid, planName: s.planName, startDate: s.startDate };
   });
   if (!r.alreadyActive && "customerUid" in r && r.customerUid)
     await notifyUser(r.customerUid, {
@@ -118,7 +131,7 @@ export async function activateSubscription(subId: string, payment: { rzpOrderId:
       url: `/account/subscriptions/${subId}`,
       tag: `sub-${subId}`,
     });
-  return { alreadyActive: r.alreadyActive };
+  return { alreadyActive: r.alreadyActive, stray: r.stray };
 }
 
 export type CustomerAction =

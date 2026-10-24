@@ -1,5 +1,5 @@
 import "server-only";
-import type { Transaction } from "firebase-admin/firestore";
+import { FieldValue, type Transaction } from "firebase-admin/firestore";
 import { computeBill, DEFAULT_SETTINGS } from "@/lib/billing";
 import { requirementsFor, round2 } from "@/lib/costing";
 import type {
@@ -13,7 +13,7 @@ import type {
   OrderStatus,
 } from "@/lib/types";
 import { pushZomatoStatus } from "@/lib/integrations/zomato";
-import { refundPayment } from "@/lib/integrations/razorpay";
+import { cancelPaymentLink, refundPayment } from "@/lib/integrations/razorpay";
 import { notifyNewOrder, notifyOrderStatus } from "./push";
 import { awaitingPayment } from "@/lib/types";
 import { HttpError, type Actor } from "./http";
@@ -255,17 +255,28 @@ export async function setOrderStatus(orderId: string, to: OrderStatus, actor: Ac
     return { ...order, ...update, status: to };
   });
 
-  // Paid online and now cancelled: refund through Razorpay.
-  const pay = (result as Order).payment;
-  if (to === "cancelled" && pay?.paymentId && !pay.refundId) {
+  // Paid online and now cancelled: refund whatever hasn't been refunded yet through Razorpay.
+  const o = result as Order;
+  const pay = o.payment;
+  const due = round2(o.total - (pay?.refundedAmount ?? 0));
+  if (to === "cancelled" && pay?.paymentId && due > 0 && pay.refundStatus !== "pending") {
     try {
-      const refund = await refundPayment(pay.paymentId, (result as Order).total, { leafliOrder: (result as Order).orderNo });
-      await col.orders().doc(orderId).update({ "payment.refundId": refund.id, paymentStatus: "refunded" });
+      const refund = await refundPayment(pay.paymentId, due, { leafliOrder: o.orderNo, reason: reason || "Order cancelled" });
+      await col.orders().doc(orderId).update({
+        "payment.refundId": refund.id,
+        "payment.refundStatus": refund.status === "processed" ? "processed" : "pending",
+        "payment.refundedAmount": round2((pay.refundedAmount ?? 0) + refund.amount / 100),
+        "payment.refundError": FieldValue.delete(),
+        paymentStatus: "refunded",
+      });
     } catch (e) {
       await col.orders().doc(orderId).update({ "payment.refundError": String((e as Error).message) });
       await col.logs().add({ provider: "razorpay", direction: "out", orderId, error: String(e), at: Date.now() });
     }
   }
+  // An unpaid payment link must not stay payable once the order is gone.
+  if (to === "cancelled" && o.paymentLink && o.paymentStatus === "pending")
+    await cancelPaymentLink(o.paymentLink.id).catch(() => {});
 
   // Tell the customer (if they ordered online) — failures never break the status change.
   if (result.status === to) await notifyOrderStatus(result as Order, to);
@@ -280,25 +291,38 @@ export async function setOrderStatus(orderId: string, to: OrderStatus, actor: Ac
   return result;
 }
 
-/** Mark an online order as paid (idempotent; called by the verify route and the webhook). */
-export async function markOrderPaid(orderId: string, rzpOrderId: string, paymentId: string) {
+/**
+ * Mark an order as paid (idempotent; called by the verify route, the webhook and reconciliation).
+ * `viaLink` payments come from a staff-sent payment link, so the Razorpay order is new to us.
+ * Returns `stray` when the money can't be kept (order already paid by another payment, or
+ * cancelled) — the caller refunds it.
+ */
+export async function markOrderPaid(
+  orderId: string,
+  rzpOrderId: string,
+  paymentId: string,
+  opts: { method?: string; viaLink?: boolean } = {},
+) {
   const ref = col.orders().doc(orderId);
   return ref.firestore.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists) throw new HttpError(404, "Order not found");
     const o = snap.data() as Order;
-    if (o.payment?.rzpOrderId !== rzpOrderId) throw new HttpError(400, "Payment does not belong to this order");
-    if (o.paymentStatus === "paid") return { alreadyPaid: true };
+    if (!opts.viaLink && o.payment?.rzpOrderId !== rzpOrderId) throw new HttpError(400, "Payment does not belong to this order");
+    if (o.payment?.paymentId === paymentId) return { alreadyPaid: true, stray: false };
+    if (o.paymentStatus !== "pending" || o.status === "cancelled") return { alreadyPaid: true, stray: true };
+    const now = Date.now();
     tx.update(ref, {
       paymentStatus: "paid",
-      "payment.paymentId": paymentId,
-      "payment.paidAt": Date.now(),
-      updatedAt: Date.now(),
+      ...(opts.viaLink
+        ? { paymentMode: "online", payment: { provider: "razorpay", rzpOrderId, paymentId, paidAt: now, ...(opts.method ? { method: opts.method } : {}) } }
+        : { "payment.paymentId": paymentId, "payment.paidAt": now, ...(opts.method ? { "payment.method": opts.method } : {}) }),
+      updatedAt: now,
     });
-    return { alreadyPaid: false, order: { ...o, id: orderId } };
+    return { alreadyPaid: false, stray: false, order: { ...o, id: orderId } };
   }).then(async (r) => {
-    // A paid online order is the moment it becomes real for the kitchen.
-    if (!r.alreadyPaid && "order" in r && r.order) await notifyNewOrder(r.order);
-    return { alreadyPaid: r.alreadyPaid };
+    // A paid online order is the moment it becomes real for the kitchen (link payments were already live).
+    if (!r.alreadyPaid && "order" in r && r.order && !opts.viaLink) await notifyNewOrder(r.order);
+    return { alreadyPaid: r.alreadyPaid, stray: r.stray };
   });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import { inr } from "@/lib/costing";
 import { useLive, useMenu } from "@/lib/hooks";
@@ -8,6 +8,7 @@ import { istDate } from "@/lib/site";
 import { addDays, DAY_NAMES, dishFor, eligibleDishes, isDue, mealsRemaining, SUB_STATUS_LABEL } from "@/lib/subscriptions";
 import type { Plan, Subscription } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
+import { PaymentPanel } from "@/components/admin/PaymentPanel";
 import { Badge, Button, Card, Empty, ErrorText, Input, PageHeader, Stat, Td, Th } from "@/components/ui";
 
 export default function SubscriptionsAdmin() {
@@ -20,6 +21,7 @@ export default function SubscriptionsAdmin() {
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [payOpen, setPayOpen] = useState<string | null>(null);
 
   const planMap = useMemo(() => new Map(plans.map((p) => [p.id, p])), [plans]);
   const due = useMemo(
@@ -131,10 +133,11 @@ export default function SubscriptionsAdmin() {
       <Card title={`All plans (${subs.length})`} className="mt-5">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr><Th>Customer</Th><Th>Plan</Th><Th>Days</Th><Th>Diet</Th><Th>Bowls</Th><Th>Valid until</Th><Th>Status</Th></tr></thead>
+            <thead><tr><Th>Customer</Th><Th>Plan</Th><Th>Days</Th><Th>Diet</Th><Th>Bowls</Th><Th>Valid until</Th><Th>Status</Th><Th>Payment</Th></tr></thead>
             <tbody>
               {[...subs].sort((a, b) => b.createdAt - a.createdAt).map((s) => (
-                <tr key={s.id} className="border-t border-stone-100">
+                <Fragment key={s.id}>
+                <tr className="border-t border-stone-100">
                   <Td><div className="font-medium">{s.customer.name}</div><div className="text-xs text-stone-500">{s.customer.phone}</div></Td>
                   <Td>{s.planName}</Td>
                   <Td className="text-xs">{s.deliveryDays.map((d) => DAY_NAMES[d]).join(" ")} · {s.slot}</Td>
@@ -142,7 +145,20 @@ export default function SubscriptionsAdmin() {
                   <Td className="tabular-nums">{s.mealsUsed}/{s.mealsTotal}</Td>
                   <Td className="text-xs">{s.endDate}</Td>
                   <Td><Badge tone={s.status === "active" ? "green" : s.status === "pending_payment" || s.status === "paused" ? "amber" : "gray"}>{SUB_STATUS_LABEL[s.status]}</Badge></Td>
+                  <Td>
+                    <Button size="sm" variant="ghost" onClick={() => setPayOpen(payOpen === s.id ? null : s.id)}>
+                      {s.paymentStatus}{s.payment?.refundedAmount ? ` · ${inr(s.payment.refundedAmount)} refunded` : ""} {payOpen === s.id ? "▴" : "▾"}
+                    </Button>
+                  </Td>
                 </tr>
+                {payOpen === s.id && (
+                  <tr className="bg-stone-50/60">
+                    <Td colSpan={8}>
+                      <div className="max-w-md py-1"><PaymentPanel kind="subscription" doc={s} /></div>
+                    </Td>
+                  </tr>
+                )}
+                </Fragment>
               ))}
             </tbody>
           </table>

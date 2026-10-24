@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, use, useRef, useState } from "react";
+import { Suspense, use, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { rupees as inr } from "@/lib/costing";
 import { gsap, MOTION_OK, useGSAP } from "@/lib/gsap";
 import { useLiveDoc } from "@/lib/hooks";
 import { awaitingPayment, ORDER_FLOW, type Order } from "@/lib/types";
+import { api } from "@/lib/api";
 import { payWithRazorpay } from "@/lib/razorpay-client";
 import { useSite } from "@/components/site/SiteContext";
 import { useAuth } from "@/components/AuthProvider";
@@ -24,6 +25,20 @@ const LABEL: Record<string, { t: string; d: string }> = {
   delivered: { t: "Delivered", d: "Enjoy! Toss it right before you eat." },
 };
 
+function paymentLabel(o: Order) {
+  const refunded = o.payment?.refundedAmount ?? 0;
+  if (refunded > 0) return `Refunded ${inr(refunded)}${o.payment?.refundStatus === "processed" ? "" : " (on its way)"}`;
+  if (o.paymentStatus === "paid") return o.payment?.method ? `Paid via ${o.payment.method.toUpperCase()}` : "Paid";
+  return o.paymentMode === "online" ? "Payment pending" : "Pay on delivery";
+}
+
+function refundNote(o: Order) {
+  const r = o.payment?.refundedAmount ?? 0;
+  if (r > 0 && o.payment?.refundStatus === "processed") return `${inr(r)} has been refunded to your original payment method.`;
+  if (r > 0) return `Your refund of ${inr(r)} is on its way — banks usually take 5–7 working days.`;
+  return o.paymentStatus === "paid" || o.paymentStatus === "refunded" ? "Your payment will be refunded." : "You haven't been charged.";
+}
+
 function Track({ id }: { id: string }) {
   const { user } = useAuth();
   const placed = useSearchParams().get("placed") === "1";
@@ -32,6 +47,14 @@ function Track({ id }: { id: string }) {
   const { menu } = useSite();
   const [paying, setPaying] = useState(false);
   const [payErr, setPayErr] = useState<string | null>(null);
+  const pending = !!o && awaitingPayment(o);
+
+  // Paid but the tab closed before we heard back? Ask Razorpay once when the page opens.
+  useEffect(() => {
+    if (!pending) return;
+    api("/api/payments/razorpay/reconcile", { kind: "order", id }).catch(() => {});
+  }, [pending, id]);
+
   const steps = o?.delivery.provider === "pickup" ? ORDER_FLOW.filter((s) => s !== "dispatched") : ORDER_FLOW;
   const at = o ? steps.indexOf(o.status) : -1;
 
@@ -87,6 +110,8 @@ function Track({ id }: { id: string }) {
         orderNo: o.orderNo,
         prefill: { name: o.customer.name, email: o.customer.email, contact: o.customer.phone?.replace("+91", "") },
       });
+      // Dismissed after paying in another app (UPI intent)? Double-check before showing "pending".
+      await api("/api/payments/razorpay/reconcile", { kind: "order", id: o.id }).catch(() => {});
     } catch (e) {
       setPayErr((e as Error).message);
     } finally {
@@ -108,7 +133,7 @@ function Track({ id }: { id: string }) {
         <h1 className="mt-2 font-display text-5xl font-medium tracking-tight">
           {o.status === "cancelled" ? "Order cancelled" : LABEL[o.status]?.t}
         </h1>
-        <p className="mt-3 text-lg text-ink/60">{o.status === "cancelled" ? "If you were charged, it will be refunded." : LABEL[o.status]?.d}</p>
+        <p className="mt-3 text-lg text-ink/60">{o.status === "cancelled" ? refundNote(o) : LABEL[o.status]?.d}</p>
       </div>
 
       {o.status !== "cancelled" && o.status !== "delivered" && (
@@ -124,6 +149,7 @@ function Track({ id }: { id: string }) {
           <div>
             <p className="font-semibold">Payment pending</p>
             <p className="text-sm text-ink/60">Your order goes to the kitchen as soon as payment is complete.</p>
+            {o.payment?.lastError && !payErr && <p className="mt-1 text-sm text-tomato">Last attempt failed: {o.payment.lastError}</p>}
             {payErr && <p className="mt-1 text-sm text-tomato">{payErr}</p>}
           </div>
           <button onClick={completePayment} disabled={paying || !menu.razorpayKeyId} className="rounded-full bg-leaf-700 px-6 py-3 font-semibold text-cream-50 transition-colors hover:bg-leaf-800 disabled:opacity-60">
@@ -172,7 +198,12 @@ function Track({ id }: { id: string }) {
               <span>Total</span>
               <span className="tabular-nums">{inr(o.total)}</span>
             </div>
-            <p className="mt-1 text-xs text-ink/40">Includes GST · {o.paymentStatus === "paid" ? "Paid" : "Pay on delivery"}</p>
+            <p className="mt-1 text-xs text-ink/40">Includes GST · {paymentLabel(o)}</p>
+            {o.paymentLink && o.paymentStatus === "pending" && o.status !== "cancelled" && (
+              <a href={o.paymentLink.url} className="mt-3 inline-flex rounded-full bg-leaf-700 px-5 py-2 text-sm font-semibold text-cream-50 hover:bg-leaf-800">
+                Pay {inr(o.total)} online
+              </a>
+            )}
           </div>
           <Link href="/#menu" className="inline-flex text-sm font-semibold text-leaf-600 hover:underline">Order something else →</Link>
         </div>

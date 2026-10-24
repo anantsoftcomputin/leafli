@@ -9,6 +9,7 @@ import { useLiveDoc, useSettings } from "@/lib/hooks";
 import type { Order } from "@/lib/types";
 import { OrderActions, SourceBadge, StatusBadge } from "@/components/OrderBits";
 import { Badge, Button, Card, ErrorText } from "@/components/ui";
+import { PaymentPanel } from "@/components/admin/PaymentPanel";
 
 export default function OrderDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -45,6 +46,11 @@ export default function OrderDetail({ params }: { params: Promise<{ id: string }
       </div>
 
       <div className="no-print space-y-4">
+        {order.source !== "zomato" && !order.subscriptionId && (
+          <Card title="Payment">
+            <PaymentPanel kind="order" doc={order} />
+          </Card>
+        )}
         <Card title="Delivery">
           <DeliveryPanel order={order} />
         </Card>
@@ -163,8 +169,7 @@ function Invoice({ order, settings }: { order: Order; settings: ReturnType<typeo
         <div className="text-right text-stone-500">
           {order.paymentMode === "online" ? "Online (Razorpay)" : order.paymentMode.replace("_", " ")} · {order.paymentStatus}
         </div>
-        {order.payment?.paymentId && <div className="no-print text-right text-[10px] text-stone-400">Payment {order.payment.paymentId}{order.payment.refundId && ` · refund ${order.payment.refundId}`}</div>}
-        {order.payment?.refundError && <div className="no-print text-right text-[10px] text-red-600">Refund failed: {order.payment.refundError} — refund from the Razorpay dashboard</div>}
+        {order.payment?.paymentId && <div className="text-right text-[10px] text-stone-400">Razorpay {order.payment.paymentId}</div>}
       </dl>
       {isTaxInvoice && <p className="mt-3 text-[10px] text-stone-500">SAC 996331 — Restaurant services. GST @ {settings.gstRate}% without input tax credit.</p>}
       {order.notes && <p className="mt-2 text-xs"><b>Note:</b> {order.notes}</p>}

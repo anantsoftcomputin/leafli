@@ -1,13 +1,16 @@
 import type { NextRequest } from "next/server";
 import { porterConfigured } from "@/lib/integrations/porter";
-import { razorpayConfigured, razorpayKeyId } from "@/lib/integrations/razorpay";
+import { pingRazorpay, razorpayConfigured, razorpayMode } from "@/lib/integrations/razorpay";
 import { requireUser, route } from "@/lib/server/http";
 import { col } from "@/lib/server/inventory";
 
 export const GET = route(async (req: NextRequest) => {
   await requireUser(req, ["admin"]);
   const origin = req.nextUrl.origin;
-  const logs = await col.logs().orderBy("at", "desc").limit(20).get();
+  const [logs, rzpPing] = await Promise.all([
+    col.logs().orderBy("at", "desc").limit(20).get(),
+    razorpayConfigured() ? pingRazorpay() : Promise.resolve(null),
+  ]);
   return {
     porter: {
       configured: porterConfigured(),
@@ -23,7 +26,9 @@ export const GET = route(async (req: NextRequest) => {
     },
     razorpay: {
       configured: razorpayConfigured(),
-      mode: razorpayKeyId().startsWith("rzp_live_") ? "live" : razorpayKeyId() ? "test" : "—",
+      mode: razorpayMode(),
+      keysWork: rzpPing?.ok ?? false,
+      keysError: rzpPing?.error ?? null,
       webhookConfigured: Boolean(process.env.RAZORPAY_WEBHOOK_SECRET),
       webhookUrl: `${origin}/api/payments/razorpay/webhook`,
     },

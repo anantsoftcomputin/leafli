@@ -148,7 +148,7 @@ function TeamCard() {
 interface Status {
   porter: { configured: boolean; baseUrl: string; webhookConfigured: boolean; webhookUrl: string };
   zomato: { webhookConfigured: boolean; statusCallbackConfigured: boolean; autoAccept: boolean; webhookUrl: string };
-  razorpay: { configured: boolean; mode: string; webhookConfigured: boolean; webhookUrl: string };
+  razorpay: { configured: boolean; mode: string; keysWork: boolean; keysError: string | null; webhookConfigured: boolean; webhookUrl: string };
   website: { menuUrl: string; ordersUrl: string; cors: string };
   logs: { id: string; provider: string; direction: string; at: number; error: string | null; orderId: string | null }[];
 }
@@ -182,10 +182,14 @@ function IntegrationsCard() {
           </div>
           <div className="space-y-1">
             <h4 className="font-medium">Razorpay payments</h4>
-            <div>API keys {ok(s.razorpay.configured)} <span className="text-xs text-stone-500">({s.razorpay.mode})</span></div>
+            <div>API keys {ok(s.razorpay.configured)} <Badge tone={s.razorpay.mode === "live" ? "green" : "blue"}>{s.razorpay.mode}</Badge></div>
+            {s.razorpay.configured && (
+              <div>Connection <Badge tone={s.razorpay.keysWork ? "green" : "red"}>{s.razorpay.keysWork ? "verified" : "failing"}</Badge></div>
+            )}
+            {s.razorpay.keysError && <p className="text-xs text-red-600">{s.razorpay.keysError}</p>}
             <div>Webhook {ok(s.razorpay.webhookConfigured)}</div>
             <code className="block break-all rounded bg-stone-100 p-1 text-[11px]">{s.razorpay.webhookUrl}</code>
-            <p className="text-xs text-stone-500">Events: payment.captured, order.paid</p>
+            <p className="text-xs text-stone-500">Events: payment.authorized, payment.captured, payment.failed, order.paid, refund.processed, refund.failed, payment_link.paid</p>
           </div>
           <div className="space-y-1">
             <h4 className="font-medium">leafli.in website</h4>

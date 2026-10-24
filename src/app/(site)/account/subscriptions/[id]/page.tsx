@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, use, useMemo, useState } from "react";
+import { Suspense, use, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { rupees } from "@/lib/costing";
@@ -30,6 +30,12 @@ function Manage({ id }: { id: string }) {
     const ids = plan?.eligibleMenuIds ?? [];
     return menu.items.filter((m) => m.available && (ids.length ? ids.includes(m.id) : !/dessert/i.test(m.category)) && dietAllows(s.diet, m.diet));
   }, [menu, plan, s]);
+
+  // Paid but the tab closed before we heard back? Ask Razorpay once when the page opens.
+  const unpaid = s?.status === "pending_payment" && !!s.payment?.rzpOrderId;
+  useEffect(() => {
+    if (unpaid) api("/api/payments/razorpay/reconcile", { kind: "subscription", id }).catch(() => {});
+  }, [unpaid, id]);
 
   if (loading) return <p className="text-ink/50">Loading…</p>;
   if (!s) return <p className="text-ink/50">Subscription not found.</p>;
@@ -63,6 +69,7 @@ function Manage({ id }: { id: string }) {
     setBusy("pay");
     try {
       await payWithRazorpay({ keyId: menu.razorpayKeyId, rzpOrderId: s.payment.rzpOrderId, amount: Math.round(s.total * 100), orderId: s.id, orderNo: s.planName, description: s.planName, verifyPath: `/api/subscriptions/${s.id}/verify` });
+      await api("/api/payments/razorpay/reconcile", { kind: "subscription", id: s.id }).catch(() => {});
     } catch (e) {
       setErr((e as Error).message);
     } finally {
@@ -104,6 +111,7 @@ function Manage({ id }: { id: string }) {
           <div>
             <p className="font-semibold">Payment pending · {rupees(s.total)}</p>
             <p className="text-sm text-ink/60">{s.paymentMode === "online" ? "Complete payment to start your deliveries." : "Our team will contact you to collect payment before your first delivery."}</p>
+            {s.payment?.lastError && <p className="mt-1 text-sm text-tomato">Last attempt failed: {s.payment.lastError}</p>}
           </div>
           <div className="flex gap-2">
             {s.paymentMode === "online" && s.payment && <button onClick={payNow} disabled={!!busy} className="rounded-full bg-leaf-700 px-6 py-3 font-semibold text-cream-50">Pay {rupees(s.total)}</button>}

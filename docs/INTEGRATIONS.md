@@ -80,3 +80,36 @@ When you have the partner spec, edit `normalizeZomatoOrder`, `OUTBOUND` and `pus
 
 **Today, without an integration:** Billing → *Zomato (manual)* lets the cashier punch in a Zomato order with its
 Zomato order ID and the price charged, so stock and food cost stay accurate from day one.
+
+## Razorpay
+
+Server code: [`src/lib/integrations/razorpay.ts`](../src/lib/integrations/razorpay.ts) (API calls) and
+[`src/lib/server/payments.ts`](../src/lib/server/payments.ts) (what a payment means for an order or plan).
+
+**Setup**
+
+1. Dashboard → Account & Settings → API keys → `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` (`rzp_live_…` in production).
+2. Dashboard → Account & Settings → Webhooks → *Add new webhook*:
+   - URL `https://<domain>/api/payments/razorpay/webhook`
+   - Secret = `RAZORPAY_WEBHOOK_SECRET`
+   - Events: `payment.authorized`, `payment.captured`, `payment.failed`, `order.paid`,
+     `refund.processed`, `refund.failed`, `payment_link.paid`
+3. Set the same three variables on the host (Netlify → Site configuration → Environment variables), then redeploy.
+4. Admin → Settings → Integrations should show **live · verified** and the webhook as configured.
+
+**How money flows**
+
+| Situation | What happens |
+| --- | --- |
+| Website order, pay online | We create a Razorpay order for the server-computed total; Checkout opens; the signed result is verified and the payment fetched from Razorpay (captured if only authorized). Only then does the order reach the kitchen. |
+| Customer closes the tab / webhook missed | The order page asks Razorpay on open (`/api/payments/razorpay/reconcile`); staff have *Check with Razorpay*. |
+| Payment attempt fails | `payment.failed` stores the reason; the customer sees it next to *Pay*. |
+| Razorpay order can't be created | The order (or plan) is cancelled immediately and the customer is asked to retry. |
+| Order cancelled after payment | Refunded automatically (whatever hasn't been refunded yet). |
+| Paid twice, or paid after cancelling | The extra payment is refunded automatically and logged. |
+| Complaint / missing item | Order → Payment → *Refund…* (managers): full or partial, with a reason. Refund status follows `refund.processed` / `refund.failed`. |
+| Pay-later or phone order | Order → Payment → *Send payment link*: Razorpay texts the customer a link (valid 7 days); paying it marks the order paid. Cancelling the order cancels the link. |
+| Subscription plans | Same Checkout + verify + reconcile; refunds from Subscriptions → *All plans* → payment. A full refund cancels the plan. |
+
+Webhook events are de-duplicated by `x-razorpay-event-id`. Events we can't match are logged and acknowledged
+with 200, so Razorpay never disables the webhook over them.

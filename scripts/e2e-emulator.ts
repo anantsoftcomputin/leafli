@@ -161,6 +161,35 @@ async function main() {
   await setOrderStatus(online.id, "accepted", actor);
   ok("online order: blocked until paid, signatures verified, payment matched to its order, idempotent, then accepted");
 
+  // ---- Stray payments, failures, payment links
+  const pays = await import("../src/lib/server/payments");
+  assert.equal((await markOrderPaid(online.id, "order_TEST1", "pay_SECOND")).stray, true, "a second payment on a paid order is flagged for refund");
+  const gone = await createOrder(
+    { source: "website", customer: { name: "Late" }, lines: [{ menuItemId: "chana-moong", qty: 1 }], paymentMode: "online", deliveryProvider: "pickup" },
+    actor,
+  );
+  await adminDb.collection("orders").doc(gone.id).update({ payment: { provider: "razorpay", rzpOrderId: "order_GONE" } });
+  await pays.recordFailure({ kind: "order", id: gone.id }, { error_description: "Bank declined", error_reason: null, created_at: 100 });
+  await pays.recordFailure({ kind: "order", id: gone.id }, { error_description: "Older failure", error_reason: null, created_at: 50 });
+  assert.equal((await adminDb.collection("orders").doc(gone.id).get()).get("payment.lastError"), "Bank declined", "newest failure reason kept");
+  await setOrderStatus(gone.id, "cancelled", actor, "customer left");
+  const late = await markOrderPaid(gone.id, "order_GONE", "pay_LATE");
+  assert.ok(late.stray && late.alreadyPaid, "payment after cancellation is flagged for refund, not kept");
+  assert.equal((await adminDb.collection("orders").doc(gone.id).get()).get("paymentStatus"), "pending");
+  assert.deepEqual(await pays.targetOfPayment({ order_id: "order_GONE", notes: [] }), { kind: "order", id: gone.id, viaLink: false });
+  assert.deepEqual(await pays.targetOfPayment({ order_id: "order_X", notes: { leafliOrderId: "abc", via: "payment_link" } }), { kind: "order", id: "abc", viaLink: true });
+
+  const cod = await createOrder(
+    { source: "website", customer: { name: "Cod" }, lines: [{ menuItemId: "chana-moong", qty: 1 }], paymentMode: "pay_later", deliveryProvider: "pickup" },
+    actor,
+  );
+  assert.equal((await markOrderPaid(cod.id, "order_LINK", "pay_LINK", { viaLink: true, method: "upi" })).alreadyPaid, false);
+  const codDoc = (await adminDb.collection("orders").doc(cod.id).get()).data()!;
+  assert.equal(codDoc.paymentStatus, "paid");
+  assert.equal(codDoc.paymentMode, "online");
+  assert.equal(codDoc.payment.method, "upi");
+  ok("stray payments flagged for refund, failure reasons recorded, payment-link payments settle pay-later orders");
+
   // ---- Subscriptions: buy → activate → daily kitchen orders
   const start = addDays(istDate(), 1);
   await assert.rejects(

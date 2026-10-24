@@ -3,7 +3,7 @@ import { z } from "zod";
 import { verifyPaymentSignature } from "@/lib/integrations/razorpay";
 import { HttpError, requireUser, route, STAFF } from "@/lib/server/http";
 import { col } from "@/lib/server/inventory";
-import { markOrderPaid } from "@/lib/server/orders";
+import { confirmCheckout } from "@/lib/server/payments";
 
 const schema = z.object({
   orderId: z.string(),
@@ -21,5 +21,5 @@ export const POST = route(async (req: NextRequest) => {
   if (snap.get("customerUid") !== actor.uid && !STAFF.includes(actor.role)) throw new HttpError(403, "Not your order");
   if (!verifyPaymentSignature(b.razorpay_order_id, b.razorpay_payment_id, b.razorpay_signature))
     throw new HttpError(400, "Payment could not be verified");
-  return markOrderPaid(b.orderId, b.razorpay_order_id, b.razorpay_payment_id);
+  return confirmCheckout({ kind: "order", id: b.orderId }, b.razorpay_order_id, b.razorpay_payment_id);
 });
