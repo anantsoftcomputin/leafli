@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { where } from "firebase/firestore";
 import {
   Bell,
@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { Logo } from "@/components/brand/Logo";
+import { OrderRinger } from "@/components/admin/OrderRinger";
 import { cx } from "@/components/ui";
 import { useLive } from "@/lib/hooks";
 import { istDate } from "@/lib/site";
@@ -83,7 +84,7 @@ export function homeFor(role: Role) {
 }
 
 /** Live counts shown as badges in the nav. */
-function useBadges(enabled: boolean): Record<BadgeKey, number> & { ready: boolean } {
+function useBadges(enabled: boolean): Record<BadgeKey, number> & { ready: boolean; fresh: Order[] } {
   const { data: open, loading: openLoading } = useLive<Order>(enabled ? "orders" : null, [where("status", "in", ["new", "accepted", "preparing"])], "open");
   const { data: items } = useLive<StockItem>(enabled ? "items" : null);
   const { data: subs } = useLive<Subscription>(enabled ? "subscriptions" : null, [where("status", "==", "active")], "active");
@@ -91,8 +92,10 @@ function useBadges(enabled: boolean): Record<BadgeKey, number> & { ready: boolea
   return useMemo(() => {
     const live = open.filter((o) => !awaitingPayment(o));
     const today = istDate();
+    const fresh = live.filter((o) => o.status === "new");
     return {
-      newOrders: live.filter((o) => o.status === "new").length,
+      fresh,
+      newOrders: fresh.length,
       openTickets: live.filter((o) => o.status !== "new").length,
       lowStock: items.filter((i) => i.active !== false && i.currentStock <= i.reorderLevel).length,
       subsDue: subs.filter((s) => isDue(s, today)).length,
@@ -102,26 +105,6 @@ function useBadges(enabled: boolean): Record<BadgeKey, number> & { ready: boolea
   }, [open, items, subs, pendingReviews, openLoading]);
 }
 
-/** Short chime for new orders (no audio file needed). */
-function chime() {
-  try {
-    const ctx = new AudioContext();
-    [880, 1320].forEach((f, i) => {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.frequency.value = f;
-      o.connect(g);
-      g.connect(ctx.destination);
-      const t = ctx.currentTime + i * 0.16;
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
-      o.start(t);
-      o.stop(t + 0.32);
-    });
-  } catch {}
-}
-
 export function StaffShell({ children }: { children: React.ReactNode }) {
   const { user, profile, loading, isStaff, logout } = useAuth();
   const router = useRouter();
@@ -129,9 +112,7 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
   const [drawer, setDrawer] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [palette, setPalette] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
   const badges = useBadges(isStaff);
-  const prevNew = useRef<number | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -165,19 +146,9 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", h);
   }, []);
 
-  // New order arrived: chime, toast and a count in the tab title.
-  // Orders that already existed when the page opened don't count as "arrived".
   useEffect(() => {
-    if (!badges.ready) return;
-    const n = badges.newOrders;
-    if (prevNew.current != null && n > prevNew.current) {
-      chime();
-      setToast(`${n - prevNew.current} new order${n - prevNew.current > 1 ? "s" : ""} received`);
-      setTimeout(() => setToast(null), 5000);
-    }
-    prevNew.current = n;
-    document.title = n ? `(${n}) Leafli Kitchen` : "Leafli Kitchen";
-  }, [badges.newOrders, badges.ready]);
+    document.title = badges.newOrders ? `(${badges.newOrders}) Leafli Kitchen` : "Leafli Kitchen";
+  }, [badges.newOrders]);
 
   if (loading || !profile || !isStaff)
     return (
@@ -388,13 +359,7 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
 
       {palette && <CommandPalette links={links} onClose={() => setPalette(false)} />}
 
-      {toast && (
-        <div role="status" className="fixed top-3 left-1/2 z-[70] flex w-max max-w-[calc(100vw-1.5rem)] -translate-x-1/2 items-center gap-3 rounded-2xl bg-leaf-950 py-2.5 pr-2.5 pl-3 text-sm whitespace-nowrap text-cream-50 shadow-2xl">
-          <span className="grid size-8 place-items-center rounded-full bg-lime-400 text-leaf-950"><Bell className="size-4" /></span>
-          <span className="font-semibold">{toast}</span>
-          <Link href="/admin/orders" onClick={() => setToast(null)} className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-semibold hover:bg-white/20">View</Link>
-        </div>
-      )}
+      <OrderRinger orders={badges.fresh} />
     </div>
   );
 }

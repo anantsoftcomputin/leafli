@@ -180,3 +180,26 @@ from the same events via [`src/lib/server/notifications.ts`](../src/lib/server/n
 Customers are messaged only if they ticked **"updates on WhatsApp"** at checkout or plan sign-up (Meta requires opt-in).
 Replying **STOP** opts a number out, **START** opts back in. Customer replies appear in Admin → WhatsApp, where staff can
 answer from the business number within 24 hours of the customer's last message.
+
+## New-order ringer (staff phones)
+
+Website and Zomato orders ring every staff device (admin, manager, kitchen, cashier) until someone accepts
+them. Counter (POS) orders are accepted on the spot, so they don't ring.
+
+- **App open** (any /admin page): a full-screen "New order" card with a looping phone-bell ringtone and
+  vibration. **Accept order** stops it on every device at once; **Silence** stops it on this device only.
+  Browsers block sound until the page has been tapped once, so the card asks for a tap if needed.
+- **App closed / phone locked**: a web push with a long call-style vibration. Netlify runs
+  `netlify/functions/order-ring.mts` every minute, which calls `/api/orders/ring` to push again for any order
+  still waiting (from 1 to 15 minutes old).
+- Setup on Netlify: add `CRON_SECRET` (same value as `.env`) plus the VAPID keys. Scheduled functions run only
+  on the published production deploy.
+- Each staff member must install the app to the home screen, sign in, and turn notifications on (Dashboard
+  card, or Settings).
+
+What web push can't do: play a custom looping ringtone when the app is closed. The phone plays its normal
+notification sound once per push, and the push repeats every minute. On Android, you can make that sound
+louder or more like a ringtone: long-press a Leafli notification → Settings → Sound, then pick a ringtone and
+turn on "Pop on screen" and "Override Do Not Disturb". iPhones (iOS 16.4+, app added to the home screen) play
+the default sound and ignore vibration patterns. A true incoming-call screen over the lock screen would need a
+native Android app.

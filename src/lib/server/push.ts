@@ -2,7 +2,7 @@ import "server-only";
 import crypto from "node:crypto";
 import webpush, { type PushSubscription } from "web-push";
 import { adminDb } from "@/lib/firebase/admin";
-import type { Role } from "@/lib/types";
+import { awaitingPayment, type Order, type Role } from "@/lib/types";
 
 const PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
 const PRIVATE = process.env.VAPID_PRIVATE_KEY || "";
@@ -16,6 +16,7 @@ export interface PushPayload {
   tag?: string; // same tag replaces the previous notification (e.g. one per order)
   image?: string;
   requireInteraction?: boolean;
+  ring?: boolean; // incoming-order alert: long ring-style vibration, re-alerts even with the same tag
 }
 
 interface StoredSub {
@@ -110,13 +111,28 @@ export function notifyOrderStatus(order: { id: string; orderNo: string; customer
   return notifyUser(order.customerUid, { ...msg(order.orderNo, order.delivery?.provider === "pickup"), url: `/account/orders/${order.id}`, tag: `order-${order.id}` });
 }
 
-export function notifyNewOrder(order: { id: string; orderNo: string; source: string; total: number; lines: { qty: number; name: string }[] }) {
+const newOrderPayload = (order: { id: string; orderNo: string; source: string; total: number; lines: { qty: number; name: string }[] }, waitingMin = 0): PushPayload => {
   const items = order.lines.map((l) => `${l.qty}× ${l.name}`).join(", ");
-  return notifyStaff({
-    title: `New ${order.source === "zomato" ? "Zomato" : "website"} order · ₹${Math.round(order.total)}`,
+  return {
+    title: `${waitingMin ? `Still waiting ${waitingMin} min · ` : ""}New ${order.source === "zomato" ? "Zomato" : "website"} order · ₹${Math.round(order.total)}`,
     body: `${order.orderNo.slice(-3)} — ${items}`,
     url: `/admin/orders/${order.id}`,
     tag: `new-order-${order.id}`,
     requireInteraction: true,
-  });
+    ring: true,
+  };
+};
+
+export const notifyNewOrder = (order: Parameters<typeof newOrderPayload>[0]) => notifyStaff(newOrderPayload(order));
+
+/** Rings staff phones again for orders nobody has accepted yet; stops after RING_FOR_MIN. */
+const RING_FOR_MIN = 15;
+export async function ringUnacceptedOrders() {
+  const now = Date.now();
+  const snap = await adminDb.collection("orders").where("status", "==", "new").get();
+  const waiting = snap.docs
+    .map((d) => ({ ...(d.data() as Order), id: d.id }))
+    .filter((o) => !awaitingPayment(o) && now - o.createdAt >= 50_000 && now - o.createdAt < RING_FOR_MIN * 60_000);
+  const results = await Promise.all(waiting.map((o) => notifyStaff(newOrderPayload(o, Math.round((now - o.createdAt) / 60_000)))));
+  return { orders: waiting.length, sent: results.reduce((n, r) => n + r.sent, 0) };
 }

@@ -101,6 +101,7 @@ self.addEventListener("fetch", (event) => {
 });
 
 // ── Push notifications ──
+const RING_VIBRATE = [700, 300, 700, 1200, 700, 300, 700, 1200, 700, 300, 700, 1200, 700, 300, 700];
 self.addEventListener("push", (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch { data = { body: event.data && event.data.text() }; }
@@ -114,7 +115,9 @@ self.addEventListener("push", (event) => {
       tag: data.tag,
       renotify: !!data.tag,
       requireInteraction: !!data.requireInteraction,
-      vibrate: [80, 40, 80],
+      // New orders buzz like an incoming call (Android; iOS ignores vibration patterns).
+      vibrate: data.ring ? RING_VIBRATE : [80, 40, 80],
+      silent: false,
       data: { url: data.url || "/" },
       actions: data.actions || [],
     }),
