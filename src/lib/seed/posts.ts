@@ -3,10 +3,11 @@
 // for nutrition facts, clear structure and internal links.
 import type { Post } from "../types";
 
-type SeedPost = Omit<Post, "id" | "createdAt" | "updatedAt" | "publishedAt" | "coverImage" | "ogImage"> & { coverDish: string; daysAgo: number };
+/** `publishAt` (ISO) wins over `daysAgo`; a future time seeds the post as scheduled. */
+export type SeedPost = Omit<Post, "id" | "createdAt" | "updatedAt" | "publishedAt" | "coverImage" | "ogImage"> & { coverDish: string; daysAgo?: number; publishAt?: string };
 
-const AUTHOR = "Leafli Kitchen Team";
-const BIO = "The chefs behind Leafli's bowls. We write every recipe down, weigh every portion and test what travels well — this blog shares what we've learned.";
+export const AUTHOR = "Leafli Kitchen Team";
+export const BIO = "The chefs behind Leafli's bowls. We write every recipe down, weigh every portion and test what travels well — this blog shares what we've learned.";
 
 export const SEED_POSTS: SeedPost[] = [
   {

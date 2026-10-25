@@ -5,6 +5,8 @@ import { DEFAULT_SETTINGS } from "@/lib/billing";
 import { adminBucket } from "@/lib/firebase/admin";
 import { MENU_ITEMS, PLANS, PREP_ITEMS, RAW_ITEMS, SUPPLIERS } from "@/lib/seed/sopData";
 import { SEED_POSTS } from "@/lib/seed/posts";
+import { VADODARA_POSTS_A } from "@/lib/seed/postsVadodara";
+import { VADODARA_POSTS_B } from "@/lib/seed/postsVadodara2";
 import { renderMarkdown } from "@/lib/markdown";
 import { col } from "./inventory";
 import { recostPreps } from "./stockOps";
@@ -102,21 +104,29 @@ export async function seedAll({ overwrite = false } = {}): Promise<SeedResult> {
     counts.plans++;
   }
 
-  // Starter blog posts — only created once (never overwritten, so edits are safe).
-  for (const sp of SEED_POSTS) {
-    const ref = db.collection("posts").doc(sp.slug);
-    if ((await ref.get()).exists) continue;
-    const { coverDish, daysAgo, ...rest } = sp;
-    const cover = storageUrl(`menu/${coverDish}.webp`);
-    const { wordCount, readingMinutes } = renderMarkdown(rest.content);
-    const ts = Date.now() - daysAgo * 86400000;
-    await ref.set({ ...rest, coverImage: cover, ogImage: storageUrl(`menu/${coverDish}-og.jpg`), twitterCard: "summary_large_image", schemaType: "BlogPosting", wordCount, readingMinutes, publishedAt: ts, createdAt: ts, updatedAt: ts });
-    counts.posts++;
-  }
+  counts.posts = await seedPosts();
 
   const settings = col.settings();
   if (!(await settings.get()).exists) await settings.set(DEFAULT_SETTINGS);
   await col.items().firestore.collection("meta").doc("seed").set({ at: Date.now(), overwrite }, { merge: true });
   counts.recosted = (await recostPreps()).updated;
   return counts;
+}
+
+/** Starter blog posts — only created once (never overwritten, so edits are safe). */
+export async function seedPosts() {
+  const db = col.items().firestore;
+  let created = 0;
+  for (const sp of [...SEED_POSTS, ...VADODARA_POSTS_A, ...VADODARA_POSTS_B]) {
+    const ref = db.collection("posts").doc(sp.slug);
+    if ((await ref.get()).exists) continue;
+    const { coverDish, daysAgo = 0, publishAt, ...rest } = sp;
+    const cover = storageUrl(`menu/${coverDish}.webp`);
+    const { wordCount, readingMinutes } = renderMarkdown(rest.content);
+    const ts = publishAt ? Date.parse(publishAt) : Date.now() - daysAgo * 86400000;
+    if (ts > Date.now()) rest.status = "scheduled";
+    await ref.set({ ...rest, coverImage: cover, ogImage: storageUrl(`menu/${coverDish}-og.jpg`), twitterCard: "summary_large_image", schemaType: "BlogPosting", wordCount, readingMinutes, publishedAt: ts, createdAt: ts, updatedAt: ts });
+    created++;
+  }
+  return created;
 }

@@ -13,7 +13,8 @@
     "verify": "NEXT_DIST_DIR=.next-verify next build",
     "seed": "tsx --conditions=react-server scripts/seed.ts",
     "check:firebase": "tsx --conditions=react-server scripts/check-firebase.ts",
-    "emails:render": "tsx --conditions=react-server scripts/render-emails.ts"
+    "emails:render": "tsx --conditions=react-server scripts/render-emails.ts",
+    "seed:posts": "tsx --conditions=react-server scripts/seed-posts.ts"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

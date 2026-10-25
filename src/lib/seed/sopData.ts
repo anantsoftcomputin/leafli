@@ -798,8 +798,8 @@ export const PLANS: Plan[] = [
   },
 ].map((p) => ({
   ...p,
-  metaTitle: `${p.name} Salad Subscription — ${p.meals} Bowls | Leafli`,
-  metaDescription: `${p.tagline}. Fresh chef-made salads delivered with dressings on the side. ₹${Math.round(p.price / p.meals)} per bowl, delivery included. Subscribe to Leafli.`,
+  metaTitle: `${p.name} — ${p.meals}-Bowl Salad Plan in Vadodara | Leafli`,
+  metaDescription: `${p.tagline}. Chef-made salads delivered across Vadodara, dressings on the side. ₹${Math.round(p.price / p.meals)} per bowl, delivery included.`,
   faqs: [
     { q: "Can I choose which salad I get each day?", a: "Yes. Pick a bowl for any upcoming day from your account until 9 pm the day before. If you don't choose, the chef rotates through the bowls in your plan." },
     { q: "Can I pause or skip deliveries?", a: "Yes. Skip a single day or pause the whole plan from your account before 9 pm the day before. Skipped meals stay in your balance until the plan's validity ends." },

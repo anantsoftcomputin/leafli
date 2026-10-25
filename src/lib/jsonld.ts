@@ -1,9 +1,12 @@
 // schema.org builders (https://developers.google.com/search/docs/appearance/structured-data)
-import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "./site";
+import { absoluteUrl, LOCAL, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "./site";
 import type { Plan, Post } from "./types";
 import type { PublicDish, PublicSettings } from "./server/content";
 
 const LOGO = absoluteUrl("/brand/leafli-logo.png");
+
+const CITY = { "@type": "City", name: LOCAL.city, alternateName: LOCAL.altName, containedInPlace: { "@type": "State", name: LOCAL.region } };
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export function organization(s: PublicSettings) {
   return {
@@ -13,8 +16,9 @@ export function organization(s: PublicSettings) {
     legalName: s.legalName || undefined,
     url: SITE_URL,
     logo: { "@type": "ImageObject", url: LOGO, width: 600, height: 600 },
-    sameAs: ["https://www.instagram.com/leafli.in"],
-    ...(s.email || s.phone ? { contactPoint: { "@type": "ContactPoint", contactType: "customer service", email: s.email || undefined, telephone: s.phone || undefined, areaServed: "IN", availableLanguage: ["en", "hi"] } } : {}),
+    sameAs: ["https://www.instagram.com/leafli.in", s.zomatoUrl, s.googleReviewUrl].filter(Boolean),
+    areaServed: CITY,
+    ...(s.email || s.phone ? { contactPoint: { "@type": "ContactPoint", contactType: "customer service", email: s.email || undefined, telephone: s.phone ? `+91${s.phone.replace(/\D/g, "").slice(-10)}` : undefined, areaServed: CITY, availableLanguage: ["en", "hi", "gu"] } } : {}),
   };
 }
 
@@ -25,28 +29,42 @@ export function restaurant(s: PublicSettings, dishes: PublicDish[]) {
     "@type": "Restaurant",
     "@id": `${SITE_URL}/#restaurant`,
     name: SITE_NAME,
+    alternateName: `${SITE_NAME} ${LOCAL.city}`,
     description: SITE_DESCRIPTION,
     url: SITE_URL,
     image: dishes.map((d) => d.photoUrl || d.imageUrl).filter(Boolean).slice(0, 6),
     logo: LOGO,
-    servesCuisine: ["Salads", "Healthy", "Continental", "Indian"],
+    servesCuisine: ["Salads", "Healthy food", "Salad bowls", "Vegetarian", "Continental", "Indian"],
+    keywords: `salad delivery ${LOCAL.city}, healthy food ${LOCAL.city}, salads in ${LOCAL.altName}, high protein salads, salad subscription`,
     priceRange: "₹₹",
+    currenciesAccepted: "INR",
+    paymentAccepted: "UPI, Credit card, Debit card, Net banking, Cash",
     hasMenu: absoluteUrl("/menu"),
     acceptsReservations: false,
-    telephone: s.phone || undefined,
+    telephone: s.phone ? `+91${s.phone.replace(/\D/g, "").slice(-10)}` : undefined,
     email: s.email || undefined,
-    ...(a?.line1
-      ? {
-          address: { "@type": "PostalAddress", streetAddress: [a.line1, a.line2].filter(Boolean).join(", "), addressLocality: a.city, addressRegion: a.state, postalCode: a.pincode, addressCountry: "IN" },
-        }
-      : {}),
-    ...(a?.lat != null ? { geo: { "@type": "GeoCoordinates", latitude: a.lat, longitude: a.lng } } : {}),
+    address: {
+      "@type": "PostalAddress",
+      ...(a?.line1 ? { streetAddress: [a.line1, a.line2].filter(Boolean).join(", ") } : {}),
+      addressLocality: LOCAL.city,
+      addressRegion: LOCAL.region,
+      ...(a?.pincode ? { postalCode: a.pincode } : {}),
+      addressCountry: "IN",
+    },
+    ...(a?.lat != null ? { geo: { "@type": "GeoCoordinates", latitude: a.lat, longitude: a.lng }, hasMap: `https://www.google.com/maps/search/?api=1&query=${a.lat},${a.lng}` } : {}),
+    openingHoursSpecification: [{ "@type": "OpeningHoursSpecification", dayOfWeek: DAYS, opens: LOCAL.opens, closes: LOCAL.closes }],
+    areaServed: [CITY, ...LOCAL.areas.map((n) => ({ "@type": "Place", name: `${n}, ${LOCAL.city}` }))],
+    potentialAction: {
+      "@type": "OrderAction",
+      target: { "@type": "EntryPoint", urlTemplate: absoluteUrl("/menu"), inLanguage: "en-IN", actionPlatform: ["https://schema.org/DesktopWebPlatform", "https://schema.org/MobileWebPlatform"] },
+      deliveryMethod: ["http://purl.org/goodrelations/v1#DeliveryModeOwnFleet"],
+    },
     parentOrganization: { "@id": `${SITE_URL}/#organization` },
   };
 }
 
 export function website() {
-  return { "@type": "WebSite", "@id": `${SITE_URL}/#website`, url: SITE_URL, name: SITE_NAME, inLanguage: "en-IN", publisher: { "@id": `${SITE_URL}/#organization` } };
+  return { "@type": "WebSite", "@id": `${SITE_URL}/#website`, url: SITE_URL, name: SITE_NAME, alternateName: `${SITE_NAME} — salads in ${LOCAL.city}`, inLanguage: "en-IN", publisher: { "@id": `${SITE_URL}/#organization` } };
 }
 
 export function breadcrumbs(items: { name: string; path: string }[]) {
@@ -72,7 +90,7 @@ export function menuItem(d: PublicDish) {
     image: d.photoUrl || d.imageUrl || undefined,
     suitableForDiet: DIET[d.diet],
     ...(d.nutrition?.calories ? { nutrition: { "@type": "NutritionInformation", calories: `${d.nutrition.calories} calories`, ...(d.nutrition.protein ? { proteinContent: `${d.nutrition.protein} g` } : {}) } } : {}),
-    offers: { "@type": "Offer", price: d.price, priceCurrency: "INR", availability: d.available ? "https://schema.org/InStock" : "https://schema.org/OutOfStock", url: absoluteUrl(`/menu/${d.slug}`) },
+    offers: { "@type": "Offer", price: d.price, priceCurrency: "INR", availability: d.available ? "https://schema.org/InStock" : "https://schema.org/OutOfStock", url: absoluteUrl(`/menu/${d.slug}`), areaServed: CITY },
   };
 }
 
@@ -81,7 +99,7 @@ export function menu(dishes: PublicDish[]) {
   return {
     "@type": "Menu",
     "@id": absoluteUrl("/menu#menu"),
-    name: "Leafli menu",
+    name: `Leafli menu — salads and healthy bowls in ${LOCAL.city}`,
     url: absoluteUrl("/menu"),
     inLanguage: "en-IN",
     hasMenuSection: cats.map((c) => ({ "@type": "MenuSection", name: c, hasMenuItem: dishes.filter((d) => d.category === c).map(menuItem) })),
@@ -99,7 +117,7 @@ export function planProduct(p: Plan) {
   return {
     "@type": "Product",
     "@id": absoluteUrl(`/plans/${p.slug}#product`),
-    name: `${p.name} — Leafli salad subscription`,
+    name: `${p.name} — Leafli salad subscription, ${LOCAL.city}`,
     description: p.description,
     brand: { "@type": "Brand", name: SITE_NAME },
     category: "Meal subscription",
@@ -110,6 +128,7 @@ export function planProduct(p: Plan) {
       priceCurrency: "INR",
       availability: "https://schema.org/InStock",
       url: absoluteUrl(`/plans/${p.slug}`),
+      areaServed: CITY,
       seller: { "@id": `${SITE_URL}/#organization` },
     },
   };

@@ -28,8 +28,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!d) return { title: "Dish not found", robots: { index: false } };
   const kcal = d.nutrition?.calories ? ` ${d.nutrition.calories} kcal.` : "";
   return {
-    title: `${d.name} — Order Online`,
-    description: `${d.description.slice(0, 120).replace(/\s+\S*$/, "")}…${kcal} ${rupees(d.price)} from Leafli, delivered fresh.`.slice(0, 160),
+    title: `${d.name} — Order Online in Vadodara`,
+    description: `${d.description.slice(0, 100).replace(/\s+\S*$/, "")}…${kcal} ${rupees(d.price)}, delivered fresh across Vadodara by Leafli.`.slice(0, 160),
     alternates: { canonical: `/menu/${d.slug}` },
     openGraph: {
       type: "website",
@@ -75,7 +75,7 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
             )}
           </div>
           <div className="order-first mx-auto w-[min(86vw,22rem)] lg:order-none lg:w-full lg:max-w-lg">
-            <DishImage id={d.id} src={d.imageUrl} alt={`${d.name} — top view of the bowl`} priority className="w-full drop-shadow-[0_30px_40px_rgba(0,0,0,.2)]" />
+            <DishImage id={d.id} src={d.imageUrl} alt={`${d.name} from Leafli, Vadodara — top view of the bowl`} priority className="w-full drop-shadow-[0_30px_40px_rgba(0,0,0,.2)]" />
           </div>
         </div>
       </section>
@@ -103,7 +103,8 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
         </div>
         <div>
           <h2 className="font-display text-2xl font-medium">How it arrives</h2>
-          <p className="mt-4 text-ink/75">Assembled to order, packed in a rigid bowl and kept chilled. Dressings and crunchy toppings travel separately — toss just before you eat for the best texture.</p>
+          <p className="mt-4 text-ink/75">Assembled to order in our Akota kitchen, packed in a rigid bowl and kept chilled. Dressings and crunchy toppings travel separately — toss just before you eat for the best texture.</p>
+          <p className="mt-3 text-sm text-ink/50">Delivered across Vadodara, 11 am – 11 pm daily. <Link href="/healthy-food-vadodara" className="font-semibold text-leaf-700 hover:underline">Delivery areas →</Link></p>
         </div>
       </section>
 

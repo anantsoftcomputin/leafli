@@ -147,7 +147,7 @@ export function Hero() {
       <div className="mx-auto grid max-w-7xl items-center gap-4 px-5 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:gap-10">
         <div data-copy className="relative z-10 min-w-0">
           <p data-reveal data-chip className="mb-5 inline-flex lg:mb-6 items-center gap-2 rounded-full border border-leaf-700/15 bg-white/60 px-3 py-1.5 text-xs font-semibold tracking-wide text-leaf-700 uppercase backdrop-blur">
-            <span className="size-1.5 animate-pulse rounded-full bg-lime-500" /> Cloud kitchen · Made fresh today
+            <span className="size-1.5 animate-pulse rounded-full bg-lime-500" /> Vadodara cloud kitchen · Made fresh today
           </p>
           <h1 data-headline className="font-display text-[clamp(3.4rem,15vw,7.5rem)] leading-[0.9] font-medium tracking-[-0.035em] text-ink">
             Fresh <em className="font-normal text-leaf-600 italic">bowls.</em>
@@ -161,7 +161,7 @@ export function Hero() {
             </span>
           </h1>
           <p data-reveal data-sub className="mt-5 max-w-md text-[1.05rem] leading-relaxed text-ink/70 lg:mt-7 lg:text-lg">
-            Chef-made salads and bowls — crisp greens, dressings packed on the side, every portion weighed to the gram and delivered cold.
+            Chef-made salads and healthy bowls in Vadodara — crisp greens, dressings packed on the side, every portion weighed to the gram and delivered cold.
           </p>
           <div data-reveal data-cta className="mt-7 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 lg:mt-9">
             <Link

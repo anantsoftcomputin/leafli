@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import { AuthProvider } from "@/components/AuthProvider";
 import { PwaProvider } from "@/components/pwa/PwaProvider";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
+import { LOCAL, SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 // Plus Jakarta Sans is the font leafli.in already uses.
@@ -11,7 +11,7 @@ const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", axe
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: `${SITE_NAME} — ${SITE_TAGLINE}`, template: `%s | ${SITE_NAME}` },
+  title: { default: `${SITE_NAME} — Healthy Salads in ${LOCAL.city}`, template: `%s | ${SITE_NAME}` },
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
   manifest: "/manifest.webmanifest",
@@ -21,9 +21,10 @@ export const metadata: Metadata = {
     icon: [{ url: "/icon.png", type: "image/png", sizes: "512x512" }],
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
   },
-  other: { "mobile-web-app-capable": "yes" },
+  // Local signals for regional search engines (Google relies on the LocalBusiness data instead).
+  other: { "mobile-web-app-capable": "yes", "geo.region": LOCAL.regionCode, "geo.placename": LOCAL.city },
   alternates: { canonical: "/" },
-  openGraph: { type: "website", siteName: SITE_NAME, locale: "en_IN", url: SITE_URL, title: `${SITE_NAME} — ${SITE_TAGLINE}`, description: SITE_DESCRIPTION },
+  openGraph: { type: "website", siteName: SITE_NAME, locale: "en_IN", url: SITE_URL, title: `${SITE_NAME} — ${SITE_TAGLINE} · ${LOCAL.city}`, description: SITE_DESCRIPTION },
   twitter: { card: "summary_large_image" },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
   formatDetection: { telephone: true, address: false, email: false },

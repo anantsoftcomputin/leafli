@@ -8,16 +8,17 @@ import { getPlans } from "@/lib/server/content";
 import { perMeal, savingsPct } from "@/lib/subscriptions";
 
 export const metadata: Metadata = {
-  title: "Salad Subscription Plans — Weekly & Monthly",
+  title: { absolute: "Salad Subscription in Vadodara — Weekly & Monthly | Leafli" },
   description:
-    "Weekly, fortnightly and monthly salad subscriptions from ₹375 per bowl, delivery included. Pick your days, swap bowls and pause anytime with Leafli.",
+    "Weekly, fortnightly and monthly salad subscriptions in Vadodara from ₹375 per bowl, delivery included. Pick your days, swap bowls and pause anytime.",
   alternates: { canonical: "/plans" },
 };
 
 const FAQS = [
   { q: "How does a Leafli salad subscription work?", a: "Pick a plan, your delivery days and lunch or dinner slot. We deliver one fresh bowl on each delivery day until your bowls are used. Choose your bowl for any day from your account, or let the chef rotate the menu for you." },
   { q: "Can I pause, skip or change my bowl?", a: "Yes — skip a day, pause your whole plan, or swap the bowl for any upcoming day until 9 pm the day before. Pausing extends your plan's validity by the days you paused." },
-  { q: "Is delivery included?", a: "Yes. Every plan includes delivery to your address on your chosen days." },
+  { q: "Is delivery included?", a: "Yes. Every plan includes delivery to your home or office anywhere in Vadodara on your chosen days — lunch between 12 and 2 pm or dinner between 7 and 9 pm." },
+  { q: "Which areas of Vadodara do subscriptions cover?", a: "All of Vadodara city — Akota, Alkapuri, Gotri, Vasna-Bhayli, Manjalpur, Karelibaug, Fatehgunj, Sama, Old Padra Road, Waghodia Road and everywhere in between." },
   { q: "Do you have vegetarian subscriptions?", a: "Yes. Choose vegetarian, eggetarian or non-vegetarian when you subscribe and we'll only send bowls that match." },
   { q: "How do I pay?", a: "Pay securely online with UPI, cards, netbanking or wallets via Razorpay. You get a GST invoice for your plan." },
 ];
@@ -29,9 +30,9 @@ export default async function PlansPage() {
       <JsonLd data={graph(...plans.map(planProduct), faqPage(FAQS))} />
       <PageHero
         crumbs={[{ name: "Subscriptions", path: "/plans" }]}
-        eyebrow="Salad subscriptions"
+        eyebrow="Salad subscriptions in Vadodara"
         title={<>Healthy lunches, <em className="text-leaf-600 italic">on repeat.</em></>}
-        intro="Prepay for your bowls, pick your delivery days, and we'll handle the rest. Save up to 22% compared with ordering one by one — with delivery included."
+        intro="Prepay for your bowls, pick your delivery days, and we'll bring a fresh salad to your Vadodara home or office. Save up to 22% compared with ordering one by one — with delivery included."
       />
       <section className="mx-auto max-w-7xl px-5 pb-20 sm:px-8">
         <PlanCards plans={plans} />

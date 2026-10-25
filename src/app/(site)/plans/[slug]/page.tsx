@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const p = await getPlanBySlug(slug);
   if (!p) return { title: "Plan not found", robots: { index: false } };
   return {
-    title: { absolute: p.metaTitle || `${p.name} — Salad Subscription | Leafli` },
+    title: { absolute: p.metaTitle || `${p.name} — Salad Subscription in Vadodara | Leafli` },
     description: p.metaDescription || p.tagline,
     alternates: { canonical: `/plans/${p.slug}` },
   };

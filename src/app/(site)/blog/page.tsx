@@ -7,8 +7,8 @@ import { categorySlug, getPublishedPosts } from "@/lib/server/content";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Blog — Healthy Eating, Salad Recipes & Nutrition Tips",
-  description: "Practical guides on healthy eating, high-protein vegetarian salads, meal prep and nutrition — straight from the Leafli kitchen team in India.",
+  title: "Healthy Eating Blog — Salads & Nutrition in Vadodara",
+  description: "Guides to healthy eating in Vadodara: high-protein vegetarian salads, office lunches, weight-loss meals and nutrition tips from the Leafli kitchen team.",
   alternates: { canonical: "/blog", types: { "application/rss+xml": "/blog/rss.xml" } },
 };
 

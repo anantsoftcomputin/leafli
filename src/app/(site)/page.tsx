@@ -7,6 +7,7 @@ import { Hero } from "@/components/site/Hero";
 import { HowItWorks } from "@/components/site/HowItWorks";
 import { Intro } from "@/components/site/Intro";
 import { Marquee } from "@/components/site/Marquee";
+import { AreasServed } from "@/components/site/AreasServed";
 import { MenuSection } from "@/components/site/MenuSection";
 import { PlanCards } from "@/components/site/PlanCards";
 import { PostCards } from "@/components/site/PostCards";
@@ -17,7 +18,7 @@ import { getPlans, getPublicMenu, getPublicSettings, getPublishedPosts, getTesti
 import { SITE_DESCRIPTION } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: { absolute: "Leafli — Healthy Salad Delivery & Salad Subscriptions" },
+  title: { absolute: "Healthy Salads & Salad Delivery in Vadodara | Leafli" },
   description: SITE_DESCRIPTION,
   alternates: { canonical: "/" },
 };
@@ -63,6 +64,7 @@ export default async function Home() {
 
       <HowItWorks />
       <MenuSection />
+      <AreasServed />
 
       {posts.length > 0 && (
         <section className="bg-cream-50 py-24 md:py-32" aria-labelledby="blog-h">
