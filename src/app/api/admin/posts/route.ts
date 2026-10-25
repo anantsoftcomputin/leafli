@@ -54,11 +54,13 @@ export const POST = route(async (req: NextRequest) => {
   const now = Date.now();
   const { wordCount, readingMinutes } = renderMarkdown(b.content);
   // First publish stamps the date; scheduled posts use the chosen time.
+  // "Publish now" on a post that still carries a future date goes live immediately.
+  const keptDate = (prev?.publishedAt as number | undefined) ?? b.publishedAt;
   const publishedAt =
     b.status === "scheduled"
       ? b.publishedAt ?? now
       : b.status === "published"
-        ? (prev?.publishedAt as number | undefined) ?? b.publishedAt ?? now
+        ? keptDate && keptDate <= now ? keptDate : now
         : (prev?.publishedAt as number | null | undefined) ?? null;
   if (b.status === "scheduled" && (publishedAt ?? 0) <= now) throw new HttpError(400, "Pick a future time to schedule, or publish now");
 
