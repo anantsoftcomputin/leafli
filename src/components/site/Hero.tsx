@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { gsap, MOTION_OK, SplitText, useGSAP } from "@/lib/gsap";
+import { Clock } from "lucide-react";
+import { DEFAULT_HOURS, hoursLabel } from "@/lib/hours";
 import { DishImage } from "./DishImage";
 import { DISH_THEME } from "./DishArt";
 import { useSite } from "./SiteContext";
@@ -146,8 +148,11 @@ export function Hero() {
     <section ref={root} className="grain relative overflow-hidden pt-20 pb-12 md:pt-32 lg:min-h-[100svh] lg:pb-24">
       <div className="mx-auto grid max-w-7xl items-center gap-4 px-5 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:gap-10">
         <div data-copy className="relative z-10 min-w-0">
-          <p data-reveal data-chip className="mb-5 inline-flex lg:mb-6 items-center gap-2 rounded-full border border-leaf-700/15 bg-white/60 px-3 py-1.5 text-xs font-semibold tracking-wide text-leaf-700 uppercase backdrop-blur">
+          <p data-reveal data-chip className="inline-flex items-center gap-2 rounded-full border border-leaf-700/15 bg-white/60 px-3 py-1.5 text-xs font-semibold tracking-wide text-leaf-700 uppercase backdrop-blur">
             <span className="size-1.5 animate-pulse rounded-full bg-lime-500" /> Vadodara cloud kitchen · Made fresh today
+          </p>
+          <p data-reveal data-chip className="mt-2 mb-5 flex items-center gap-1.5 pl-1 text-sm font-medium text-ink/60 lg:mb-6">
+            <Clock className="size-4 text-leaf-600" aria-hidden /> Orders open daily · {hoursLabel(menu.orderingHours ?? DEFAULT_HOURS)}
           </p>
           <h1 data-headline className="font-display text-[clamp(3.4rem,15vw,7.5rem)] leading-[0.9] font-medium tracking-[-0.035em] text-ink">
             Fresh <em className="font-normal text-leaf-600 italic">bowls.</em>
