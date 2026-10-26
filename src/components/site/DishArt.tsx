@@ -23,6 +23,7 @@ export const DISH_THEME: Record<string, { bg: string; fg: string; accent: string
   "chana-moong": { bg: "#fbecc9", fg: "#5a3b10", accent: "#ef5b3c", tag: "High-fibre desi" },
   caprese: { bg: "#fde3dc", fg: "#7a1f14", accent: "#3f7a4f", tag: "Italian classic" },
   "potato-apple": { bg: "#f6eccd", fg: "#4a3410", accent: "#b4365e", tag: "Tangy & hearty" },
+  "potato-apple-eggless": { bg: "#f6eccd", fg: "#4a3410", accent: "#b4365e", tag: "Eggless · Tangy & hearty" },
   "chocolate-fruit-bowl": { bg: "#f3dde4", fg: "#4a1e2e", accent: "#e2397a", tag: "Guilt-light dessert" },
 };
 
