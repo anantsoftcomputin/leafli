@@ -174,6 +174,11 @@ function Manage({ id }: { id: string }) {
         <h2 className="font-display text-xl text-ink">Plan details</h2>
         <p className="mt-2">Delivering to {[s.address.line1, s.address.line2, s.address.city, s.address.pincode].filter(Boolean).join(", ")}</p>
         <p className="mt-1">Paid {rupees(s.total)} (incl. GST {rupees(s.cgst + s.sgst)}){s.invoiceNo && <> · Invoice {s.invoiceNo}</>}</p>
+        {s.invoiceNo && (
+          <Link href={`/account/subscriptions/${s.id}/invoice`} className="mt-3 inline-flex rounded-full bg-leaf-700 px-5 py-2.5 font-semibold text-cream-50 hover:bg-leaf-800">
+            Download tax invoice
+          </Link>
+        )}
         <p className="mt-3 text-ink/50">Need to change your address or delivery days? <Link href="/contact" className="underline">Contact us</Link>.</p>
       </section>
     </div>

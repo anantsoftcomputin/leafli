@@ -370,6 +370,9 @@ export interface Subscription {
   payment?: RazorpayPayment;
   notify?: { whatsapp?: boolean };
   invoiceNo?: string;
+  /** When the tax invoice was issued (payment confirmed). */
+  invoicedAt?: number;
+  roundOff?: number;
   notes?: string;
   createdAt: number;
   updatedAt: number;

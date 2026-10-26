@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
+import Link from "next/link";
 import { api } from "@/lib/api";
 import { inr } from "@/lib/costing";
 import { useLive, useMenu } from "@/lib/hooks";
@@ -149,6 +150,11 @@ export default function SubscriptionsAdmin() {
                     <Button size="sm" variant="ghost" onClick={() => setPayOpen(payOpen === s.id ? null : s.id)}>
                       {s.paymentStatus}{s.payment?.refundedAmount ? ` · ${inr(s.payment.refundedAmount)} refunded` : ""} {payOpen === s.id ? "▴" : "▾"}
                     </Button>
+                    {s.invoiceNo && (
+                      <Link href={`/admin/subscriptions/${s.id}/invoice`} className="ml-1 text-xs font-semibold text-leaf-700 hover:underline" title={s.invoiceNo}>
+                        Invoice
+                      </Link>
+                    )}
                   </Td>
                 </tr>
                 {payOpen === s.id && (

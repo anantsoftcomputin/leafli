@@ -106,6 +106,11 @@ body {
 @media print {
   .no-print { display: none !important; }
   body { background: white; }
+  /* A page with an invoice prints only the invoice (no site header, nav or footer). */
+  body:has(.print-area) * { visibility: hidden; }
+  body:has(.print-area) .print-area,
+  body:has(.print-area) .print-area * { visibility: visible; }
+  body:has(.print-area) .print-area { position: absolute; inset: 0 auto auto 0; width: 100%; }
 }
 
 /* Long-form content (blog posts, policies) */

@@ -77,6 +77,7 @@ export async function createSubscription(input: NewSubscriptionInput, actor: Act
     taxableValue: t.taxableValue,
     cgst: t.cgst,
     sgst: t.sgst,
+    roundOff: t.roundOff,
     total: t.total,
     paymentMode: input.paymentMode,
     paymentStatus: "pending",
@@ -122,6 +123,7 @@ export async function activateSubscription(
       status: s.status === "pending_payment" ? "active" : s.status,
       paymentStatus: "paid",
       invoiceNo: `LF/${financialYear()}/${String(counter.value).padStart(5, "0")}`,
+      invoicedAt: Date.now(),
       ...(payment
         ? { "payment.paymentId": payment.paymentId, "payment.paidAt": Date.now(), ...(payment.method ? { "payment.method": payment.method } : {}) }
         : {}),

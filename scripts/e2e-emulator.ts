@@ -250,6 +250,15 @@ async function main() {
   const subDoc = (await adminDb.collection("subscriptions").doc(sub.id).get()).data()!;
   assert.equal(subDoc.status, "active");
   assert.ok(String(subDoc.invoiceNo).startsWith("LF/"), "subscription gets a GST invoice number");
+  {
+    const { buildSubscriptionInvoice } = await import("../src/lib/invoice");
+    const { getSettings } = await import("../src/lib/server/orders");
+    const inv = buildSubscriptionInvoice({ ...subDoc, id: sub.id } as never, await getSettings())!;
+    assert.equal(inv.invoiceNo, subDoc.invoiceNo);
+    assert.ok(typeof subDoc.invoicedAt === "number", "invoice date recorded on payment");
+    near(inv.taxableValue + inv.cgst + inv.sgst + inv.roundOff, inv.total, "invoice lines add up to the total");
+    assert.equal(inv.total, 2204);
+  }
   gen = await subsSvc.generateSubscriptionOrders(start, actor, menuNow);
   assert.equal(gen.created.length, 1, "one kitchen order for the due day");
   const rerun = await subsSvc.generateSubscriptionOrders(start, actor, menuNow);
