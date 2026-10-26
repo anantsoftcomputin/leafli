@@ -18,6 +18,8 @@ interface PwaState {
   /** iPhone/iPad Safari: no prompt exists — show Share → Add to Home Screen. */
   isIOS: boolean;
   isStandalone: boolean;
+  /** Installed on this device as far as we can tell (standalone now, installed before, or reported by the browser). */
+  isInstalled: boolean;
   install: () => Promise<"accepted" | "dismissed" | "unavailable">;
   /** Native prompt where available, otherwise the iPhone "Add to Home Screen" guide. */
   openInstall: () => void;
@@ -28,6 +30,13 @@ interface PwaState {
 }
 
 const Ctx = createContext<PwaState | null>(null);
+const INSTALLED = "leafli-app-installed";
+const remember = (on: boolean) => {
+  try {
+    if (on) localStorage.setItem(INSTALLED, "1");
+    else localStorage.removeItem(INSTALLED);
+  } catch {}
+};
 const VAPID = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
 
 function urlBase64ToUint8Array(base64: string) {
@@ -42,6 +51,7 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
   const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setStandalone] = useState(false);
+  const [isInstalled, setInstalled] = useState(false);
   const [isIOS, setIOS] = useState(false);
   const [push, setPush] = useState<PushState>("unsupported");
   const [guide, setGuide] = useState(false);
@@ -49,7 +59,21 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
 
   // ── Register the service worker and watch for updates ──
   useEffect(() => {
-    setStandalone(window.matchMedia("(display-mode: standalone)").matches || (navigator as unknown as { standalone?: boolean }).standalone === true);
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as unknown as { standalone?: boolean }).standalone === true;
+    setStandalone(standalone);
+    // Opening the installed app marks this device; on Android the app and Chrome share storage,
+    // so the browser then stops nudging. Chrome can also confirm it directly.
+    if (standalone) remember(true);
+    try {
+      if (standalone || localStorage.getItem(INSTALLED) === "1") setInstalled(true);
+    } catch {}
+    const related = (navigator as unknown as { getInstalledRelatedApps?: () => Promise<unknown[]> }).getInstalledRelatedApps;
+    related?.call(navigator).then((apps) => {
+      if (apps.length) {
+        remember(true);
+        setInstalled(true);
+      }
+    }).catch(() => {});
     setIOS(/iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
     if (!("serviceWorker" in navigator) || process.env.NODE_ENV !== "production") return;
 
@@ -87,10 +111,14 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
     const onPrompt = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
+      // The browser only offers this when the app is NOT installed (e.g. it was uninstalled).
+      remember(false);
+      setInstalled(false);
     };
     const onInstalled = () => {
       setDeferred(null);
-      setStandalone(true);
+      remember(true);
+      setInstalled(true);
     };
     window.addEventListener("beforeinstallprompt", onPrompt);
     window.addEventListener("appinstalled", onInstalled);
@@ -157,7 +185,7 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <Ctx.Provider value={{ canInstall: !!deferred, isIOS, isStandalone, install, openInstall, push, enablePush, disablePush, sendTestPush }}>
+    <Ctx.Provider value={{ canInstall: !!deferred, isIOS, isStandalone, isInstalled, install, openInstall, push, enablePush, disablePush, sendTestPush }}>
       {children}
       {guide && (
         <InstallGuide

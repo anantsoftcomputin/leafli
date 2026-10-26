@@ -8,20 +8,25 @@ import { usePwa } from "./PwaProvider";
 const SNOOZE = "leafli-install-snooze";
 const SEEN = "leafli-install-guide-seen";
 
+const DAY = 86400000;
+
 /**
  * Install nudges for phones:
  *  - first visit: after a few seconds, open the "Install the Leafli app" guide
  *  - later visits: a compact banner that opens the same guide
- * Never shown inside the installed app; "x" snoozes for 3 days.
+ * Never shown once the app is installed. Browsers with an install prompt (Chrome, Edge,
+ * Samsung) only fire it when the app isn't installed, so we wait for it there. Safari and
+ * others can't tell us, so the banner shows at most once a fortnight; "x" snoozes it longer.
  */
 export function InstallBanner() {
-  const { canInstall, isStandalone, openInstall } = usePwa();
+  const { canInstall, isStandalone, isInstalled, openInstall } = usePwa();
   const [banner, setBanner] = useState(false);
 
   useEffect(() => {
-    if (isStandalone) return;
+    if (isStandalone || isInstalled) return;
     const phone = window.matchMedia("(pointer: coarse)").matches && window.innerWidth < 1024;
-    if (!phone && !canInstall) return;
+    const detectable = "onbeforeinstallprompt" in window;
+    if (detectable ? !canInstall : !phone) return;
     let snoozed = false;
     let seen = false;
     try {
@@ -36,22 +41,29 @@ export function InstallBanner() {
           try {
             localStorage.setItem(SEEN, "1");
           } catch {}
-        } else setBanner(true);
+        } else {
+          setBanner(true);
+          // Where installation can't be detected, don't nag every visit.
+          if (!detectable)
+            try {
+              localStorage.setItem(SNOOZE, String(Date.now() + 14 * DAY));
+            } catch {}
+        }
       },
       seen ? 8000 : 5000,
     );
     return () => clearTimeout(t);
-  }, [isStandalone, canInstall, openInstall]);
+  }, [isStandalone, isInstalled, canInstall, openInstall]);
 
   useEffect(() => {
     if (banner) gsap.fromTo("[data-install-banner]", { y: 120, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "expo.out" });
   }, [banner]);
 
-  if (!banner || isStandalone) return null;
+  if (!banner || isStandalone || isInstalled) return null;
   const snooze = () => {
     setBanner(false);
     try {
-      localStorage.setItem(SNOOZE, String(Date.now() + 3 * 86400000));
+      localStorage.setItem(SNOOZE, String(Date.now() + 30 * DAY));
     } catch {}
   };
 

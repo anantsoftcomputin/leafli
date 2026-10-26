@@ -28,7 +28,7 @@ export function SiteHeader({ solid: solidProp }: { solid?: boolean }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(!!solid);
   const { user, isStaff, logout } = useAuth();
-  const { isStandalone, openInstall } = usePwa();
+  const { isInstalled, openInstall } = usePwa();
   const { count, setCartOpen, setCartTarget } = useSite();
 
   useEffect(() => {
@@ -150,7 +150,7 @@ export function SiteHeader({ solid: solidProp }: { solid?: boolean }) {
               )}
             </div>
           </nav>
-          {!isStandalone && (
+          {!isInstalled && (
             <button onClick={() => { setOpen(false); openInstall(); }} className="mt-8 flex items-center gap-3 rounded-2xl bg-lime-400 px-4 py-3 text-left text-leaf-900">
               <img src="/icons/icon-192.png" alt="" className="size-10 rounded-xl" />
               <span className="flex-1"><b className="block">Install the Leafli app</b><span className="text-xs">Faster ordering & live alerts</span></span>

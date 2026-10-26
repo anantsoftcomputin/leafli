@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { absoluteUrl } from "@/lib/site";
 
 /** Web app manifest: what the phone uses for the installed icon, name, splash and shortcuts. */
 export default function manifest(): MetadataRoute.Manifest {
@@ -18,6 +19,8 @@ export default function manifest(): MetadataRoute.Manifest {
     dir: "ltr",
     categories: ["food", "health", "lifestyle"],
     prefer_related_applications: false,
+    // Lets Chrome's getInstalledRelatedApps() tell the website the app is already installed.
+    related_applications: [{ platform: "webapp", url: absoluteUrl("/manifest.webmanifest") }],
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
