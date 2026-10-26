@@ -68,7 +68,7 @@ export default function MenuPage() {
           </table>
         </div>
       )}
-      {editMenu && <MenuEditor item={editMenu === "new" ? null : editMenu} items={items} map={map} onClose={() => setEditMenu(null)} />}
+      {editMenu && <MenuEditor item={editMenu === "new" ? null : editMenu} items={items} map={map} categories={[...new Set(menu.map((m) => m.category).filter(Boolean))]} onClose={() => setEditMenu(null)} />}
       {editPrep && <PrepEditor item={editPrep === "new" ? null : editPrep} items={items} map={map} onClose={() => setEditPrep(null)} />}
     </>
   );
@@ -165,10 +165,10 @@ function RecipeLinesEditor({ value, onChange, items, map, exclude }: { value: Re
   );
 }
 
-function MenuEditor({ item, items, map, onClose }: { item: MenuItem | null; items: StockItem[]; map: ItemMap; onClose: () => void }) {
+function MenuEditor({ item, items, map, categories, onClose }: { item: MenuItem | null; items: StockItem[]; map: ItemMap; categories: string[]; onClose: () => void }) {
   const [f, setF] = useState<MenuItem>(
     item ?? {
-      id: "", name: "", description: "", category: "Salads", price: 0, available: true,
+      id: "", name: "", description: "", category: categories[0] ?? "Fresh Salads", price: 0, available: true,
       channels: { pos: true, website: true, zomato: true }, recipe: [], packagingCost: 0, allergens: [], diet: "veg", sortOrder: 99,
     },
   );
@@ -223,7 +223,10 @@ function MenuEditor({ item, items, map, onClose }: { item: MenuItem | null; item
             <Field label="URL slug" hint="leafli.in/menu/…  — changing it breaks old links">
               <Input value={f.slug ?? ""} placeholder={slug(f.name || "dish")} onChange={(e) => setF({ ...f, slug: slug(e.target.value) })} />
             </Field>
-            <Field label="Category"><Input value={f.category} onChange={(e) => setF({ ...f, category: e.target.value })} /></Field>
+            <Field label="Category" hint="Shown as a filter on the website menu — pick an existing one to group dishes">
+              <Input list="menu-categories" value={f.category} onChange={(e) => setF({ ...f, category: e.target.value })} />
+              <datalist id="menu-categories">{categories.map((c) => <option key={c} value={c} />)}</datalist>
+            </Field>
             <Field label="Diet">
               <Select value={f.diet} onChange={(e) => setF({ ...f, diet: e.target.value as MenuItem["diet"] })}>
                 <option value="veg">Veg</option><option value="egg">Contains egg</option><option value="nonveg">Non-veg</option>

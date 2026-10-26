@@ -23,11 +23,11 @@ const ROTATE_MS = 4500;
 export function Hero() {
   const root = useRef<HTMLElement>(null);
   const { menu } = useSite();
-  // Every available bowl with a photo, Caesar first (it's the signature dish).
+  // Every available bowl with a photo; the Chicken Caesar comes last so the hero opens on a veg bowl.
   const dishes = useMemo(() => {
     const list = menu.items.filter((d) => d.available && d.imageUrl);
     const caesar = list.findIndex((d) => d.id === "chicken-caesar");
-    if (caesar > 0) list.unshift(...list.splice(caesar, 1));
+    if (caesar >= 0 && caesar < list.length - 1) list.push(...list.splice(caesar, 1));
     return list.length ? list : menu.items.slice(0, 1);
   }, [menu.items]);
   const [active, setActive] = useState(0);

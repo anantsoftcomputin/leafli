@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Flip, gsap, MOTION_OK, useGSAP } from "@/lib/gsap";
 import { rupees as inr } from "@/lib/costing";
 import { DietDot } from "@/components/DietDot";
@@ -10,26 +10,32 @@ import { DISH_THEME } from "./DishArt";
 import { DishImage } from "./DishImage";
 import { useSite } from "./SiteContext";
 
-const FILTERS = [
-  { key: "all", label: "Everything" },
-  { key: "veg", label: "Veg" },
-  { key: "egg", label: "With egg" },
-  { key: "nonveg", label: "Non-veg" },
-  { key: "Desserts", label: "Sweet" },
-] as const;
+// Diet filters are fixed; category filters come from the categories set in Admin → Menu,
+// so the website always matches the back office.
+const DIETS = [
+  { key: "diet:veg", label: "Veg" },
+  { key: "diet:egg", label: "With egg" },
+  { key: "diet:nonveg", label: "Non-veg" },
+];
 
 export function MenuSection({ hideHeading }: { hideHeading?: boolean } = {}) {
   const root = useRef<HTMLElement>(null);
   const grid = useRef<HTMLDivElement>(null);
   const flipState = useRef<Flip.FlipState | null>(null);
   const { menu, kitchen, live } = useSite();
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("all");
+  const [filter, setFilter] = useState("all");
+  const filters = useMemo(() => {
+    const cats = [...new Set(menu.items.map((i) => i.category).filter(Boolean))];
+    return [{ key: "all", label: "Everything" }, ...cats.map((c) => ({ key: `cat:${c}`, label: c })), ...DIETS];
+  }, [menu.items]);
+  // A category renamed or emptied while selected falls back to everything.
+  const active = filters.some((f) => f.key === filter) ? filter : "all";
   const [openId, setOpenId] = useState<string | null>(null);
 
   const match = (i: (typeof menu.items)[number]) =>
-    filter === "all" ? true : filter === "Desserts" ? i.category === "Desserts" : i.diet === filter;
+    active === "all" ? true : active.startsWith("cat:") ? i.category === active.slice(4) : i.diet === active.slice(5);
 
-  function choose(f: typeof filter) {
+  function choose(f: string) {
     if (grid.current) flipState.current = Flip.getState(grid.current.querySelectorAll("[data-menu-card]"));
     setFilter(f);
   }
@@ -48,7 +54,7 @@ export function MenuSection({ hideHeading }: { hideHeading?: boolean } = {}) {
       });
       flipState.current = null;
     },
-    { dependencies: [filter], scope: grid },
+    { dependencies: [active], scope: grid },
   );
 
   useGSAP(
@@ -78,13 +84,13 @@ export function MenuSection({ hideHeading }: { hideHeading?: boolean } = {}) {
           </div>
         </div>
         <div className="no-scrollbar sticky top-16 z-20 lg:top-18 mt-4 lg:mt-8 -mx-5 flex w-[calc(100%+2.5rem)] gap-2 overflow-x-auto bg-cream-100/90 px-5 py-3 backdrop-blur sm:mx-0 sm:w-auto sm:flex-wrap sm:overflow-visible sm:bg-transparent sm:p-0 sm:backdrop-blur-none" role="tablist" aria-label="Filter menu">
-          {FILTERS.map((f) => (
+          {filters.map((f) => (
             <button
               key={f.key}
               role="tab"
-              aria-selected={filter === f.key}
+              aria-selected={active === f.key}
               onClick={() => choose(f.key)}
-              className={`tap shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${filter === f.key ? "bg-leaf-700 text-cream-50 shadow-lg shadow-leaf-900/15" : "bg-white text-ink/70 ring-1 ring-ink/10 hover:ring-ink/25"}`}
+              className={`tap shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${active === f.key ? "bg-leaf-700 text-cream-50 shadow-lg shadow-leaf-900/15" : "bg-white text-ink/70 ring-1 ring-ink/10 hover:ring-ink/25"}`}
             >
               {f.label}
             </button>
