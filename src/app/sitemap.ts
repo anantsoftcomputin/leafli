@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { categorySlug, getPlans, getPublicMenu, getPublishedPosts } from "@/lib/server/content";
+import { POSTS_PER_PAGE } from "@/components/site/Pagination";
 import { absoluteUrl } from "@/lib/site";
 
 export const revalidate = 3600;
@@ -37,5 +38,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .filter((p) => !p.noindex && !p.canonicalUrl)
       .map((p) => ({ url: absoluteUrl(`/blog/${p.slug}`), lastModified: new Date(p.updatedAt), changeFrequency: "monthly" as const, priority: 0.6, images: [p.coverImage].filter(Boolean) as string[] })),
     ...[...new Set(posts.map((p) => categorySlug(p.category)))].map((c) => ({ url: absoluteUrl(`/blog/category/${c}`), lastModified: now, changeFrequency: "weekly" as const, priority: 0.4 })),
+    ...Array.from({ length: Math.max(0, Math.ceil(posts.length / POSTS_PER_PAGE) - 1) }, (_, i) => ({ url: absoluteUrl(`/blog/page/${i + 2}`), lastModified: now, changeFrequency: "weekly" as const, priority: 0.3 })),
   ];
 }

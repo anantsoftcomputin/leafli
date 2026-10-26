@@ -31,6 +31,9 @@ const nextConfig: NextConfig = {
       { source: "/forgot-password", destination: "/login", permanent: true },
       { source: "/reset-password", destination: "/login", permanent: true },
       { source: "/dashboard", destination: "/admin", permanent: false },
+      // Blog page 1 lives at the bare URL (one canonical address per listing).
+      { source: "/blog/page/1", destination: "/blog", permanent: true },
+      { source: "/blog/category/:category/page/1", destination: "/blog/category/:category", permanent: true },
     ];
   },
   images: {
