@@ -16,8 +16,9 @@ import type { Address, DietPref, MenuItem, Plan, Subscription } from "@/lib/type
 import { HttpError, type Actor } from "./http";
 import { col, financialYear, nextCounter } from "./inventory";
 import { createOrder, getSettings } from "./orders";
-import { notifyUser } from "./push";
-import { onSubscriptionActive, onSubscriptionChanged, onSubscriptionCreated, onSubscriptionEndingSoon, onSubscriptionFinished } from "./notifications";
+import { notifyNewOrder, notifyUser } from "./push";
+import { kitchenStatus } from "@/lib/hours";
+import { onOrderLive, onSubscriptionActive, onSubscriptionChanged, onSubscriptionCreated, onSubscriptionEndingSoon, onSubscriptionFinished } from "./notifications";
 
 const subs = () => col.orders().firestore.collection("subscriptions");
 const plans = () => col.orders().firestore.collection("plans");
@@ -255,4 +256,103 @@ export async function generateSubscriptionOrders(date: string, actor: Actor, men
     if (!order.duplicate) created.push(order.orderNo);
   }
   return { date, created, skipped };
+}
+
+/** Most bowls a subscriber can order in one go from their balance. */
+export const ORDER_NOW_MAX = 5;
+
+/**
+ * "Order now": the subscriber spends bowls from their balance on an immediate delivery
+ * (outside their schedule). The bowls are reserved first, so two taps can never spend
+ * the same bowl; if the kitchen order can't be created the reservation is given back.
+ * `requestId` makes retries safe.
+ */
+export async function orderNowFromSubscription(
+  subId: string,
+  picks: { menuItemId: string; qty: number }[],
+  requestId: string,
+  actor: Actor,
+  menu: MenuItem[],
+) {
+  const ref = subs().doc(subId);
+  const snap = await ref.get();
+  if (!snap.exists) throw new HttpError(404, "Subscription not found");
+  const s = { ...(snap.data() as Subscription), id: snap.id };
+  if (s.customerUid !== actor.uid) throw new HttpError(403, "Not your subscription");
+  const done = s.onDemand?.[requestId];
+  if (done && done !== "pending") return { orderId: done, duplicate: true };
+
+  if (s.paymentStatus !== "paid" || (s.status !== "active" && s.status !== "paused"))
+    throw new HttpError(409, s.status === "pending_payment" ? "Complete payment for your plan first" : "This plan has no bowls to order from");
+  const today = istDate();
+  if (today > s.endDate) throw new HttpError(409, "This plan has expired");
+
+  const lines = picks.filter((p) => p.qty > 0);
+  const qty = lines.reduce((n, p) => n + p.qty, 0);
+  if (!qty) throw new HttpError(400, "Pick at least one bowl");
+  if (qty > ORDER_NOW_MAX) throw new HttpError(400, `You can order up to ${ORDER_NOW_MAX} bowls at a time`);
+  if (qty > mealsRemaining(s)) throw new HttpError(409, `You have ${mealsRemaining(s)} bowl${mealsRemaining(s) === 1 ? "" : "s"} left in this plan`);
+
+  const kitchen = kitchenStatus(await getSettings());
+  if (!kitchen.open) throw new HttpError(409, kitchen.message);
+
+  const planSnap = await plans().doc(s.planId).get();
+  const eligible = eligibleDishes(menu, (planSnap.get("eligibleMenuIds") as string[]) ?? [], s.diet);
+  for (const l of lines) {
+    if (!eligible.some((m) => m.id === l.menuItemId)) throw new HttpError(400, "That bowl isn't part of your plan or is sold out today");
+  }
+
+  // 1. Reserve the bowls.
+  const prev = await ref.firestore.runTransaction(async (tx) => {
+    const fresh = (await tx.get(ref)).data() as Subscription;
+    if (fresh.onDemand?.[requestId]) throw new HttpError(409, "This order is already being placed");
+    if (fresh.mealsTotal - fresh.mealsUsed < qty) throw new HttpError(409, "Not enough bowls left in this plan");
+    const used = fresh.mealsUsed + qty;
+    tx.update(ref, {
+      mealsUsed: used,
+      [`onDemand.${requestId}`]: "pending",
+      status: used >= fresh.mealsTotal ? "completed" : fresh.status,
+      updatedAt: Date.now(),
+    });
+    return { status: fresh.status, left: fresh.mealsTotal - used };
+  });
+
+  // 2. Send it to the kitchen like any new website order (it rings staff phones).
+  let order: Awaited<ReturnType<typeof createOrder>>;
+  try {
+    order = await createOrder(
+      {
+        source: "website",
+        externalId: `sub-${s.id}-now-${requestId}`,
+        customerUid: s.customerUid,
+        customer: { name: s.customer.name, phone: s.customer.phone, email: s.customer.email ?? undefined, address: s.address },
+        lines: lines.map((l) => ({ menuItemId: l.menuItemId, qty: l.qty, notes: `Subscription · ${s.planName}` })),
+        paymentMode: "online",
+        paymentStatus: "paid",
+        deliveryProvider: "porter",
+        notes: `Order now from subscription (${qty} bowl${qty > 1 ? "s" : ""} from balance)${s.notes ? ` — ${s.notes}` : ""}`,
+        prepaid: { subscriptionId: s.id, unitPrice: perMeal(s.price, s.mealsTotal) },
+      },
+      actor,
+    );
+  } catch (e) {
+    // 3. Give the bowls back if the order couldn't be created.
+    await ref.firestore.runTransaction(async (tx) => {
+      const fresh = (await tx.get(ref)).data() as Subscription;
+      if (fresh.onDemand?.[requestId] !== "pending") return;
+      const onDemand = { ...fresh.onDemand };
+      delete onDemand[requestId];
+      tx.update(ref, { mealsUsed: fresh.mealsUsed - qty, onDemand, status: fresh.status === "completed" ? prev.status : fresh.status, updatedAt: Date.now() });
+    });
+    throw e;
+  }
+  await ref.update({ [`onDemand.${requestId}`]: order.id });
+
+  if (!order.duplicate) {
+    await notifyNewOrder(order);
+    await onOrderLive(order.id);
+  }
+  if (prev.left === 0) await onSubscriptionFinished(s.id, false);
+  else if (prev.left <= 2) await onSubscriptionEndingSoon(s.id, prev.left);
+  return { orderId: order.id, orderNo: order.orderNo, left: prev.left, duplicate: order.duplicate };
 }

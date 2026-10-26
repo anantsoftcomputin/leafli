@@ -356,6 +356,8 @@ export interface Subscription {
   skipped: string[]; // YYYY-MM-DD
   /** Dates an order has already been generated for. */
   fulfilled: Record<string, string>; // date -> orderId
+  /** "Order now" requests paid from the bowl balance: request id -> order id ("pending" while placing). */
+  onDemand?: Record<string, string>;
   status: SubscriptionStatus;
   pausedFrom?: string | null;
   price: number;

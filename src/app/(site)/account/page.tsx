@@ -7,7 +7,8 @@ import { orderBy, where } from "firebase/firestore";
 import { rupees as inr } from "@/lib/costing";
 import { gsap, MOTION_OK, useGSAP } from "@/lib/gsap";
 import { useLive } from "@/lib/hooks";
-import type { Order, OrderStatus } from "@/lib/types";
+import { canOrderNow, mealsRemaining } from "@/lib/subscriptions";
+import type { Order, OrderStatus, Subscription } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 import { DishImage } from "@/components/site/DishImage";
 import { PushOptIn } from "@/components/pwa/PushOptIn";
@@ -36,6 +37,9 @@ export default function AccountPage() {
     user?.uid,
   );
 
+  const { data: subs } = useLive<Subscription>(user ? "subscriptions" : null, [where("customerUid", "==", user?.uid ?? "")], `subs-${user?.uid}`);
+  const orderable = subs.filter((s) => canOrderNow(s));
+
   useGSAP(
     () => {
       const mm = gsap.matchMedia();
@@ -57,6 +61,15 @@ export default function AccountPage() {
           <button onClick={async () => { await logout(); router.push("/"); }} className="rounded-full px-5 py-2.5 text-sm font-semibold text-ink/60 ring-1 ring-ink/15 hover:bg-ink/5">Sign out</button>
         </div>
       </div>
+      {orderable.map((s) => (
+        <div key={s.id} className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-[1.75rem] bg-leaf-800 p-5 text-cream-50 sm:p-6">
+          <div>
+            <p className="font-display text-2xl">{mealsRemaining(s)} bowl{mealsRemaining(s) === 1 ? "" : "s"} waiting in {s.planName}</p>
+            <p className="mt-1 text-sm text-cream-50/70">Order one now — it comes out of your plan, no payment needed.</p>
+          </div>
+          <Link href={`/account/subscriptions/${s.id}#order-now`} className="rounded-full bg-lime-400 px-6 py-3 font-semibold text-leaf-900 hover:bg-lime-300">Order now →</Link>
+        </div>
+      ))}
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
         <PushOptIn variant="account" />
         <InstallAppCard />

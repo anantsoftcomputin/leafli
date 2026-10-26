@@ -86,6 +86,11 @@ export function canChange(date: string, now = new Date()) {
   return now.getTime() < cutoff;
 }
 
+/** Can the subscriber spend bowls on an immediate "order now" delivery? */
+export const canOrderNow = (s: Pick<Subscription, "status" | "paymentStatus" | "endDate" | "mealsTotal" | "mealsUsed">, today = istToday()) =>
+  (s.status === "active" || s.status === "paused") && s.paymentStatus === "paid" && mealsRemaining(s) > 0 && today <= s.endDate;
+const istToday = () => new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+
 export const perMeal = (price: number, meals: number) => Math.round(price / Math.max(meals, 1));
 export const savingsPct = (price: number, compareAt: number) => (compareAt > price ? Math.round(((compareAt - price) / compareAt) * 100) : 0);
 

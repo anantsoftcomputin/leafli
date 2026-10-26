@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { Suspense, use, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { rupees } from "@/lib/costing";
 import { useLiveDoc } from "@/lib/hooks";
 import { payWithRazorpay } from "@/lib/razorpay-client";
 import { istDate } from "@/lib/site";
 import { addDays, canChange, daysBetween, dietAllows, mealsRemaining, SLOT_LABEL, upcomingDates, DAY_NAMES } from "@/lib/subscriptions";
-import type { Plan, Subscription } from "@/lib/types";
+import type { Address, Plan, Subscription } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 import { DishImage } from "@/components/site/DishImage";
 import { useSite, type PublicItem } from "@/components/site/SiteContext";
@@ -121,6 +121,10 @@ function Manage({ id }: { id: string }) {
       )}
       {err && <p className="mt-4 rounded-xl bg-tomato/10 px-4 py-3 text-sm text-tomato">{err}</p>}
 
+      {(s.status === "active" || s.status === "paused") && s.paymentStatus === "paid" && left > 0 && today <= s.endDate && (
+        <OrderNow subId={s.id} left={left} eligible={eligible} address={s.address} />
+      )}
+
       {(s.status === "active" || s.status === "paused") && (
         <section className="mt-10">
           <h2 className="font-display text-2xl font-medium">Upcoming deliveries</h2>
@@ -173,6 +177,85 @@ function Manage({ id }: { id: string }) {
         <p className="mt-3 text-ink/50">Need to change your address or delivery days? <Link href="/contact" className="underline">Contact us</Link>.</p>
       </section>
     </div>
+  );
+}
+
+const ORDER_NOW_MAX = 5;
+const newRequestId = () => (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`).replace(/[^\w-]/g, "");
+
+/** Spend bowls from the balance on a delivery right now, outside the usual schedule. */
+function OrderNow({ subId, left, eligible, address }: { subId: string; left: number; eligible: PublicItem[]; address: Address }) {
+  const router = useRouter();
+  const { kitchen } = useSite();
+  const [qty, setQty] = useState<Record<string, number>>({});
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  // One id per attempt: a retry after a network blip can't spend the bowls twice.
+  const [requestId, setRequestId] = useState(newRequestId);
+  const total = Object.values(qty).reduce((a, b) => a + b, 0);
+  const cap = Math.min(left, ORDER_NOW_MAX);
+  const bump = (id: string, d: number) =>
+    setQty((q) => {
+      const next = Math.max(0, (q[id] ?? 0) + d);
+      if (d > 0 && total >= cap) return q;
+      return { ...q, [id]: next };
+    });
+
+  async function place() {
+    setBusy(true);
+    setErr(null);
+    try {
+      const r = await api<{ orderId: string }>(`/api/subscriptions/${subId}/order-now`, {
+        requestId,
+        lines: Object.entries(qty).filter(([, n]) => n > 0).map(([menuItemId, n]) => ({ menuItemId, qty: n })),
+      });
+      router.push(`/account/orders/${r.orderId}`);
+    } catch (e) {
+      setErr((e as Error).message);
+      setRequestId(newRequestId());
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section id="order-now" className="mt-10 scroll-mt-24 rounded-[1.75rem] bg-leaf-800 p-6 text-cream-50 sm:p-8">
+      <p className="text-sm font-semibold tracking-[0.2em] text-lime-300 uppercase">Hungry now?</p>
+      <h2 className="mt-2 font-display text-3xl font-medium">Order from your {left} bowl{left === 1 ? "" : "s"} left</h2>
+      <p className="mt-2 text-sm text-cream-50/70">
+        Delivered now to {[address.line1, address.city].filter(Boolean).join(", ")} — no payment needed, it comes out of your plan. Your scheduled deliveries continue with the bowls that remain.
+      </p>
+      <ul className="mt-6 space-y-2">
+        {eligible.map((m) => {
+          const n = qty[m.id] ?? 0;
+          return (
+            <li key={m.id} className="flex items-center gap-3 rounded-2xl bg-white/10 p-3">
+              <DishImage id={m.id} src={m.imageUrl} alt={m.name} className="size-12 shrink-0" />
+              <span className="min-w-0 flex-1 text-sm font-medium">{m.name}</span>
+              {n > 0 ? (
+                <span className="flex items-center rounded-full bg-lime-400 font-semibold text-leaf-900">
+                  <button onClick={() => bump(m.id, -1)} className="grid size-9 place-items-center" aria-label={`One less ${m.name}`}>−</button>
+                  <span className="w-5 text-center tabular-nums">{n}</span>
+                  <button onClick={() => bump(m.id, 1)} disabled={total >= cap} className="grid size-9 place-items-center disabled:opacity-40" aria-label={`One more ${m.name}`}>+</button>
+                </span>
+              ) : (
+                <button onClick={() => bump(m.id, 1)} disabled={total >= cap} className="rounded-full bg-white/15 px-4 py-2 text-sm font-semibold hover:bg-white/25 disabled:opacity-40">Add</button>
+              )}
+            </li>
+          );
+        })}
+        {!eligible.length && <li className="text-sm text-cream-50/70">No bowls from your plan are available right now.</li>}
+      </ul>
+      {total >= cap && cap > 0 && <p className="mt-3 text-xs text-cream-50/60">Up to {cap} bowl{cap === 1 ? "" : "s"} per order{left < ORDER_NOW_MAX ? " — that's all your remaining bowls" : ""}.</p>}
+      {!kitchen.open && <p className="mt-4 rounded-xl bg-mango/25 px-4 py-3 text-sm font-medium text-cream-50">{kitchen.message}</p>}
+      {err && <p className="mt-4 rounded-xl bg-tomato/20 px-4 py-3 text-sm text-cream-50">{err}</p>}
+      <button
+        onClick={place}
+        disabled={!total || busy || !kitchen.open}
+        className="mt-5 w-full rounded-full bg-lime-400 py-4 font-semibold text-leaf-900 transition hover:bg-lime-300 disabled:opacity-50"
+      >
+        {busy ? "Placing order…" : total ? `Order ${total} bowl${total > 1 ? "s" : ""} now · uses ${total} of ${left}` : "Pick a bowl to order"}
+      </button>
+    </section>
   );
 }
 

@@ -176,8 +176,10 @@ export async function createOrder(input: CreateOrderInput, actor: Actor) {
       foodCost,
       paymentMode: input.paymentMode,
       // Online orders are only "paid" once Razorpay confirms (markOrderPaid); never trust the client.
-      paymentStatus:
-        input.paymentMode === "online" || input.paymentMode === "pay_later" ? "pending" : (input.paymentStatus ?? "paid"),
+      // Subscription meals were paid for with the plan.
+      paymentStatus: input.prepaid
+        ? "paid"
+        : input.paymentMode === "online" || input.paymentMode === "pay_later" ? "pending" : (input.paymentStatus ?? "paid"),
       status,
       statusHistory: [
         { status: "new", at: now, by: actor.uid },

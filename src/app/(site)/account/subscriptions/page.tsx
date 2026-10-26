@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { orderBy, where } from "firebase/firestore";
 import { useLive } from "@/lib/hooks";
-import { mealsRemaining, SUB_STATUS_LABEL as STATUS_LABEL } from "@/lib/subscriptions";
+import { canOrderNow, mealsRemaining, SUB_STATUS_LABEL as STATUS_LABEL } from "@/lib/subscriptions";
 import type { Subscription } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -31,14 +31,17 @@ export default function MySubscriptions() {
       ) : (
         <ul className="mt-10 space-y-3">
           {data.map((s) => (
-            <li key={s.id}>
-              <Link href={`/account/subscriptions/${s.id}`} className="flex items-center justify-between gap-4 rounded-[1.5rem] bg-white p-5 ring-1 ring-ink/5 transition hover:shadow-xl hover:shadow-leaf-900/5">
-                <div>
+            <li key={s.id} className="flex items-center gap-2 rounded-[1.5rem] bg-white p-2 pr-3 ring-1 ring-ink/5 transition hover:shadow-xl hover:shadow-leaf-900/5">
+              <Link href={`/account/subscriptions/${s.id}`} className="flex min-w-0 flex-1 items-center justify-between gap-4 rounded-[1.2rem] p-3">
+                <div className="min-w-0">
                   <div className="font-display text-xl">{s.planName}</div>
                   <div className="text-sm text-ink/50">{mealsRemaining(s)} of {s.mealsTotal} bowls left · until {s.endDate}</div>
                 </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${s.status === "active" ? "bg-lime-300 text-leaf-900" : s.status === "pending_payment" ? "bg-mango/30" : "bg-ink/5 text-ink/60"}`}>{STATUS_LABEL[s.status]}</span>
+                <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${s.status === "active" ? "bg-lime-300 text-leaf-900" : s.status === "pending_payment" ? "bg-mango/30" : "bg-ink/5 text-ink/60"}`}>{STATUS_LABEL[s.status]}</span>
               </Link>
+              {canOrderNow(s) && (
+                <Link href={`/account/subscriptions/${s.id}#order-now`} className="shrink-0 rounded-full bg-leaf-700 px-4 py-2 text-sm font-semibold text-cream-50 hover:bg-leaf-800">Order now</Link>
+              )}
             </li>
           ))}
         </ul>

@@ -260,6 +260,7 @@ async function main() {
   assert.equal(mo.cgst, 0, "no second GST on a prepaid meal");
   assert.equal(mo.invoiceNo, undefined, "no second invoice on a prepaid meal");
   assert.equal(mo.stockDeducted, true, "meal deducts stock");
+  assert.equal(mo.paymentStatus, "paid", "prepaid meal is paid (kitchen must see it)");
   assert.ok(["veg"].includes((MENU_ITEMS.find((m) => m.id === mo.lines[0].menuItemId)?.diet) ?? ""), "veg subscriber gets a veg bowl");
   near(mo.lines[0].unitPrice, 420, "meal valued at per-bowl plan price");
   const after = (await adminDb.collection("subscriptions").doc(sub.id).get()).data()!;
@@ -268,6 +269,43 @@ async function main() {
   gen = await subsSvc.generateSubscriptionOrders(addDays(start, 1), actor, menuNow);
   assert.equal(gen.created.length, 0, "skipped day produces no order");
   ok(`subscription: GST invoice on purchase, 1 prepaid kitchen order (no double GST), idempotent, skip honoured`);
+
+  // ---- Subscription "order now": bowls from the balance, delivered immediately
+  {
+    const subRef = adminDb.collection("subscriptions").doc(sub.id);
+    const used0 = (await subRef.get()).get("mealsUsed") as number; // 1 of 5
+    await assert.rejects(subsSvc.orderNowFromSubscription(sub.id, [{ menuItemId: "chicken-caesar", qty: 1 }], "req-nonveg-1", actor, menuNow), /isn't part of your plan/);
+    const now1 = await subsSvc.orderNowFromSubscription(sub.id, [{ menuItemId: "chana-moong", qty: 2 }], "req-now-0001", actor, menuNow);
+    const o1 = (await adminDb.collection("orders").doc(now1.orderId).get()).data()!;
+    assert.equal(o1.status, "new", "order-now goes to the kitchen as a new order (rings staff)");
+    assert.equal(o1.paymentStatus, "paid");
+    assert.equal(o1.subscriptionId, sub.id);
+    assert.equal(o1.cgst, 0, "no GST again on bowls already invoiced");
+    assert.equal((await subRef.get()).get("mealsUsed"), used0 + 2, "two bowls taken from the balance");
+    const again = await subsSvc.orderNowFromSubscription(sub.id, [{ menuItemId: "chana-moong", qty: 2 }], "req-now-0001", actor, menuNow);
+    assert.equal(again.orderId, now1.orderId, "retrying the same request never spends bowls twice");
+    assert.equal((await subRef.get()).get("mealsUsed"), used0 + 2);
+    await assert.rejects(subsSvc.orderNowFromSubscription(sub.id, [{ menuItemId: "chana-moong", qty: 3 }], "req-now-0002", actor, menuNow), /2 bowls left/);
+    await assert.rejects(
+      subsSvc.orderNowFromSubscription(sub.id, [{ menuItemId: "chana-moong", qty: 1 }], "req-now-0003", { ...actor, uid: "someone-else" }, menuNow),
+      /Not your subscription/,
+    );
+    // Kitchen closed → refused, balance untouched
+    const settingsRef = adminDb.collection("settings").doc("business");
+    const { istMinutes } = await import("../src/lib/hours");
+    const t = istMinutes();
+    const hhmm = (m: number) => `${String(Math.floor((m % 1440) / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+    await settingsRef.update({ orderingHours: { opens: hhmm(t + 60), closes: hhmm(t + 120) } });
+    await assert.rejects(subsSvc.orderNowFromSubscription(sub.id, [{ menuItemId: "chana-moong", qty: 1 }], "req-now-0004", actor, menuNow), /kitchen is closed/);
+    await settingsRef.update({ orderingHours: { opens: "00:00", closes: "00:00" } });
+    assert.equal((await subRef.get()).get("mealsUsed"), used0 + 2, "refused order leaves the balance alone");
+    // Last two bowls → plan completes, no more scheduled deliveries
+    await subsSvc.orderNowFromSubscription(sub.id, [{ menuItemId: "chana-moong", qty: 2 }], "req-now-0005", actor, menuNow);
+    const done = (await subRef.get()).data()!;
+    assert.equal(done.mealsUsed, 5);
+    assert.equal(done.status, "completed", "plan completes when the last bowl is ordered");
+    ok("subscription order-now: spends the balance, rings the kitchen, idempotent, respects plan, owner, balance and kitchen hours");
+  }
 
   // ---- Wastage, counts, batch close
   await ops.recordWastage("lettuce", 100, "Wilted", actor);
