@@ -10,6 +10,7 @@ import type { BusinessSettings, Role, UserProfile } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 import { AddressForm } from "@/components/AddressForm";
 import { Badge, Button, Card, ErrorText, Field, Input, PageHeader, Select, Td, Textarea, Th } from "@/components/ui";
+import { DEFAULT_HOURS } from "@/lib/hours";
 
 export default function SettingsPage() {
   return (
@@ -70,9 +71,15 @@ function BusinessCard() {
         <Field label="Google review link" hint="From your Google Business Profile → Ask for reviews"><Input value={f.googleReviewUrl ?? ""} placeholder="https://g.page/r/…/review" onChange={(e) => set("googleReviewUrl", e.target.value)} /></Field>
         <Field label="Zomato page link"><Input value={f.zomatoUrl ?? ""} placeholder="https://www.zomato.com/…" onChange={(e) => set("zomatoUrl", e.target.value)} /></Field>
         <div className="sm:col-span-2"><Field label="Invoice footer"><Input value={f.invoiceFooter} onChange={(e) => set("invoiceFooter", e.target.value)} /></Field></div>
-        <label className="flex items-center gap-2 text-sm sm:col-span-2 lg:col-span-4">
+        <Field label="Website orders open at" hint="India time">
+          <Input type="time" value={f.orderingHours?.opens ?? DEFAULT_HOURS.opens} onChange={(e) => set("orderingHours", { ...(f.orderingHours ?? DEFAULT_HOURS), opens: e.target.value })} />
+        </Field>
+        <Field label="Website orders close at" hint="Customers see “kitchen closed” outside these hours">
+          <Input type="time" value={f.orderingHours?.closes ?? DEFAULT_HOURS.closes} onChange={(e) => set("orderingHours", { ...(f.orderingHours ?? DEFAULT_HOURS), closes: e.target.value })} />
+        </Field>
+        <label className="flex items-center gap-2 text-sm sm:col-span-2">
           <input type="checkbox" checked={f.acceptingOrders} onChange={(e) => set("acceptingOrders", e.target.checked)} />
-          Accepting website orders (turn off when the kitchen is closed)
+          Accepting website orders (switch off to close early, e.g. holidays or a rush)
         </label>
         <div className="sm:col-span-2 lg:col-span-4">
           <h4 className="mb-2 text-xs font-medium text-stone-600">Kitchen address (Porter pickup — include coordinates)</h4>

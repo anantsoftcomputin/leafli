@@ -52,7 +52,7 @@ export function restaurant(s: PublicSettings, dishes: PublicDish[]) {
       addressCountry: "IN",
     },
     ...(a?.lat != null ? { geo: { "@type": "GeoCoordinates", latitude: a.lat, longitude: a.lng }, hasMap: `https://www.google.com/maps/search/?api=1&query=${a.lat},${a.lng}` } : {}),
-    openingHoursSpecification: [{ "@type": "OpeningHoursSpecification", dayOfWeek: DAYS, opens: LOCAL.opens, closes: LOCAL.closes }],
+    openingHoursSpecification: [{ "@type": "OpeningHoursSpecification", dayOfWeek: DAYS, opens: s.orderingHours?.opens || LOCAL.opens, closes: s.orderingHours?.closes || LOCAL.closes }],
     areaServed: [CITY, ...LOCAL.areas.map((n) => ({ "@type": "Place", name: `${n}, ${LOCAL.city}` }))],
     potentialAction: {
       "@type": "OrderAction",

@@ -22,7 +22,7 @@ export function MenuSection({ hideHeading }: { hideHeading?: boolean } = {}) {
   const root = useRef<HTMLElement>(null);
   const grid = useRef<HTMLDivElement>(null);
   const flipState = useRef<Flip.FlipState | null>(null);
-  const { menu, live } = useSite();
+  const { menu, kitchen, live } = useSite();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("all");
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -91,8 +91,8 @@ export function MenuSection({ hideHeading }: { hideHeading?: boolean } = {}) {
           ))}
         </div>
         {!live && <p className="mt-6 text-sm text-ink/50">Showing our signature bowls — live availability loads when ordering opens.</p>}
-        {live && !menu.acceptingOrders && (
-          <p className="mt-6 rounded-2xl bg-mango/20 px-4 py-3 text-sm font-medium text-ink/80">The kitchen is closed right now. Come back during service hours to order.</p>
+        {live && !kitchen.open && (
+          <p role="status" className="mt-6 rounded-2xl bg-mango/20 px-4 py-3 text-sm font-medium text-ink/80">🕘 {kitchen.message}</p>
         )}
 
         <div ref={grid} className="mt-6 grid gap-3 sm:mt-12 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">

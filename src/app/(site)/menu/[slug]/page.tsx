@@ -104,7 +104,7 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
         <div>
           <h2 className="font-display text-2xl font-medium">How it arrives</h2>
           <p className="mt-4 text-ink/75">Assembled to order in our Akota kitchen, packed in a rigid bowl and kept chilled. Dressings and crunchy toppings travel separately — toss just before you eat for the best texture.</p>
-          <p className="mt-3 text-sm text-ink/50">Delivered across Vadodara, 11 am – 11 pm daily. <Link href="/healthy-food-vadodara" className="font-semibold text-leaf-700 hover:underline">Delivery areas →</Link></p>
+          <p className="mt-3 text-sm text-ink/50">Delivered across Vadodara, 11 am – 9 pm daily. <Link href="/healthy-food-vadodara" className="font-semibold text-leaf-700 hover:underline">Delivery areas →</Link></p>
         </div>
       </section>
 

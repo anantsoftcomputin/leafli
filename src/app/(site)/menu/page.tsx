@@ -8,7 +8,7 @@ import { getPublicMenu } from "@/lib/server/content";
 export const metadata: Metadata = {
   title: { absolute: "Salad Menu Vadodara — Healthy Bowls Delivered | Leafli" },
   description:
-    "Order salads online in Vadodara: Chicken Caesar, Salad Caprese, Asian Noodle Salad and more, with calories, allergens and prices. Delivered fresh, 11 am–11 pm.",
+    "Order salads online in Vadodara: Chicken Caesar, Salad Caprese, Asian Noodle Salad and more, with calories, allergens and prices. Delivered fresh, 11 am–9 pm.",
   alternates: { canonical: "/menu" },
 };
 

@@ -14,7 +14,7 @@ const GROUPS: { title: string; items: { q: string; a: string }[] }[] = [
     title: "Ordering & delivery",
     items: [
       { q: "Where do you deliver?", a: "We deliver across Vadodara city from our cloud kitchen in Akota — including Alkapuri, Old Padra Road, Race Course, Gotri, Vasna-Bhayli, Manjalpur, Karelibaug, Fatehgunj, Sama, Nizampura and Waghodia Road. Enter your address at checkout to confirm delivery for your street." },
-      { q: "What are your opening hours?", a: "We take orders from 11 am to 11 pm, every day of the week. Subscription lunches arrive between 12 and 2 pm and dinners between 7 and 9 pm." },
+      { q: "What are your opening hours?", a: "We take orders from 11 am to 9 pm, every day of the week. Subscription lunches arrive between 12 and 2 pm and dinners between 7 and 9 pm." },
       { q: "Where can I get healthy food in Vadodara?", a: "Leafli is a Vadodara kitchen dedicated to salads and healthy bowls — high-protein vegetarian salads, chicken salads and fruit bowls with calories and allergens listed for every dish. Order online at leafli.in for delivery anywhere in Vadodara." },
       { q: "Can I order salads for my office in Vadodara?", a: "Yes. We deliver team lunches and bulk salad orders to offices across Vadodara. Contact us a day ahead for large orders so we can schedule them." },
       { q: "How long does delivery take?", a: "Most orders are assembled within 15–20 minutes and then handed to a rider. You can track your rider live from your order page." },

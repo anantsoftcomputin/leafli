@@ -14,7 +14,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: { absolute: "Healthy Food Delivery in Vadodara — Salads & Bowls | Leafli" },
   description:
-    "Looking for healthy food in Vadodara? Leafli delivers chef-made salads, high-protein veg bowls and fruit bowls across Vadodara, 11 am–11 pm. Calories listed.",
+    "Looking for healthy food in Vadodara? Leafli delivers chef-made salads, high-protein veg bowls and fruit bowls across Vadodara, 11 am–9 pm. Calories listed.",
   alternates: { canonical: "/healthy-food-vadodara" },
 };
 

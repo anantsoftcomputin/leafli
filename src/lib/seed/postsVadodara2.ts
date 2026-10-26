@@ -121,7 +121,7 @@ Each gives you a good portion of protein, some carbohydrates and vegetables — 
 
 Good post workout meals don't need to be complicated: protein, some carbs, vegetables and water, within a couple of hours of training. Get your total daily protein right and you'll recover well.
 
-Browse our high-protein bowls on the [menu](/menu) — we deliver across Vadodara from 11 am to 11 pm.
+Browse our high-protein bowls on the [menu](/menu) — we deliver across Vadodara from 11 am to 9 pm.
 `,
   },
   {
@@ -221,7 +221,7 @@ Same flavours, much better balance. You'll likely find you feel lighter after me
 
 ## When you don't have time to cook
 
-Busy weekdays are when the healthy plan usually falls apart. On those days, a protein-rich salad bowl is a light, satisfying alternative. We deliver across Vadodara from 11 am to 11 pm — see the [menu](/menu), or let our [salad subscription](/plans) handle your weekday lunches.
+Busy weekdays are when the healthy plan usually falls apart. On those days, a protein-rich salad bowl is a light, satisfying alternative. We deliver across Vadodara from 11 am to 9 pm — see the [menu](/menu), or let our [salad subscription](/plans) handle your weekday lunches.
 
 ## Making swaps stick at home
 
@@ -347,7 +347,7 @@ When a menu lists calories, a few tips help you use the number well. Check what 
 
 The best low calorie food delivery in Vadodara gives you clear calorie labels, real protein, lots of vegetables and dressing on the side. Choose meals that fill you up, and the calorie numbers take care of themselves.
 
-We deliver from our Akota kitchen across Vadodara, 11 am to 11 pm daily — see the [menu](/menu).
+We deliver from our Akota kitchen across Vadodara, 11 am to 9 pm daily — see the [menu](/menu).
 `,
   },
   {
@@ -360,7 +360,7 @@ We deliver from our Akota kitchen across Vadodara, 11 am to 11 pm daily — see 
     focusKeyword: "healthy late night food in Vadodara",
     secondaryKeywords: ["late night delivery Vadodara", "healthy dinner delivery Vadodara", "night food Baroda"],
     metaTitle: "Healthy Late Night Food in Vadodara: Smart Choices",
-    metaDescription: "Hungry after 9 pm? How to choose healthy late night food in Vadodara that satisfies without feeling heavy — plus delivery till 11 pm from Leafli in Akota.",
+    metaDescription: "Hungry after 9 pm? How to choose healthy late night food in Vadodara that satisfies without feeling heavy — plus orders till 9 pm from Leafli in Akota.",
     coverAlt: "Asian noodle salad, a lighter late-night meal in Vadodara",
     coverDish: "asian-rice-noodle",
     relatedMenuIds: ["asian-rice-noodle", "potato-apple", "chocolate-fruit-bowl"],
@@ -368,7 +368,7 @@ We deliver from our Akota kitchen across Vadodara, 11 am to 11 pm daily — see 
     faqs: [
       { q: "Is it bad to eat late at night?", a: "Eating late isn't automatically harmful, but large, heavy or spicy meals close to bedtime can disturb sleep and digestion for some people. A lighter meal a couple of hours before bed is usually more comfortable." },
       { q: "What are healthy late-night food options?", a: "Light, protein-rich meals with vegetables — such as a salad bowl, curd with fruit, a small dal and roti, or a vegetable soup — rather than fried or very heavy food." },
-      { q: "Until what time does Leafli deliver in Vadodara?", a: "Leafli takes orders from 11 am to 11 pm every day and delivers across Vadodara." },
+      { q: "Until what time does Leafli deliver in Vadodara?", a: "Leafli takes orders from 11 am to 9 pm every day and delivers across Vadodara." },
     ],
     content: `Vadodara doesn't sleep early. Students study late near MSU, IT teams work US hours, families head out for late ice cream on Race Course, and Navratri nights go on until the early hours. When hunger hits at 10 pm, the usual options are fried, cheesy and heavy. Here's how to find **healthy late night food in Vadodara** instead.
 
@@ -423,9 +423,9 @@ You'll feel more alert the next morning, and you'll avoid the sugar crash that o
 
 ## Healthy late night food in Vadodara, delivered
 
-The challenge is that most kitchens open late serve heavy food. Leafli takes orders until **11 pm every day**, so you can get a fresh salad or healthy bowl delivered across Vadodara — from Akota and Alkapuri to Gotri, Sama and Waghodia Road — well into the evening.
+The challenge is that most kitchens open late serve heavy food. Leafli takes orders until **9 pm every day**, so if you know it'll be a late night, order a fresh salad or healthy bowl before then and keep it in the fridge — we deliver across Vadodara, from Akota and Alkapuri to Gotri, Sama and Waghodia Road.
 
-Our bowls are assembled to order, so a 10 pm salad is as fresh as a lunchtime one, with dressing on the side so it arrives crisp.
+Our bowls are assembled to order with dressing on the side, so a salad ordered at 8:30 pm still tastes crisp a couple of hours later — just keep it refrigerated and dress it when you eat.
 
 ## Tips to cut down on late-night snacking
 
@@ -452,7 +452,7 @@ The easiest way to avoid a heavy late-night order is to have good options ready.
 
 ## The bottom line
 
-Healthy late night food in Vadodara is about choosing lighter, protein-rich meals with vegetables, eating moderate portions, and leaving some time before bed. And when you'd rather not cook at 10 pm, we're open until 11 — see the [menu](/menu) or our [delivery areas](/healthy-food-vadodara).
+Healthy late night food in Vadodara is about choosing lighter, protein-rich meals with vegetables, eating moderate portions, and leaving some time before bed. And when you know you won't want to cook later, order before 9 pm — see the [menu](/menu) or our [delivery areas](/healthy-food-vadodara).
 `,
   },
   {
@@ -554,7 +554,7 @@ See our guide to [healthy late night food in Vadodara](/blog/healthy-late-night-
 
 Sometimes you just want a good meal without cooking. A fresh salad bowl can be a satisfying treat that won't leave you sleepy in afternoon lectures. Our [Desi Mango & Sprout Salad](/menu/desi-mango-sprout-salad) is vegetarian, tangy and protein-rich, and the [Asian Noodle Salad](/menu/asian-noodle-salad) feels like comfort food. When you need something sweet, the [Dark Chocolate Fruit Bowl](/menu/dark-chocolate-fruit-bowl) beats a packet of biscuits.
 
-We deliver from our Akota kitchen to areas around MSU — Fatehgunj, Sayajigunj and Alkapuri — and across Vadodara, until 11 pm.
+We deliver from our Akota kitchen to areas around MSU — Fatehgunj, Sayajigunj and Alkapuri — and across Vadodara, from 11 am to 9 pm.
 
 ## Small habits that make a big difference
 
@@ -717,7 +717,7 @@ Learn more [about Leafli](/about), or browse the [menu](/menu) to see allergens 
     publishAt: "2026-11-30T09:00:00+05:30",
     faqs: [
       { q: "Is a fruit bowl a healthy dessert?", a: "Whole fruit gives you sweetness along with fibre, vitamins and water, which makes it a lighter choice than most sugary desserts. Watch added syrups, cream and sweetened toppings." },
-      { q: "Does Leafli deliver fruit bowls in Vadodara?", a: "Yes. Leafli's Dark Chocolate Fruit Bowl is available for delivery across Vadodara from 11 am to 11 pm, along with our salads and healthy bowls." },
+      { q: "Does Leafli deliver fruit bowls in Vadodara?", a: "Yes. Leafli's Dark Chocolate Fruit Bowl is available for delivery across Vadodara from 11 am to 9 pm, along with our salads and healthy bowls." },
       { q: "Is fruit juice as healthy as a fruit bowl?", a: "Not quite. Juicing removes much of the fibre, and the WHO counts sugars in fruit juice as free sugars. Whole fruit is the better choice." },
     ],
     content: `Vadodara loves its sweets — from jalebi-fafda mornings to kulfi on summer nights. But not every craving needs a sugar rush. A good fruit bowl satisfies your sweet tooth while giving you fibre, vitamins and a refreshing finish. Here's what makes a great one and how to get **fruit bowl delivery in Vadodara**.
@@ -785,7 +785,7 @@ Our [Desi Mango & Sprout Salad](/menu/desi-mango-sprout-salad) brings mango into
 
 ## Fruit bowl delivery in Vadodara
 
-Cutting a variety of fruit at home is time-consuming, and buying five types of fruit for one bowl rarely makes sense. That's where fruit bowl delivery in Vadodara helps. We prepare our fruit bowls to order and keep them chilled, delivering across Vadodara — Akota, Alkapuri, Gotri, Manjalpur, Karelibaug, Sama and beyond — from 11 am to 11 pm.
+Cutting a variety of fruit at home is time-consuming, and buying five types of fruit for one bowl rarely makes sense. That's where fruit bowl delivery in Vadodara helps. We prepare our fruit bowls to order and keep them chilled, delivering across Vadodara — Akota, Alkapuri, Gotri, Manjalpur, Karelibaug, Sama and beyond — from 11 am to 9 pm.
 
 You can add a fruit bowl to any salad order, making it a complete lunch with dessert.
 

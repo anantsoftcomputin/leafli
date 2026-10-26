@@ -29,6 +29,7 @@ export const GET = route(async (req: NextRequest) => {
     }));
   const res = Response.json({
     acceptingOrders: settings.acceptingOrders,
+    orderingHours: settings.orderingHours ?? null,
     // Razorpay key id is public by design (it's embedded in Checkout); the secret never leaves the server.
     razorpayKeyId: razorpayConfigured() ? razorpayKeyId() : null,
     gstRate: settings.gstRate,

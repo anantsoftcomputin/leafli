@@ -267,6 +267,8 @@ export interface BusinessSettings {
   defaultDeliveryCharge: number;
   zomatoCommissionPct: number;
   acceptingOrders: boolean;
+  /** Website ordering hours, India time ("HH:MM"). Missing → DEFAULT_HOURS. */
+  orderingHours?: { opens: string; closes: string };
   porterEnabled: boolean;
   zomatoEnabled: boolean;
   invoiceFooter: string;

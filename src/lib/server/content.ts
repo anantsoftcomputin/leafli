@@ -28,6 +28,7 @@ export interface PublicDish {
 
 export interface PublicMenu {
   acceptingOrders: boolean;
+  orderingHours: BusinessSettings["orderingHours"] | null;
   razorpayKeyId: string | null;
   gstRate: number;
   packagingChargePerOrder: number;
@@ -35,7 +36,7 @@ export interface PublicMenu {
   items: PublicDish[];
 }
 
-export type PublicSettings = Pick<BusinessSettings, "name" | "legalName" | "gstin" | "fssai" | "phone" | "email" | "address" | "acceptingOrders" | "googleReviewUrl" | "zomatoUrl">;
+export type PublicSettings = Pick<BusinessSettings, "name" | "legalName" | "gstin" | "fssai" | "phone" | "email" | "address" | "acceptingOrders" | "orderingHours" | "googleReviewUrl" | "zomatoUrl">;
 
 export const getSettingsCached = unstable_cache(
   async (): Promise<BusinessSettings> => {
@@ -48,7 +49,7 @@ export const getSettingsCached = unstable_cache(
 
 export async function getPublicSettings(): Promise<PublicSettings> {
   const s = await getSettingsCached();
-  return { name: s.name, legalName: s.legalName, gstin: s.gstin, fssai: s.fssai, phone: s.phone, email: s.email, address: s.address, acceptingOrders: s.acceptingOrders, googleReviewUrl: s.googleReviewUrl, zomatoUrl: s.zomatoUrl };
+  return { name: s.name, legalName: s.legalName, gstin: s.gstin, fssai: s.fssai, phone: s.phone, email: s.email, address: s.address, acceptingOrders: s.acceptingOrders, orderingHours: s.orderingHours, googleReviewUrl: s.googleReviewUrl, zomatoUrl: s.zomatoUrl };
 }
 
 const toDish = (id: string, m: Omit<MenuItem, "id">): PublicDish => ({
@@ -86,6 +87,7 @@ export async function getPublicMenu(): Promise<PublicMenu> {
   const [items, s] = await Promise.all([getMenuRaw(), getSettingsCached()]);
   return {
     acceptingOrders: s.acceptingOrders,
+    orderingHours: s.orderingHours ?? null,
     razorpayKeyId: razorpayConfigured() ? razorpayKeyId() : null,
     gstRate: s.gstRate,
     packagingChargePerOrder: s.packagingChargePerOrder,

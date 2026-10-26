@@ -22,7 +22,7 @@ export const VADODARA_POSTS_A: SeedPost[] = [
     relatedMenuIds: ["caprese", "chicken-caesar", "chana-moong"],
     publishAt: "2026-10-25T08:00:00+05:30",
     faqs: [
-      { q: "Where can I order salads in Vadodara?", a: "Leafli delivers salads and healthy bowls across Vadodara from its kitchen in Akota, 11 am to 11 pm every day. You can order on leafli.in or on Zomato." },
+      { q: "Where can I order salads in Vadodara?", a: "Leafli delivers salads and healthy bowls across Vadodara from its kitchen in Akota, 11 am to 9 pm every day. You can order on leafli.in or on Zomato." },
       { q: "Are salads filling enough for lunch?", a: "Yes, when they include protein, some slow carbohydrates, healthy fat and enough volume. A side salad of leaves alone won't keep you full." },
       { q: "Why should salad dressing come separately?", a: "Dressing softens leaves within minutes. Packing it separately keeps the salad crisp until you're ready to eat." },
     ],
@@ -101,7 +101,7 @@ And one practical tip: when your salad arrives, open the dressing, pour it over,
 
 We're obviously biased — we think our bowls are among the best salads in Vadodara, because we built our whole kitchen around the six points above. But the checklist works anywhere. Next time you order, look for freshness, real protein, balance, honest labels, bold flavour and good packaging.
 
-If you want to try us, start with a single bowl from the [menu](/menu), or try five lunches with our [Taster Week plan](/plans/taster-week). We deliver across Vadodara from 11 am to 11 pm — see all our [delivery areas](/healthy-food-vadodara).
+If you want to try us, start with a single bowl from the [menu](/menu), or try five lunches with our [Taster Week plan](/plans/taster-week). We deliver across Vadodara from 11 am to 9 pm — see all our [delivery areas](/healthy-food-vadodara).
 `,
   },
   {
@@ -208,7 +208,7 @@ Healthy food tastes best when it's eaten soon after it's made. In a city the siz
 
 ## Where Leafli fits in
 
-We're a Vadodara kitchen in Akota that only makes salads and healthy bowls, open 11 am to 11 pm every day. Try the [Desi Mango & Sprout Salad](/menu/desi-mango-sprout-salad) for something tangy and vegetarian, or the [Roasted Potato & Apple Salad](/menu/roasted-potato-apple-salad) for a lighter, comforting bowl. See where we deliver on our [healthy food in Vadodara](/healthy-food-vadodara) page.
+We're a Vadodara kitchen in Akota that only makes salads and healthy bowls, open 11 am to 9 pm every day. Try the [Desi Mango & Sprout Salad](/menu/desi-mango-sprout-salad) for something tangy and vegetarian, or the [Roasted Potato & Apple Salad](/menu/roasted-potato-apple-salad) for a lighter, comforting bowl. See where we deliver on our [healthy food in Vadodara](/healthy-food-vadodara) page.
 `,
   },
   {
@@ -618,7 +618,7 @@ Diwali gifting in Vadodara usually means boxes of mithai and dry fruit. If you'd
 
 Healthy Diwali eating means enjoying the festival with the people you love and the food you grew up with, while looking after yourself along the way. Eat regular meals, pick your favourite sweets, keep moving and balance the days in between.
 
-Happy Diwali from all of us at Leafli in Akota. If you need a light lunch between celebrations, we deliver across Vadodara from 11 am to 11 pm — see the [menu](/menu).
+Happy Diwali from all of us at Leafli in Akota. If you need a light lunch between celebrations, we deliver across Vadodara from 11 am to 9 pm — see the [menu](/menu).
 `,
   },
   {
@@ -829,7 +829,7 @@ Cold-weather bowls travel well because cooler weather keeps them fresher for lon
 
 ## Enjoy the season
 
-Fresh seasonal bowls are one of the best things about Vadodara's cool months — colourful, crunchy and full of flavour. Make them at home with seasonal produce, or let us do the work: we deliver fresh bowls across Vadodara from 11 am to 11 pm. See the [menu](/menu) or try a [salad subscription](/plans) for the season.
+Fresh seasonal bowls are one of the best things about Vadodara's cool months — colourful, crunchy and full of flavour. Make them at home with seasonal produce, or let us do the work: we deliver fresh bowls across Vadodara from 11 am to 9 pm. See the [menu](/menu) or try a [salad subscription](/plans) for the season.
 `,
   },
 ];

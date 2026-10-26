@@ -45,7 +45,8 @@ async function main() {
     const { id, ...rest } = p;
     batch.set(adminDb.collection("plans").doc(id), rest);
   }
-  batch.set(adminDb.collection("settings").doc("business"), { ...DEFAULT_SETTINGS, packagingChargePerOrder: 10 });
+  // Equal open/close times = open around the clock, so the suite passes at any hour.
+  batch.set(adminDb.collection("settings").doc("business"), { ...DEFAULT_SETTINGS, packagingChargePerOrder: 10, orderingHours: { opens: "00:00", closes: "00:00" } });
   await batch.commit();
   await ops.recostPreps();
   ok("seeded SOP data and computed prep standard costs");
@@ -109,6 +110,24 @@ async function main() {
   near(chanaBatch.remaining, chanaBefore, "batch remaining restored");
   assert.equal(chanaBatch.status, "active");
   ok("website order: deducted on accept, fully restored (incl. batch) when cancelled before prep");
+
+  // ---- Ordering hours: website orders refused outside them; staff billing still works
+  {
+    const settingsRef = adminDb.collection("settings").doc("business");
+    const { istMinutes } = await import("../src/lib/hours");
+    const t = istMinutes();
+    const hhmm = (m: number) => `${String(Math.floor((m % 1440) / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+    await settingsRef.update({ orderingHours: { opens: hhmm(t + 60), closes: hhmm(t + 120) } }); // opens in an hour
+    await assert.rejects(
+      createOrder({ source: "website", customer: { name: "Early" }, lines: [{ menuItemId: "chana-moong", qty: 1 }], paymentMode: "pay_later", deliveryProvider: "pickup" }, actor),
+      /kitchen is closed/,
+    );
+    const counter = await createOrder({ source: "pos", customer: { name: "Walk-in" }, lines: [{ menuItemId: "chana-moong", qty: 1 }], paymentMode: "cash", deliveryProvider: "pickup", autoAccept: true }, actor);
+    assert.equal(counter.status, "accepted");
+    await setOrderStatus(counter.id, "cancelled", actor, "test");
+    await settingsRef.update({ orderingHours: { opens: "00:00", closes: "00:00" } });
+    ok("website order refused outside ordering hours with the kitchen-closed message; POS billing unaffected");
+  }
 
   // ---- Cancel after preparing: no restore
   const web2 = await createOrder(

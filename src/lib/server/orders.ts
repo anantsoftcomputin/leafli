@@ -18,6 +18,7 @@ import { notifyNewOrder, notifyOrderStatus } from "./push";
 import { onOrderLive, onOrderStatus, onStaffIssue } from "./notifications";
 import { awaitingPayment } from "@/lib/types";
 import { HttpError, type Actor } from "./http";
+import { kitchenStatus } from "@/lib/hours";
 import { col, financialYear, istDateKey, nextCounter, StockTx } from "./inventory";
 
 export async function getSettings(tx?: Transaction): Promise<BusinessSettings> {
@@ -82,7 +83,12 @@ export async function createOrder(input: CreateOrderInput, actor: Actor) {
       if (existing.exists) return { id: orderRef.id, duplicate: true, ...(existing.data() as Omit<Order, "id">) };
     }
     if (!settings.acceptingOrders && input.source !== "pos" && !input.prepaid)
-      throw new HttpError(409, "The kitchen is not accepting orders right now");
+      throw new HttpError(409, kitchenStatus(settings).message);
+    // Website orders only inside ordering hours (Zomato enforces its own hours; staff can always bill).
+    if (input.source === "website" && !input.prepaid) {
+      const k = kitchenStatus(settings);
+      if (!k.open) throw new HttpError(409, k.message);
+    }
 
     const menuIds = [...new Set(input.lines.map((l) => l.menuItemId))];
     const menuSnaps = await tx.getAll(...menuIds.map((id) => col.menu().doc(id)));

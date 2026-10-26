@@ -60,7 +60,7 @@ export function Footer({ settings }: { settings?: PublicSettings | null }) {
           <p className="mt-5 max-w-xs font-display text-2xl leading-snug text-cream-50 italic">Fresh bowls. Happy moods.</p>
           <div className="mt-5 space-y-1 text-sm">
             {a?.line1 && <address className="not-italic">{[a.line1, a.line2, a.city, a.pincode].filter(Boolean).join(", ")}</address>}
-            <p>Salads &amp; healthy bowls delivered across Vadodara · Open 11 am – 11 pm daily</p>
+            <p>Salads &amp; healthy bowls delivered across Vadodara · Open 11 am – 9 pm daily</p>
             {settings?.phone && <a href={`tel:${settings.phone}`} className="block hover:text-cream-50">{settings.phone}</a>}
             {settings?.email && <a href={`mailto:${settings.email}`} className="block hover:text-cream-50">{settings.email}</a>}
             <a href="https://www.instagram.com/leafli.in" target="_blank" rel="noreferrer" className="inline-flex text-lime-300 hover:underline">@leafli.in on Instagram ↗</a>

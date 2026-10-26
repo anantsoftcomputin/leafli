@@ -5,7 +5,7 @@ import { LOCAL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact Leafli Vadodara — Orders, Office Lunches & Plans",
-  description: "Contact Leafli, the salad kitchen in Akota, Vadodara: help with an order or subscription, bulk and office lunch orders across Vadodara. Open 11 am–11 pm daily.",
+  description: "Contact Leafli, the salad kitchen in Akota, Vadodara: help with an order or subscription, bulk and office lunch orders across Vadodara. Open 11 am–9 pm daily.",
   alternates: { canonical: "/contact" },
 };
 

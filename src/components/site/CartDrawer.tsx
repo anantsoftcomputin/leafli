@@ -17,7 +17,7 @@ import { DishImage } from "./DishImage";
 import { useSite } from "./SiteContext";
 
 export function CartDrawer() {
-  const { cartOpen, setCartOpen, cart, add, menu, clear, count } = useSite();
+  const { cartOpen, setCartOpen, cart, add, menu, kitchen, clear, count } = useSite();
   const { user, profile } = useAuth();
   const router = useRouter();
   const panel = useRef<HTMLDivElement>(null);
@@ -270,6 +270,7 @@ export function CartDrawer() {
               <div className="flex justify-between pt-2 text-lg font-semibold text-ink"><dt>To pay</dt><dd className="tabular-nums">{inr(bill.total)}</dd></div>
             </dl>
             {err && <p className="mt-3 rounded-xl bg-tomato/10 px-3 py-2 text-sm text-tomato">{err}</p>}
+            {!kitchen.open && <p role="status" className="mt-3 rounded-xl bg-mango/20 px-3 py-2 text-sm font-medium text-ink/80">{kitchen.message}</p>}
             {step === "bag" ? (
               <button onClick={() => setStep("details")} disabled={!menu.acceptingOrders} className="mt-4 w-full rounded-full bg-leaf-700 py-4 font-semibold text-cream-50 transition hover:bg-leaf-800 disabled:opacity-50">
                 {menu.acceptingOrders ? "Checkout" : "Kitchen closed right now"}
@@ -278,7 +279,7 @@ export function CartDrawer() {
               <div className="mt-4 flex gap-2">
                 <button onClick={() => setStep("bag")} className="rounded-full px-5 py-4 font-semibold text-ink/60 hover:bg-ink/5">Back</button>
                 {user && (
-                  <button onClick={place} disabled={busy} className="flex-1 rounded-full bg-leaf-700 py-4 font-semibold text-cream-50 transition hover:bg-leaf-800 disabled:opacity-60">
+                  <button onClick={place} disabled={busy || !kitchen.open} className="flex-1 rounded-full bg-leaf-700 py-4 font-semibold text-cream-50 transition hover:bg-leaf-800 disabled:opacity-60">
                     {busy ? "Placing order…" : payMode === "online" && menu.razorpayKeyId ? `Pay ${inr(bill.total)}` : `Place order · ${inr(bill.total)}`}
                   </button>
                 )}

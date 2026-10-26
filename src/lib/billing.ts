@@ -2,6 +2,7 @@
 // function for the live preview so the numbers always match.
 import { round2 } from "./costing";
 import type { BusinessSettings, Channel } from "./types";
+import { DEFAULT_HOURS } from "./hours";
 
 export interface BillInput {
   source: Channel;
@@ -72,6 +73,7 @@ export const DEFAULT_SETTINGS: BusinessSettings = {
   defaultDeliveryCharge: 0,
   zomatoCommissionPct: 25,
   acceptingOrders: true,
+  orderingHours: DEFAULT_HOURS,
   porterEnabled: false,
   zomatoEnabled: false,
   invoiceFooter: "Thank you for ordering from Leafli!",

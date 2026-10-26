@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { kitchenStatus, type KitchenStatus, type OrderingHours } from "@/lib/hours";
 import type { MenuItem } from "@/lib/types";
 import { storagePhoto } from "./DishImage";
 
@@ -10,7 +11,9 @@ export type PublicItem = Pick<MenuItem, "id" | "name" | "description" | "categor
   nutrition?: MenuItem["nutrition"] | null;
 };
 export interface PublicMenu {
+  /** Effective "can order now" on the client (manual switch AND ordering hours). */
   acceptingOrders: boolean;
+  orderingHours?: OrderingHours | null;
   razorpayKeyId?: string | null;
   gstRate: number;
   packagingChargePerOrder: number;
@@ -36,6 +39,8 @@ const FALLBACK: PublicMenu = {
 
 interface SiteState {
   menu: PublicMenu;
+  /** Open/closed right now, with the message to show when closed. */
+  kitchen: KitchenStatus;
   live: boolean; // true once the real menu has loaded
   cart: Record<string, number>;
   count: number;
@@ -58,6 +63,18 @@ export function SiteProvider({ children, initialMenu }: { children: React.ReactN
   const [cart, setCart] = useState<Record<string, number>>({});
   const [cartOpen, setCartOpen] = useState(false);
   const [cartTarget, setCartTarget] = useState<HTMLElement | null>(null);
+  // Pages are cached HTML, so the clock is only read in the browser (null until mounted),
+  // and re-checked every 30 s so the menu closes on time for someone already browsing.
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+    const id = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  const kitchen = useMemo<KitchenStatus>(
+    () => (now ? kitchenStatus(menu, now) : { open: menu.acceptingOrders, message: menu.acceptingOrders ? "" : kitchenStatus(menu).message }),
+    [menu, now],
+  );
 
   useEffect(() => {
     try {
@@ -92,7 +109,8 @@ export function SiteProvider({ children, initialMenu }: { children: React.ReactN
 
   const value = useMemo<SiteState>(
     () => ({
-      menu,
+      menu: kitchen.open === menu.acceptingOrders ? menu : { ...menu, acceptingOrders: kitchen.open },
+      kitchen,
       live,
       cart,
       count: Object.values(cart).reduce((a, b) => a + b, 0),
@@ -103,7 +121,7 @@ export function SiteProvider({ children, initialMenu }: { children: React.ReactN
       cartTarget,
       setCartTarget,
     }),
-    [menu, live, cart, add, cartOpen, cartTarget],
+    [menu, kitchen, live, cart, add, cartOpen, cartTarget],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
