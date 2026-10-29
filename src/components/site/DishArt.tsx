@@ -22,12 +22,27 @@ export const DISH_THEME: Record<string, { bg: string; fg: string; accent: string
   "asian-rice-noodle": { bg: "#efe2f2", fg: "#4b2560", accent: "#f08a2c", tag: "Sesame & soy" },
   "chana-moong": { bg: "#fbecc9", fg: "#5a3b10", accent: "#ef5b3c", tag: "High-fibre desi" },
   caprese: { bg: "#fde3dc", fg: "#7a1f14", accent: "#3f7a4f", tag: "Italian classic" },
+  "greek-hummus": { bg: "#f4ead6", fg: "#3d3a1c", accent: "#b8324a", tag: "Mediterranean" },
   "potato-apple": { bg: "#f6eccd", fg: "#4a3410", accent: "#b4365e", tag: "Tangy & hearty" },
   "potato-apple-eggless": { bg: "#f6eccd", fg: "#4a3410", accent: "#b4365e", tag: "Eggless · Tangy & hearty" },
   "chocolate-fruit-bowl": { bg: "#f3dde4", fg: "#4a1e2e", accent: "#e2397a", tag: "Guilt-light dessert" },
 };
 
 const RECIPES: Record<string, Recipe> = {
+  "greek-hummus": {
+    base: "#e8d3a6", rim: "#ffffff", bowl: "#f4efe3",
+    layers: [
+      { shape: "leaf", colors: ["#7fb35a", "#9cc96d"], count: 8, size: 20, rings: [0.2, 0.9] },
+      { shape: "cube", colors: ["#b9d98a", "#d8ecb6"], count: 14, size: 10, rings: [0.1, 0.9] },
+      { shape: "half", colors: ["#e8402d", "#f2593f"], count: 6, size: 12, rings: [0.3, 0.9] },
+      { shape: "disc", colors: ["#2f2a2a", "#4a3f3a"], count: 7, size: 8, rings: [0.1, 0.85] },
+      { shape: "slice", colors: ["#d7b6d6", "#c99bc6"], count: 6, size: 16, rings: [0.2, 0.9] },
+      { shape: "slice", colors: ["#e6c48a", "#d9b06e"], count: 4, size: 26, rings: [0.5, 0.9] },
+      { shape: "leaf", colors: ["#3f9a4a", "#5bb35f"], count: 8, size: 10, rings: [0, 0.9] },
+      { shape: "seed", colors: ["#c8203f", "#e0304f"], count: 24, size: 3.5, rings: [0, 0.9] },
+      { shape: "seed", colors: ["#8a2a2a", "#6b8a3a"], count: 30, size: 1.8, rings: [0, 0.8] },
+    ],
+  },
   "chicken-caesar": {
     base: "#cfe3a8", rim: "#ffffff", bowl: "#f4efe3",
     layers: [
