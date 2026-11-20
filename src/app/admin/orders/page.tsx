@@ -71,9 +71,9 @@ export default function OrdersPage() {
                         {o.customer.name} · {timeAgo(o.createdAt)}
                       </div>
                       <ul className="my-2 space-y-0.5 text-xs">
-                        {o.lines.map((l) => (
-                          <li key={l.menuItemId}>
-                            <b>{l.qty}×</b> {l.name}
+                        {o.lines.map((l, index) => (
+                          <li key={index}>
+                            <b>{l.qty}×</b> {l.name}<span className="block text-leaf-700">{[l.variantName, ...(l.addons ?? []).map((a) => a.name)].filter(Boolean).join(" · ")}</span>
                           </li>
                         ))}
                       </ul>

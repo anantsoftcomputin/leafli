@@ -1,11 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Printer } from "lucide-react";
-import { api } from "@/lib/api";
 import { inr } from "@/lib/costing";
 import { rupeesInWords, type SubscriptionInvoice } from "@/lib/invoice";
-import { useAuth } from "@/components/AuthProvider";
+import { InvoicePage } from "@/components/InvoicePage";
 
 const date = (ts: number) => new Date(ts).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
 const day = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
@@ -13,27 +10,7 @@ const addr = (a: { line1?: string; line2?: string; city?: string; state?: string
 
 /** Loads and shows a plan's tax invoice, with a Print / Save as PDF button. */
 export function SubscriptionInvoicePage({ id }: { id: string }) {
-  const { user, loading } = useAuth();
-  const [inv, setInv] = useState<SubscriptionInvoice | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  useEffect(() => {
-    if (loading) return;
-    if (!user) return setErr("Please sign in to see this invoice.");
-    api<SubscriptionInvoice>(`/api/subscriptions/${id}/invoice`).then(setInv).catch((e) => setErr((e as Error).message));
-  }, [id, user, loading]);
-
-  if (err) return <p className="rounded-xl bg-tomato/10 px-4 py-3 text-sm text-tomato">{err}</p>;
-  if (!inv) return <p className="text-sm text-stone-500">Loading invoice…</p>;
-  return (
-    <div>
-      <div className="no-print mb-4 flex justify-end">
-        <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-full bg-leaf-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-leaf-800">
-          <Printer className="size-4" /> Print / Save as PDF
-        </button>
-      </div>
-      <SubscriptionInvoiceView inv={inv} />
-    </div>
-  );
+  return <InvoicePage kind="subscription" id={id} />;
 }
 
 export function SubscriptionInvoiceView({ inv }: { inv: SubscriptionInvoice }) {

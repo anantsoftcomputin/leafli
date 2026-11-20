@@ -59,6 +59,7 @@ export interface NavItem {
 export const NAV: NavItem[] = [
   { href: "/admin", label: "Dashboard", roles: MGR, icon: LayoutDashboard, group: "Overview" },
   { href: "/admin/pos", label: "Billing / POS", roles: ["admin", "manager", "cashier"], icon: Receipt, group: "Sell" },
+  { href: "/admin/invoices", label: "Invoices", roles: ["admin", "manager", "cashier"], icon: Receipt, group: "Sell" },
   { href: "/admin/orders", label: "Orders", roles: ALL, icon: ClipboardList, group: "Sell", badge: "newOrders" },
   { href: "/admin/subscriptions", label: "Subscriptions", roles: ALL, icon: RefreshCw, group: "Sell", badge: "subsDue" },
   { href: "/admin/kitchen", label: "Kitchen display", roles: ALL, icon: ChefHat, group: "Kitchen & stock", badge: "openTickets" },

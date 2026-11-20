@@ -9,6 +9,8 @@ import { useLiveDoc, useSettings } from "@/lib/hooks";
 import type { Order } from "@/lib/types";
 import { OrderActions, SourceBadge, StatusBadge } from "@/components/OrderBits";
 import { Badge, Button, Card, ErrorText } from "@/components/ui";
+import { InvoiceView } from "@/components/InvoiceView";
+import { buildInvoiceRecord } from "@/lib/invoice-record";
 import { PaymentPanel } from "@/components/admin/PaymentPanel";
 
 export default function OrderDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -24,6 +26,7 @@ export default function OrderDetail({ params }: { params: Promise<{ id: string }
   if (loading) return <p className="text-sm text-stone-500">Loading…</p>;
   if (!order) return <p className="text-sm text-stone-500">Order not found.</p>;
 
+  const invoice = buildInvoiceRecord("order", order.id, order, settings);
   const margin = order.taxableValue - order.foodCost - order.aggregatorCommission - (order.delivery.fare ?? 0);
 
   return (
@@ -35,14 +38,15 @@ export default function OrderDetail({ params }: { params: Promise<{ id: string }
           <SourceBadge source={order.source} />
           <StatusBadge status={order.status} />
           <div className="ml-auto flex gap-2">
-            <Button variant="secondary" onClick={() => window.print()}>Print bill</Button>
+            {invoice && <Link className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-leaf-700 ring-1 ring-stone-200" href={`/admin/invoices/order/${order.id}`}>View / edit invoice</Link>}
+            <Button variant="secondary" onClick={() => window.print()}>Print / Save as PDF</Button>
           </div>
         </div>
         <div className="no-print">
           <OrderActions order={order} />
         </div>
 
-        <Invoice order={order} settings={settings} />
+        {invoice ? <InvoiceView invoice={invoice} /> : <Invoice order={order} settings={settings} />}
       </div>
 
       <div className="no-print space-y-4">
@@ -96,7 +100,7 @@ function Line({ k, v }: { k: string; v: string }) {
 }
 
 function Invoice({ order, settings }: { order: Order; settings: ReturnType<typeof useSettings> }) {
-  const isTaxInvoice = !order.gstCollectedByAggregator;
+  const isTaxInvoice = !!order.invoiceNo && !order.subscriptionId;
   const a = settings.address;
   return (
     <article className="rounded-xl border border-stone-200 bg-white p-6 text-sm print:border-0 print:p-0">
@@ -115,6 +119,7 @@ function Invoice({ order, settings }: { order: Order; settings: ReturnType<typeo
       <div className="mb-3 grid grid-cols-2 gap-2 text-xs">
         <div>
           {order.invoiceNo && <div><b>Invoice:</b> {order.invoiceNo}</div>}
+          {order.subscriptionId && <div>Prepaid meal — invoiced with subscription</div>}
           <div><b>Order:</b> {order.orderNo}</div>
           {order.externalId && <div><b>Zomato ID:</b> {order.externalId}</div>}
           <div><b>Date:</b> {new Date(order.createdAt).toLocaleString("en-IN")}</div>
@@ -137,9 +142,9 @@ function Invoice({ order, settings }: { order: Order; settings: ReturnType<typeo
           </tr>
         </thead>
         <tbody>
-          {order.lines.map((l) => (
-            <tr key={l.menuItemId}>
-              <td className="py-1">{l.name}</td>
+          {order.lines.map((l, index) => (
+            <tr key={index}>
+              <td className="py-1">{l.name}<p>{[l.variantName, ...(l.addons ?? []).map((a) => a.name)].filter(Boolean).join(" · ")}</p></td>
               <td className="py-1 text-right">{l.qty}</td>
               <td className="py-1 text-right">{inr(l.unitPrice)}</td>
               <td className="py-1 text-right">{inr(l.lineTotal)}</td>
@@ -159,7 +164,7 @@ function Invoice({ order, settings }: { order: Order; settings: ReturnType<typeo
             <Line k={`SGST @ ${settings.gstRate / 2}%`} v={inr(order.sgst)} />
           </>
         ) : (
-          <Line k="GST" v="Collected by Zomato" />
+          <Line k="GST" v={order.subscriptionId ? "Invoiced with subscription" : "Collected by Zomato"} />
         )}
         {order.roundOff !== 0 && <Line k="Round off" v={inr(order.roundOff)} />}
         <div className="flex justify-between border-t border-stone-200 pt-1 text-sm font-semibold">

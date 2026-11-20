@@ -58,7 +58,7 @@ export function dietAllows(pref: DietPref, dish: MenuItem["diet"]) {
 /** Dishes this subscription can receive, in a stable order. */
 export function eligibleDishes(menu: MenuItem[], eligibleIds: string[], diet: DietPref) {
   return menu
-    .filter((m) => m.available && m.channels?.website !== false)
+    .filter((m) => m.available && m.channels?.website !== false && !["Combos", "Sharing boxes"].includes(m.category))
     .filter((m) => (eligibleIds.length ? eligibleIds.includes(m.id) : m.category !== "Fruit & Dessert Bowls" && m.category !== "Desserts"))
     .filter((m) => dietAllows(diet, m.diet))
     .sort((a, b) => a.sortOrder - b.sortOrder);

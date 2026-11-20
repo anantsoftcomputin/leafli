@@ -32,7 +32,7 @@ const orderUrl = (o: { id: string }) => `/account/orders/${o.id}`;
 const isPickup = (o: OrderLike) => o.delivery?.provider === "pickup";
 
 function orderBill(o: OrderLike, images: Record<string, string | null | undefined>) {
-  const lines: BillLine[] = o.lines.map((l) => ({ name: l.name, qty: l.qty, amount: l.lineTotal, imageUrl: images[l.menuItemId], note: l.notes }));
+  const lines: BillLine[] = o.lines.map((l) => ({ name: l.name, qty: l.qty, amount: l.lineTotal, imageUrl: images[l.menuItemId], note: [l.variantName, ...(l.addons ?? []).map((a) => a.name), l.notes].filter(Boolean).join(" · ") }));
   const gst = (o.cgst ?? 0) + (o.sgst ?? 0);
   return bill(
     lines,

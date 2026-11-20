@@ -1,3 +1,4 @@
+import { publicOptions } from "@/lib/menu-options";
 import type { NextRequest } from "next/server";
 import { col } from "@/lib/server/inventory";
 import { getSettings } from "@/lib/server/orders";
@@ -16,6 +17,9 @@ export const GET = route(async (req: NextRequest) => {
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((m) => ({
       id: m.id,
+      slug: m.slug || m.id,
+      ingredients: m.ingredients ?? [],
+      ...publicOptions(m),
       name: m.name,
       description: m.description,
       category: m.category,

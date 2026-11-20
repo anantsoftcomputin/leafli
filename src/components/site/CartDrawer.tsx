@@ -17,7 +17,7 @@ import { DishImage } from "./DishImage";
 import { useSite } from "./SiteContext";
 
 export function CartDrawer() {
-  const { cartOpen, setCartOpen, cart, add, menu, kitchen, clear, count } = useSite();
+  const { cartOpen, setCartOpen, cart, cartLines, add, menu, kitchen, clear, count } = useSite();
   const { user, profile } = useAuth();
   const router = useRouter();
   const panel = useRef<HTMLDivElement>(null);
@@ -100,10 +100,9 @@ export function CartDrawer() {
 
   if (!mounted) return null;
 
-  const byId = new Map(menu.items.map((i) => [i.id, i]));
-  const lines = Object.entries(cart).filter(([id]) => byId.has(id)).map(([id, qty]) => ({ item: byId.get(id)!, qty }));
+  const lines = cartLines;
   const bill = computeBill(
-    { source: "website", lines: lines.map((l) => ({ unitPrice: l.item.price, qty: l.qty })), delivery: mode === "porter" },
+    { source: "website", lines: lines.map((l) => ({ unitPrice: l.unitPrice, qty: l.qty })), delivery: mode === "porter" },
     { ...DEFAULT_SETTINGS, gstRate: menu.gstRate, packagingChargePerOrder: menu.packagingChargePerOrder, defaultDeliveryCharge: menu.deliveryCharge },
   );
 
@@ -120,7 +119,7 @@ export function CartDrawer() {
       const order = await api<{ id: string; orderNo: string; checkout?: Omit<CheckoutArgs, "orderId" | "orderNo"> }>("/api/orders", {
         source: "website",
         customer: { name, phone: `+91${phone.replace(/\D/g, "").slice(-10)}`, email: email.trim() || undefined, address: mode === "porter" ? address : null },
-        lines: lines.map((l) => ({ menuItemId: l.item.id, qty: l.qty })),
+        lines: lines.map((l) => ({ ...l.selection, qty: l.qty })),
         paymentMode: online ? "online" : "pay_later",
         deliveryProvider: mode,
         notes: notes || undefined,
@@ -188,6 +187,7 @@ export function CartDrawer() {
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-5">
+          {Object.keys(cart).length > lines.length && <div className="mb-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Some saved choices are no longer available. <button className="font-semibold underline" onClick={() => { for (const key of Object.keys(cart)) if (!lines.some((l) => l.key === key)) add(key, -cart[key]); }}>Remove unavailable choices</button></div>}
           {lines.length === 0 ? (
             <div className="grid h-full place-items-center text-center">
               <div>
@@ -200,17 +200,18 @@ export function CartDrawer() {
             </div>
           ) : step === "bag" ? (
             <ul className="space-y-4">
-              {lines.map(({ item, qty }) => (
-                <li key={item.id} data-line className="flex items-center gap-4">
+              {lines.map(({ key, item, qty, unitPrice, label }) => (
+                <li key={key} data-line className="flex items-center gap-4">
                   <DishImage id={item.id} src={item.imageUrl} className="size-16 shrink-0" />
                   <div className="min-w-0 flex-1">
                     <div className="font-medium leading-tight">{item.name}</div>
-                    <div className="text-sm text-ink/50">{inr(item.price)}</div>
+                    <div className="text-sm text-ink/50">{inr(unitPrice)}</div>
+                    {label && <div className="mt-1 text-sm text-leaf-700">{label}</div>}
                   </div>
                   <div className="flex items-center rounded-full bg-white ring-1 ring-ink/10">
-                    <button className="grid size-9 place-items-center" onClick={() => add(item.id, -1)} aria-label={`Remove one ${item.name}`}>−</button>
+                    <button className="grid size-9 place-items-center" onClick={() => add(key, -1)} aria-label={`Remove one ${item.name}`}>−</button>
                     <span className="w-5 text-center text-sm font-semibold tabular-nums">{qty}</span>
-                    <button className="grid size-9 place-items-center" onClick={() => add(item.id, 1)} aria-label={`Add one ${item.name}`}>+</button>
+                    <button className="grid size-9 place-items-center" onClick={() => add(key, 1)} aria-label={`Add one ${item.name}`}>+</button>
                   </div>
                 </li>
               ))}

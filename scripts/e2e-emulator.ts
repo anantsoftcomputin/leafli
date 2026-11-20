@@ -327,6 +327,82 @@ async function main() {
   near(await stock("mango-chilli-dressing"), 0, "expired batch's remaining stock written off");
   ok("expired batch closed and written off");
 
+  // ---- Configured lines: authoritative add-on price, exact raw consumption and independent choices.
+  {
+    const { resolveSelection, cartKey, parseCartKey, publicOptions } = await import("../src/lib/menu-options");
+    const chicken = MENU_ITEMS.find((m) => m.id === "chicken-caesar")!;
+    const paneer = chicken.addonGroups!.flatMap((g) => g.options).find((a) => a.name.startsWith("Paneer"))!;
+    const tofu = chicken.addonGroups!.flatMap((g) => g.options).find((a) => a.name.startsWith("Tofu"))!;
+    const royale = chicken.variants!.find((v) => v.name === "Royale")!;
+    assert.equal(resolveSelection(chicken, { variantId: royale.id, addonIds: [paneer.id] }).unitPrice, 600);
+    assert.throws(() => resolveSelection(chicken, { addonIds: [paneer.id, tofu.id] }), /Choose/);
+    assert.throws(() => resolveSelection(chicken, { addonIds: [paneer.id, paneer.id] }), /once/);
+    assert.throws(() => resolveSelection(chicken, { addonIds: ["forged-addon"] }), /no longer available/);
+    const key = cartKey(chicken.id, { variantId: royale.id, addonIds: [paneer.id] });
+    assert.notEqual(key, cartKey(chicken.id, { variantId: royale.id, addonIds: [tofu.id] }));
+    assert.deepEqual(parseCartKey(key), { menuItemId: chicken.id, variantId: royale.id, addonIds: [paneer.id] });
+    assert.ok(!JSON.stringify(publicOptions(chicken)).includes('"recipe"'), "public option DTO never exposes BOM");
+    await ops.stockCount("paneer", 1000, "Opening add-on stock", actor);
+    const configured = await createOrder({ source: "pos", customer: { name: "Configured" }, lines: [{ menuItemId: chicken.id, qty: 2, variantId: royale.id, addonIds: [paneer.id] }], paymentMode: "cash", deliveryProvider: "pickup", autoAccept: true }, actor);
+    assert.equal(configured.lines[0]!.unitPrice, 600);
+    assert.equal(configured.lines[0]!.addons![0]!.price, 50);
+    near(await stock("paneer"), 900, "50 g paneer per bowl consumed");
+    await setOrderStatus(configured.id, "cancelled", actor, "Before preparation");
+    near(await stock("paneer"), 1000, "add-on consumption restored with cancelled bowl");
+    const warm = MENU_ITEMS.find((m) => m.id === "asian-stir-fry-vegetables")!;
+    const warmPaneer = warm.addonGroups!.flatMap((g) => g.options).find((a) => a.name.startsWith("Paneer"))!;
+    assert.equal(resolveSelection(warm, { addonIds: [warmPaneer.id] }).unitPrice, 560, "dish-specific paneer price is 100");
+    ok("configured bowls: correct per-dish prices, selection limits, distinct carts, private recipes, add-on stock and reversal");
+  }
+
+  // ---- Invoice correction: atomic revision checks, audit, gateway lock and unchanged stock.
+  {
+    const { buildInvoiceRecord } = await import("../src/lib/invoice-record");
+    const { editInvoice, invoiceEditSchema } = await import("../src/lib/server/invoices");
+    const { getSettings } = await import("../src/lib/server/orders");
+    const pendingInvoice = await createOrder({ source: "website", customer: { name: "Original buyer" }, lines: [{ menuItemId: "chana-moong", qty: 1 }], paymentMode: "pay_later", deliveryProvider: "pickup" }, actor);
+    const stockBefore = await stock("lettuce");
+    const invoiceNo = pendingInvoice.invoiceNo;
+    const edit = invoiceEditSchema.parse({ revision: 0, reason: "Correct phone order billing", buyer: { name: "Corrected buyer", email: "buyer@example.com" }, note: "Revised billing", amounts: { rates: [400], discount: 20, packagingCharge: 10, deliveryCharge: 0 } });
+    await editInvoice("order", pendingInvoice.id, edit, actor);
+    const fresh = (await adminDb.collection("orders").doc(pendingInvoice.id).get()).data()!;
+    assert.equal(fresh.invoiceNo, invoiceNo, "invoice number never changes");
+    assert.equal(fresh.customer.name, "Original buyer", "billing correction does not rewrite delivery contact");
+    assert.equal(fresh.invoiceDetails.buyer.name, "Corrected buyer");
+    assert.equal(fresh.invoiceDetails.history.length, 1);
+    assert.equal(fresh.lines[0].unitPrice, 400);
+    assert.equal(fresh.total, 410);
+    near(await stock("lettuce"), stockBefore, "rate corrections never move stock");
+    await assert.rejects(editInvoice("order", pendingInvoice.id, edit, actor), /changed/);
+    await adminDb.collection("orders").doc(pendingInvoice.id).update({ paymentStatus: "paid" });
+    await assert.rejects(editInvoice("order", pendingInvoice.id, { ...edit, revision: 1 }, actor), /locked/);
+    await editInvoice("order", pendingInvoice.id, { ...edit, revision: 1, amounts: undefined }, actor);
+    const final = { ...(await adminDb.collection("orders").doc(pendingInvoice.id).get()).data(), id: pendingInvoice.id };
+    const inv = buildInvoiceRecord("order", pendingInvoice.id, final as never, await getSettings())!;
+    assert.equal(inv.buyer.name, "Corrected buyer");
+    assert.equal(inv.revision, 2);
+    assert.equal(inv.canEditAmounts, false);
+    assert.equal(inv.total, 410);
+    ok("invoice corrections: audited revisions, stale edit rejected, paid totals locked, billing corrected without stock changes");
+  }
+
+  // ---- Catalogue migration is additive and safe to repeat.
+  {
+    const { importZomatoCatalog } = await import("../src/lib/server/zomato-catalog");
+    await adminDb.collection("menuItems").doc("grazing-box").delete();
+    const preview = await importZomatoCatalog(false);
+    assert.ok(preview.created.includes("The Grazing Box"));
+    assert.equal((await adminDb.collection("menuItems").doc("grazing-box").get()).exists, false, "preview does not write");
+    const price = (await adminDb.collection("menuItems").doc("chicken-caesar").get()).get("price");
+    await importZomatoCatalog(true);
+    assert.equal((await adminDb.collection("menuItems").doc("grazing-box").get()).get("price"), 900);
+    assert.equal((await adminDb.collection("menuItems").doc("chicken-caesar").get()).get("price"), price);
+    const repeat = await importZomatoCatalog(true);
+    assert.equal(repeat.created.length, 0);
+    assert.equal(repeat.enriched.length, 0);
+    ok("Zomato catalogue: preview is read-only, missing dishes imported, staff prices preserved, repeated migration is a no-op");
+  }
+
   // Ledger consistency: every item's stock equals the sum of its movements.
   const moves = await adminDb.collection("stockMovements").get();
   const sums = new Map<string, number>();

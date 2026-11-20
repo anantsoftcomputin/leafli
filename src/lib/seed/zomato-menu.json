@@ -1,0 +1,458 @@
+{
+  "source": "https://www.zomato.com/vadodara/leafli-akota/order",
+  "retrievedAt": "2026-11-20",
+  "dishes": [
+    {
+      "id": "ctl_823229451",
+      "name": "The Grazing Box",
+      "price": 0,
+      "display_price": 900,
+      "desc": "Made from scratch, whisked by hand in small batches, with nothing bottled or preserved.\n\nThecha Hummus: silky, with the slow heat of thecha\nPesto: fresh basil, bright and herby\nTzatziki: cool yogurt, cucumber and herbs\nChoco Fruit Stack: fresh fruit and chocolate, no added sugar\nServed with lavash, breadsticks or fresh focaccia, your choice.\n\nImage for representation, actually packaging may vary.",
+      "item_image_url": "https://b.zmtcdn.com/data/dish_photos/eea/a1a163aa31752fb777211c5402836eea.jpeg",
+      "dietary_slugs": [
+        "veg"
+      ],
+      "item_state": "available",
+      "modifier_group_ids": [],
+      "category": "Hamper",
+      "variants": [
+        {
+          "id": "pv_267278193",
+          "name": "Lavash sticks",
+          "price": 900,
+          "available": true,
+          "addonGroupIds": []
+        },
+        {
+          "id": "pv_267278194",
+          "name": "Breadsticks",
+          "price": 900,
+          "available": true,
+          "addonGroupIds": []
+        },
+        {
+          "id": "pv_267278195",
+          "name": "Focaccia bread",
+          "price": 900,
+          "available": true,
+          "addonGroupIds": []
+        }
+      ]
+    },
+    {
+      "id": "ctl_826200135",
+      "name": "Asian Veggie & Noodle Salad Combo",
+      "price": 640,
+      "display_price": 640,
+      "desc": "Asian stir fry vegetables & Asian noodle salad",
+      "item_image_url": null,
+      "dietary_slugs": [
+        "veg"
+      ],
+      "item_state": "available",
+      "modifier_group_ids": [],
+      "category": "Combos",
+      "variants": []
+    },
+    {
+      "id": "ctl_826201040",
+      "name": "Chicken & Mango Salad Combo",
+      "price": 640,
+      "display_price": 640,
+      "desc": "Chicken caesar salad & Desi mango and sprout salad",
+      "item_image_url": null,
+      "dietary_slugs": [
+        "non-veg"
+      ],
+      "item_state": "available",
+      "modifier_group_ids": [],
+      "category": "Combos",
+      "variants": []
+    },
+    {
+      "id": "ctl_826201041",
+      "name": "Greek & Caprese Salad Combo",
+      "price": 640,
+      "display_price": 640,
+      "desc": "Greek hummus salad + Caprese salad",
+      "item_image_url": null,
+      "dietary_slugs": [
+        "veg"
+      ],
+      "item_state": "available",
+      "modifier_group_ids": [],
+      "category": "Combos",
+      "variants": []
+    },
+    {
+      "id": "ctl_826201042",
+      "name": "Asian Noodles Salad & Dark chocolate Fruit bowl",
+      "price": 550,
+      "display_price": 550,
+      "desc": "Asian noodle salad + Dark chocolate fruit bowl",
+      "item_image_url": null,
+      "dietary_slugs": [
+        "veg"
+      ],
+      "item_state": "available",
+      "modifier_group_ids": [],
+      "category": "Combos",
+      "variants": []
+    },
+    {
+      "id": "ctl_826201043",
+      "name": "Roasted potato and apple salad & Asian stir fry vegetables Combo",
+      "price": 460,
+      "display_price": 460,
+      "desc": "Roasted potato and apple salad + asian stir fry vegetables",
+      "item_image_url": null,
+      "dietary_slugs": [
+        "veg"
+      ],
+      "item_state": "available",
+      "modifier_group_ids": [],
+      "category": "Combos",
+      "variants": []
+    },
+    {
+      "id": "ctl_826201044",
+      "name": "Choose your salad & Dark Chocolate Fruit Bowl",
+      "price": 0,
+      "display_price": 640,
+      "desc": "Salad of your choice + dark chocolate fruit bowl",
+      "item_image_url": "https://b.zmtcdn.com/data/dish_photos/15a/aec09591cbf6c39d66d38612234f215a.jpeg",
+      "dietary_slugs": [
+        "non-veg"
+      ],
+      "item_state": "available",
+      "modifier_group_ids": [],
+      "category": "Combos",
+      "variants": [
+        {
+          "id": "pv_268435375",
+          "name": "Caprese Salad",
+          "price": 640,
+          "available": true,
+          "addonGroupIds": []
+        },
+        {
+          "id": "pv_268435376",
+          "name": "Chicken Caesar",
+          "price": 640,
+          "available": true,
+          "addonGroupIds": []
+        },
+        {
+          "id": "pv_268435377",
+          "name": "Asian Noodle",
+          "price": 640,
+          "available": true,
+          "addonGroupIds": []
+        },
+        {
+          "id": "pv_268435378",
+          "name": "Asian stir fry vegetables",
+          "price": 640,
+          "available": true,
+          "addonGroupIds": []
+        },
+        {
+          "id": "pv_268435379",
+          "name": "Roasted potato & Apple",
+          "price": 640,
+          "available": true,
+          "addonGroupIds": []
+        },
+        {
+          "id": "pv_268435380",
+          "name": "Desi Mango & Sprouts",
+          "price": 640,
+          "available": true,
+          "addonGroupIds": []
+        },
+        {
+          "id": "pv_268435381",
+          "name": "Greek Hummus",
+          "price": 640,
+          "available": true,
+          "addonGroupIds": []
+        }
+      ]
+    },
+    {
+      "id": "ctl_822955569",
+      "name": "Asian Noodles Salad",
+      "price": 0,
+      "display_price": 325,
+      "desc": "(Veg Preparation) Rice noodles, shredded purple cabbage, carrots, sliced onion, crunchy peanuts, fresh mint and coriander in toasted sesame-soy vinaigrette.",
+      "item_image_url": "https://b.zmtcdn.com/data/dish_photos/453/50b7e270bd12adf054bfd8998705b453.jpeg",
+      "dietary_slugs": [
+        "veg"
+      ],
+      "item_state": "available",
+      "modifier_group_ids": [],
+      "category": "Salads",
+      "variants": [
+        {
+          "id": "pv_268422941",
+          "name": "Classic",
+          "price": 325,
+          "available": true,
+          "addonGroupIds": [
+            "mg_142131894",
+            "mg_142131947"
+          ]
+        },
+        {
+          "id": "pv_268422942",
+          "name": "Royale",
+          "price": 460,
+          "available": true,
+          "addonGroupIds": [
+            "mg_142131894",
+            "mg_142131947"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ctl_822955570",
+      "name": "Desi Mango and Sprout Salad",
+      "price": 370,
+      "display_price": 370,
+      "desc": "(Veg Preparation) Protein-packed chana moong sprouts tossed with fresh mango, cucumbers, tomatoes, chaat masala and sweet-spicy mango-jalapeno dressing.",
+      "item_image_url": "https://b.zmtcdn.com/data/dish_photos/500/f2613c52cd112e75ce91d6d56dfad500.jpeg",
+      "dietary_slugs": [
+        "veg"
+      ],
+      "item_state": "available",
+      "modifier_group_ids": [],
+      "category": "Salads",
+      "variants": []
+    },
+    {
+      "id": "ctl_822955571",
+      "name": "Salad Caprese",
+      "price": 0,
+      "display_price": 370,
+      "desc": "(Veg Preparation) Fresh buffalo Mozzarella, ripe tomatoes, peppery arugula and basil drizzled with walnut basil pesto, balsamic glaze and toasted nuts.",
+      "item_image_url": "https://b.zmtcdn.com/data/dish_photos/812/760ca0de76e094081b598f2129bea812.jpeg",
+      "dietary_slugs": [
+        "veg"
+      ],
+      "item_state": "available",
+      "modifier_group_ids": [],
+      "category": "Salads",
+      "variants": [
+        {
+          "id": "pv_268422928",
+          "name": "Classic",
+          "price": 370,
+          "available": true,
+          "addonGroupIds": [
+            "mg_142131894"
+          ]
+        },
+        {
+          "id": "pv_268422929",
+          "name": "Royale",
+          "price": 550,
+          "available": true,
+          "addonGroupIds": [
+            "mg_142131894"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ctl_822955572",
+      "name": "Roasted Potato and Apple Salad",
+      "price": 460,
+      "display_price": 460,
+      "desc": "(Veg Preparation) Herb roasted potatoes, crisp apples, lettuce, cherry tomatoes walnuts folded in tangy honey mustard sauce with capers and gherkins.",
+      "item_image_url": "https://b.zmtcdn.com/data/dish_photos/364/47b8efde8d48162e8b7405bcc3788364.jpeg",
+      "dietary_slugs": [
+        "veg"
+      ],
+      "item_state": "available",
+      "modifier_group_ids": [
+        "mg_142132119"
+      ],
+      "category": "Salads",
+      "variants": []
+    },
+    {
+      "id": "ctl_822955573",
+      "name": "Classic Chicken Caesar Salad",
+      "price": 0,
+      "display_price": 370,
+      "desc": "Grilled chicken steak, hard-boiled eggs, crisp lettuce, cherry tomatoes, shaved Parmesan and crunchy garlic croutons in signature caesar dressing.",
+      "item_image_url": "https://b.zmtcdn.com/data/dish_photos/52b/a187f54508d5ac39a92c84a67eefe52b.jpeg",
+      "dietary_slugs": [
+        "non-veg"
+      ],
+      "item_state": "available",
+      "modifier_group_ids": [],
+      "category": "Salads",
+      "variants": [
+        {
+          "id": "pv_268422922",
+          "name": "Classic",
+          "price": 370,
+          "available": true,
+          "addonGroupIds": [
+            "mg_142131947"
+          ]
+        },
+        {
+          "id": "pv_268422923",
+          "name": "Royale",
+          "price": 550,
+          "available": true,
+          "addonGroupIds": [
+            "mg_142131947"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ctl_822975513",
+      "name": "Asian stir fry vegetables",
+      "price": 460,
+      "display_price": 460,
+      "desc": "A warm salad, wok-tossed. Crunchy bell peppers, zucchini, broccoli, mushrooms and carrots in a light garlic-ginger soy glaze, finished with spring onion and toasted sesame.",
+      "item_image_url": "https://b.zmtcdn.com/data/dish_photos/1a0/a1d43dd14fa29cee854291934d1631a0.jpeg",
+      "dietary_slugs": [
+        "veg"
+      ],
+      "item_state": "available",
+      "modifier_group_ids": [
+        "mg_142132119",
+        "mg_142132120"
+      ],
+      "category": "Salads",
+      "variants": []
+    },
+    {
+      "id": "ctl_822975791",
+      "name": "Greek Hummus Salad",
+      "price": 0,
+      "display_price": 370,
+      "desc": "Creamy house-made hummus topped with crisp cucumber, cherry tomatoes, olives, pomegranate and mint, dusted with za'atar and sumac. Served with crunchy lavash.",
+      "item_image_url": "https://b.zmtcdn.com/data/dish_photos/0aa/93e84193001bef87bfc7184ebf28d0aa.jpeg",
+      "dietary_slugs": [
+        "veg"
+      ],
+      "item_state": "available",
+      "modifier_group_ids": [],
+      "category": "Salads",
+      "variants": [
+        {
+          "id": "pv_268422956",
+          "name": "Classic",
+          "price": 370,
+          "available": true,
+          "addonGroupIds": [
+            "mg_142131894",
+            "mg_142131947"
+          ]
+        },
+        {
+          "id": "pv_268422957",
+          "name": "Royale",
+          "price": 550,
+          "available": true,
+          "addonGroupIds": [
+            "mg_142131894",
+            "mg_142131947"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ctl_822955567",
+      "name": "Dark Chocolate Fruit Bowl",
+      "price": 460,
+      "display_price": 460,
+      "desc": "Velvety hung curd blended with dark chocolate compound, cocoa, orange zest, honey, topped with seasonal exotic fruits and granola/nuts.",
+      "item_image_url": "https://b.zmtcdn.com/data/dish_photos/6a6/cfe3f4db97c5070a3d46cdf34b5566a6.jpeg",
+      "dietary_slugs": [
+        "veg"
+      ],
+      "item_state": "available",
+      "modifier_group_ids": [],
+      "category": "Bowls",
+      "variants": []
+    }
+  ],
+  "modifierGroups": {
+    "mg_142132119": {
+      "id": "mg_142132119",
+      "name": "Extra Chicken",
+      "min": 0,
+      "max": 1,
+      "options": [
+        {
+          "id": "ctl_827101270",
+          "name": "Chicken (70 gms) Cooked",
+          "price": 160,
+          "available": true
+        }
+      ]
+    },
+    "mg_142132120": {
+      "id": "mg_142132120",
+      "name": "Extra Paneer ot Tofu",
+      "min": 0,
+      "max": 1,
+      "options": [
+        {
+          "id": "ctl_827101310",
+          "name": "Paneer (50 gms)",
+          "price": 100,
+          "available": true
+        },
+        {
+          "id": "ctl_827101311",
+          "name": "Tofu (50 gms)",
+          "price": 100,
+          "available": true
+        }
+      ]
+    },
+    "mg_142131947": {
+      "id": "mg_142131947",
+      "name": "Paneer or Tofu",
+      "min": 0,
+      "max": 1,
+      "options": [
+        {
+          "id": "ctl_827099588",
+          "name": "Paneer (50 gms)",
+          "price": 50,
+          "available": true
+        },
+        {
+          "id": "ctl_827099589",
+          "name": "Tofu (50 gms)",
+          "price": 50,
+          "available": true
+        }
+      ]
+    },
+    "mg_142131894": {
+      "id": "mg_142131894",
+      "name": "Add Chicken",
+      "min": 0,
+      "max": 1,
+      "options": [
+        {
+          "id": "ctl_827099187",
+          "name": "Chicken (70 gms) Cooked",
+          "price": 80,
+          "available": true
+        }
+      ]
+    }
+  }
+}

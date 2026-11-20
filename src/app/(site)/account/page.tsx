@@ -86,7 +86,7 @@ export default function AccountPage() {
             <li key={o.id} data-order>
               <Link href={`/account/orders/${o.id}`} className="group flex items-center gap-4 rounded-[1.5rem] bg-white p-4 ring-1 ring-ink/5 transition hover:shadow-xl hover:shadow-leaf-900/5">
                 <div className="flex -space-x-5">
-                  {o.lines.slice(0, 3).map((l) => <DishImage key={l.menuItemId} id={l.menuItemId} className="size-14 ring-4 ring-white" />)}
+                  {o.lines.slice(0, 3).map((l, index) => <DishImage key={index} id={l.menuItemId} className="size-14 ring-4 ring-white" />)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{o.lines.map((l) => `${l.qty}× ${l.name}`).join(", ")}</div>

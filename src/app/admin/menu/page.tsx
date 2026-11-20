@@ -1,5 +1,6 @@
 "use client";
 
+import { MenuOptionsEditor } from "@/components/admin/MenuOptionsEditor";
 import { useState } from "react";
 import { doc, setDoc, updateDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
@@ -19,6 +20,16 @@ export default function MenuPage() {
   const { data: menu } = useMenu();
   const { data: items, map } = useItems();
   const [editMenu, setEditMenu] = useState<MenuItem | "new" | null>(null);
+  const [importPreview, setImportPreview] = useState<{ created: string[]; enriched: string[] } | null>(null);
+  const [importBusy, setImportBusy] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  async function importCatalog(apply = false) {
+    setImportBusy(true); setImportError(null);
+    try {
+      const result = await api<{ created: string[]; enriched: string[] }>("/api/admin/menu/import-zomato", { apply });
+      setImportPreview(apply ? null : result);
+    } catch (e) { setImportError((e as Error).message); } finally { setImportBusy(false); }
+  }
   const [editPrep, setEditPrep] = useState<StockItem | "new" | null>(null);
 
   return (
@@ -26,8 +37,16 @@ export default function MenuPage() {
       <PageHeader
         title="Menu & recipes"
         sub="Recipes are the bill of materials: every order and batch deducts exactly these quantities. Items marked TBC are still open in the SOPs."
-        actions={<Button onClick={() => (tab === "menu" ? setEditMenu("new") : setEditPrep("new"))}>{tab === "menu" ? "Add dish" : "Add prep recipe"}</Button>}
+        actions={<><Button variant="secondary" loading={importBusy} onClick={() => importCatalog()}>Import Zomato menu</Button><Button onClick={() => (tab === "menu" ? setEditMenu("new") : setEditPrep("new"))}>{tab === "menu" ? "Add dish" : "Add prep recipe"}</Button></>}
       />
+      <ErrorText>{importError}</ErrorText>
+      {importPreview && <Modal open title="Import Leafli’s Zomato catalogue" onClose={() => setImportPreview(null)}>
+        <p className="mb-4 text-sm">Verified snapshot: 20 November 2026. Existing website prices, recipes and stock counts are preserved.</p>
+        <h3 className="font-semibold">New dishes ({importPreview.created.length})</h3><ul className="my-3 list-disc pl-5">{importPreview.created.map((name) => <li key={name}>{name}</li>)}</ul>
+        <h3 className="font-semibold">Existing dishes gaining options ({importPreview.enriched.length})</h3><ul className="my-3 list-disc pl-5">{importPreview.enriched.map((name) => <li key={name}>{name}</li>)}</ul>
+        <p className="mb-4 text-sm text-amber-800">The source does not supply kitchen recipe weights. Imported dishes flag missing recipes and costs for review in this editor.</p>
+        <Button loading={importBusy} onClick={() => importCatalog(true)}>Apply catalogue import</Button>
+      </Modal>}
       <div className="mb-4 flex gap-1 border-b border-stone-200">
         {(["menu", "prep"] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)} className={cx("-mb-px border-b-2 px-4 py-2 text-sm", tab === t ? "border-leaf-700 font-medium text-leaf-800" : "border-transparent text-stone-500")}>
@@ -217,6 +236,7 @@ function MenuEditor({ item, items, map, categories, onClose }: { item: MenuItem 
     <Modal open onClose={onClose} title={item ? `Edit ${item.name}` : "Add dish"} wide>
       <div className="grid gap-5 lg:grid-cols-[1fr_260px]">
         <div className="space-y-4">
+          <MenuOptionsEditor item={f} onChange={setF} />
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2"><Field label="Name"><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field></div>
             <div className="col-span-2"><Field label="Description (shown to customers)"><Textarea rows={2} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></Field></div>

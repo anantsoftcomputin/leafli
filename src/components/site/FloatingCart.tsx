@@ -11,8 +11,8 @@ import { useSite } from "./SiteContext";
  */
 export function FloatingCart() {
   const ref = useRef<HTMLButtonElement>(null);
-  const { count, cart, menu, setCartOpen, cartOpen } = useSite();
-  const total = menu.items.reduce((s, i) => s + (cart[i.id] ?? 0) * i.price, 0);
+  const { count, cartLines, setCartOpen, cartOpen } = useSite();
+  const total = cartLines.reduce((s, l) => s + l.qty * l.unitPrice, 0);
   const show = count > 0 && !cartOpen;
 
   // Initial state lives in GSAP (not inline CSS) so it owns the whole transform.

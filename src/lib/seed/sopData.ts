@@ -10,6 +10,7 @@
 //    surfaced in the UI until someone confirms it.
 //  - Shelf-life hours come from the shelf-life guide (lower bound of each range).
 import type { MenuItem, Plan, StockItem, Supplier } from "../types";
+import { withZomatoMenu, ZOMATO_STOCK_ITEMS } from "./zomato";
 
 const H = 1; // hours
 const D = 24; // days -> hours
@@ -565,7 +566,7 @@ export const PREP_ITEMS: StockItem[] = [
 const PRICE_TBC = "Prices copied from leafli.in — confirm whether they include GST (this system treats menu prices as excl. GST)";
 const allChannels = { pos: true, website: true, zomato: true };
 
-export const MENU_ITEMS: MenuItem[] = [
+const BASE_MENU_ITEMS: MenuItem[] = [
   {
     id: "chicken-caesar",
     ingredients: ["Grilled chicken steak", "Hard-boiled eggs", "Lettuce", "Cherry tomatoes", "Parmesan cheese", "Garlic croutons", "Caesar dressing"],
@@ -868,6 +869,9 @@ export const MENU_ITEMS: MenuItem[] = [
 // Priced off the live menu: salads average ₹478 (Caesar 550, Caprese 550, Asian 460,
 // Sprout 460, Potato–Apple 370). Discounts grow with commitment; at ₹375/meal the
 // monthly plan still runs ~27% food cost on the SOP recipe costs. Delivery included.
+export const MENU_ITEMS = withZomatoMenu(BASE_MENU_ITEMS);
+RAW_ITEMS.push(...ZOMATO_STOCK_ITEMS);
+
 const SALAD_AVG = 478;
 export const PLANS: Plan[] = [
   {

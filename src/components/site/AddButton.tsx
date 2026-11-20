@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { DishOptions } from "./DishOptions";
 import { gsap } from "@/lib/gsap";
 import { useSite, type PublicItem } from "./SiteContext";
 
@@ -10,6 +11,8 @@ import { useSite, type PublicItem } from "./SiteContext";
  */
 export function AddButton({ item, accent = "#1f4d33", size = "md" }: { item: PublicItem; accent?: string; size?: "md" | "sm" }) {
   const { cart, add, cartTarget, menu } = useSite();
+  const [customising, setCustomising] = useState(false);
+  const configurable = !!(item.variants?.length || item.addonGroups?.length);
   const btn = useRef<HTMLButtonElement>(null);
   const qty = cart[item.id] ?? 0;
   const disabled = !item.available;
@@ -35,8 +38,14 @@ export function AddButton({ item, accent = "#1f4d33", size = "md" }: { item: Pub
 
   const pad = size === "sm" ? "h-9 text-sm sm:h-10" : "h-12 text-[15px]";
   if (disabled) return <span className={`inline-flex items-center rounded-full px-4 text-sm font-semibold opacity-60 ${pad}`}>Sold out</span>;
+  if (configurable) return <>
+    <button className={`inline-flex items-center whitespace-nowrap rounded-full px-3 font-semibold text-white ${pad}`} style={{ background: accent }} onClick={() => setCustomising(true)} aria-label={`Customise ${item.name}`}>Customise +</button>
+    {customising && <DishOptions item={item} onClose={() => setCustomising(false)} />}
+  </>;
+
   if (!menu.acceptingOrders && qty === 0)
     return <span className={`inline-flex items-center rounded-full px-4 text-sm font-semibold opacity-70 ${pad}`}>Kitchen closed</span>;
+
 
   if (qty > 0)
     return (

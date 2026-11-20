@@ -1,4 +1,5 @@
 import "server-only";
+import { invoiceSeller } from "@/lib/invoice-record";
 import { subscriptionTotals } from "@/lib/billing";
 import { createRazorpayOrder, razorpayConfigured, razorpayKeyId } from "@/lib/integrations/razorpay";
 import { istDate } from "@/lib/site";
@@ -117,6 +118,7 @@ export async function activateSubscription(
     if (payment && s.payment?.paymentId === payment.paymentId) return { alreadyActive: true, stray: false };
     // Paid twice, or paid after it was cancelled: the caller refunds this payment.
     if (s.paymentStatus !== "pending" || s.status === "cancelled") return { alreadyActive: true, stray: Boolean(payment) };
+    const settings = await getSettings(tx);
     const counter = await nextCounter(tx, `invoice-${financialYear()}`);
     tx.set(counter.ref, { value: counter.value }, { merge: true });
     tx.update(ref, {
@@ -124,6 +126,7 @@ export async function activateSubscription(
       paymentStatus: "paid",
       invoiceNo: `LF/${financialYear()}/${String(counter.value).padStart(5, "0")}`,
       invoicedAt: Date.now(),
+      invoiceSeller: invoiceSeller(settings),
       ...(payment
         ? { "payment.paymentId": payment.paymentId, "payment.paidAt": Date.now(), ...(payment.method ? { "payment.method": payment.method } : {}) }
         : {}),

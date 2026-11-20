@@ -21,7 +21,7 @@ deployed on Firebase App Hosting.
 | **Integrations** | Porter (quote, book, track, cancel, webhook) and Zomato (inbound webhook, status + stock callbacks). See [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md). |
 
 All SOPs (LF-KIT-SOP-001, 003–007) and the Practical Shelf-Life Guide are encoded in
-[`src/lib/seed/sopData.ts`](src/lib/seed/sopData.ts): 64 raw materials (incl. packaging), 13 batch preps, 6 dishes.
+[`src/lib/seed/sopData.ts`](src/lib/seed/sopData.ts): 74 raw materials (incl. packaging and add-on stock), 15 batch preps, 16 dishes after the Zomato catalogue import.
 Every quantity the SOPs leave "to be confirmed" is flagged **TBC** and listed on the dashboard.
 
 ## Setup
@@ -127,3 +127,20 @@ Settings → Team land on the page their role uses. There's also a "Team login" 
 After launch: verify the domain in **Google Search Console** (put the token in `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`),
 submit `https://leafli.in/sitemap.xml`, and create/claim your **Google Business Profile** — for a food business that's
 the biggest local-ranking lever.
+
+## Dish details, add-ons and invoices
+
+Dish photos and titles link to `/menu/[slug]` on phones and desktops. The live public menu includes the slug, ingredients and public option data, so refreshing availability keeps those links intact. Portion/bread/salad choices and per-dish add-ons are saved on each cart line. The server validates selections, calculates prices, records option snapshots and consumes mapped add-on stock alongside the dish. Kitchen tickets, order tracking and invoices show the selected extras.
+
+The Zomato catalogue snapshot is in `src/lib/seed/zomato-menu.json` (retrieved 20 November 2026). It includes eight missing items, variants and dish-specific chicken/paneer/tofu prices. To import into an existing database **after deploying this application version**, open **Admin → Menu & recipes → Import Zomato menu**, review the preview, and apply. Existing website prices, recipes, availability and stock counts are preserved. The import is safe to repeat.
+
+For CLI use:
+
+```bash
+npm run import:zomato                 # read-only preview
+npm run import:zomato -- --apply      # additive database migration
+```
+
+Zomato does not supply recipe weights for new dishes, portions or combos. Those gaps are flagged in the menu editor. Confirm ingredient weights, packaging, allergens and costs before relying on food-cost reports. Paneer/tofu add-ons use the stated 50 g; the 70 g cooked-chicken add-on needs a confirmed conversion to the existing cooked-chicken stock unit. The add-on editor supports stock-item/quantity mapping.
+
+**Admin → Invoices** lists order and subscription invoices, with older-record pagination, invoice-number lookup across all years, buyer/reference filters, CSV export, print and browser PDF saving. Managers can correct billing details with a reason and revision history. Unpaid invoices without a gateway/payment link can also have rates and charges corrected; paid or payment-linked totals and ordered quantities stay fixed. Concurrent edits are rejected until the invoice is reloaded. New invoices save the seller details when issued. Customers can open order invoices from their tracking page and plan invoices from their subscription.

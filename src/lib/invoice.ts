@@ -20,6 +20,7 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 
 export function buildSubscriptionInvoice(s: Subscription, settings: BusinessSettings): SubscriptionInvoice | null {
   if (!s.invoiceNo) return null;
+  settings = { ...settings, ...(s.invoiceSeller ?? {}) };
   return {
     seller: {
       name: settings.name,
@@ -36,7 +37,7 @@ export function buildSubscriptionInvoice(s: Subscription, settings: BusinessSett
     invoiceDate: s.invoicedAt ?? s.payment?.paidAt ?? s.updatedAt,
     // Intra-state supply (CGST + SGST): the kitchen and every delivery are in Gujarat.
     placeOfSupply: "Gujarat (24)",
-    buyer: { name: s.customer.name, phone: s.customer.phone, email: s.customer.email, address: s.address },
+    buyer: { name: s.invoiceDetails?.buyer?.name ?? s.customer.name, phone: s.invoiceDetails?.buyer?.phone ?? s.customer.phone, email: s.invoiceDetails?.buyer?.email ?? s.customer.email, address: s.invoiceDetails?.buyer?.address ?? s.address },
     plan: { name: s.planName, meals: s.mealsTotal, startDate: s.startDate, endDate: s.endDate, slot: s.slot },
     taxableValue: s.taxableValue,
     cgst: s.cgst,

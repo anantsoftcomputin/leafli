@@ -32,7 +32,9 @@ const schema = z.object({
   lines: z
     .array(
       z.object({
-        menuItemId: z.string(),
+        menuItemId: z.string().min(1),
+        variantId: z.string().max(100).optional(),
+        addonIds: z.array(z.string().max(100)).max(20).optional(),
         qty: z.number().int().positive().max(50),
         notes: z.string().max(200).optional(),
         unitPriceOverride: z.number().nonnegative().optional(),

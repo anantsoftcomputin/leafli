@@ -1,5 +1,6 @@
 // Pure food-cost calculations. Safe to use on both client and server.
-import type { MenuItem, RecipeLine, StockItem } from "./types";
+import { resolveSelection } from "./menu-options";
+import type { MenuItem, MenuSelection, RecipeLine, StockItem } from "./types";
 
 export type ItemMap = Map<string, StockItem>;
 
@@ -85,14 +86,14 @@ function usesEstimate(itemId: string, items: ItemMap, seen = new Set<string>()):
  * (they're made ahead in batches); raw items are consumed directly.
  */
 export function requirementsFor(
-  lines: { menuItemId: string; qty: number }[],
+  lines: ({ menuItemId: string; qty: number; stockRecipe?: RecipeLine[] } & MenuSelection)[],
   menu: Map<string, MenuItem>,
 ): Map<string, number> {
   const req = new Map<string, number>();
   for (const l of lines) {
     const m = menu.get(l.menuItemId);
     if (!m) continue;
-    for (const r of m.recipe) req.set(r.itemId, (req.get(r.itemId) ?? 0) + r.qty * l.qty);
+    for (const r of l.stockRecipe ?? resolveSelection(m, l).recipe) req.set(r.itemId, (req.get(r.itemId) ?? 0) + r.qty * l.qty);
   }
   return req;
 }

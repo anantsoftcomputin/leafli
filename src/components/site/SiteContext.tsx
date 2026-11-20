@@ -2,11 +2,14 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { kitchenStatus, type KitchenStatus, type OrderingHours } from "@/lib/hours";
+import { parseCartKey, resolveSelection } from "@/lib/menu-options";
 import type { MenuItem } from "@/lib/types";
 import { storagePhoto } from "./DishImage";
 
 export type PublicItem = Pick<MenuItem, "id" | "name" | "description" | "category" | "price" | "imageUrl" | "available" | "diet" | "allergens"> & {
   slug?: string;
+  variants?: MenuItem["variants"];
+  addonGroups?: MenuItem["addonGroups"];
   photoUrl?: string | null;
   nutrition?: MenuItem["nutrition"] | null;
 };
@@ -44,6 +47,7 @@ interface SiteState {
   live: boolean; // true once the real menu has loaded
   cart: Record<string, number>;
   count: number;
+  cartLines: { key: string; item: PublicItem; qty: number; selection: ReturnType<typeof parseCartKey>; unitPrice: number; label: string }[];
   add: (id: string, delta?: number) => void;
   clear: () => void;
   cartOpen: boolean;
@@ -61,6 +65,7 @@ export function SiteProvider({ children, initialMenu }: { children: React.ReactN
   const [menu, setMenu] = useState<PublicMenu>(initialMenu?.items.length ? initialMenu : FALLBACK);
   const [live, setLive] = useState(!!initialMenu?.items.length);
   const [cart, setCart] = useState<Record<string, number>>({});
+  const [cartLoaded, setCartLoaded] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [cartTarget, setCartTarget] = useState<HTMLElement | null>(null);
   // Pages are cached HTML, so the clock is only read in the browser (null until mounted),
@@ -78,8 +83,13 @@ export function SiteProvider({ children, initialMenu }: { children: React.ReactN
 
   useEffect(() => {
     try {
-      setCart(JSON.parse(localStorage.getItem(CART_KEY) ?? "{}"));
+      const saved = JSON.parse(localStorage.getItem(CART_KEY) ?? "{}");
+      if (saved && typeof saved === "object" && !Array.isArray(saved))
+        setCart(Object.fromEntries(Object.entries(saved).filter(([key, qty]) => {
+          try { parseCartKey(key); return Number.isInteger(qty) && Number(qty) > 0 && Number(qty) <= 20; } catch { return false; }
+        })) as Record<string, number>);
     } catch {}
+    setCartLoaded(true);
     fetch("/api/public/menu")
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((m: PublicMenu) => {
@@ -92,10 +102,11 @@ export function SiteProvider({ children, initialMenu }: { children: React.ReactN
   }, []);
 
   useEffect(() => {
+    if (!cartLoaded) return;
     try {
       localStorage.setItem(CART_KEY, JSON.stringify(cart));
     } catch {}
-  }, [cart]);
+  }, [cart, cartLoaded]);
 
   const add = useCallback((id: string, delta = 1) => {
     setCart((c) => {
@@ -107,12 +118,23 @@ export function SiteProvider({ children, initialMenu }: { children: React.ReactN
     });
   }, []);
 
+  const cartLines = useMemo(() => Object.entries(cart).flatMap(([key, qty]) => {
+    try {
+      const selection = parseCartKey(key);
+      const item = menu.items.find((m) => m.id === selection.menuItemId);
+      if (!item) return [];
+      const chosen = resolveSelection(item, selection);
+      return [{ key, item, qty, selection, unitPrice: chosen.unitPrice, label: [chosen.variant?.name, ...chosen.addons.map((a) => a.name)].filter(Boolean).join(" · ") }];
+    } catch { return []; }
+  }), [cart, menu.items]);
+
   const value = useMemo<SiteState>(
     () => ({
       menu: kitchen.open === menu.acceptingOrders ? menu : { ...menu, acceptingOrders: kitchen.open },
       kitchen,
       live,
       cart,
+      cartLines,
       count: Object.values(cart).reduce((a, b) => a + b, 0),
       add,
       clear: () => setCart({}),
@@ -121,7 +143,7 @@ export function SiteProvider({ children, initialMenu }: { children: React.ReactN
       cartTarget,
       setCartTarget,
     }),
-    [menu, kitchen, live, cart, add, cartOpen, cartTarget],
+    [menu, kitchen, live, cart, cartLines, add, cartOpen, cartTarget],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

@@ -79,7 +79,7 @@ export async function seedAll({ overwrite = false } = {}): Promise<SeedResult> {
     const photos = await uploadDishPhotos(m.id, overwrite);
     counts.photosUploaded += photos.uploaded;
     const { id: _id, imageUrl: _ignored, ...rest } = m;
-    const images = { imageUrl: photos.cutout ?? null, photoUrl: photos.photo ?? null, ogImageUrl: photos.og ?? null };
+    const images = { imageUrl: photos.cutout ?? m.imageUrl ?? null, photoUrl: photos.photo ?? m.photoUrl ?? null, ogImageUrl: photos.og ?? m.ogImageUrl ?? null };
     if (snap.exists && !overwrite) {
       // Keep the manager's edits, but fill in fields added since the dish was first seeded.
       const missing: Record<string, unknown> = {};
@@ -88,6 +88,9 @@ export async function seedAll({ overwrite = false } = {}): Promise<SeedResult> {
       if (!snap.get("slug") && m.slug) missing.slug = m.slug;
       if (!snap.get("ingredients") && m.ingredients) missing.ingredients = m.ingredients;
       if (!snap.get("nutrition") && m.nutrition) missing.nutrition = m.nutrition;
+      if (!snap.get("variants") && m.variants?.length) missing.variants = m.variants;
+      if (!snap.get("addonGroups") && m.addonGroups?.length) missing.addonGroups = m.addonGroups;
+      if (!snap.get("zomatoItemId") && m.zomatoItemId) missing.zomatoItemId = m.zomatoItemId;
       if (Object.keys(missing).length) await ref.update(missing);
       continue;
     }

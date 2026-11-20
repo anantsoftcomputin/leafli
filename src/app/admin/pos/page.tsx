@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { resolveSelection } from "@/lib/menu-options";
 import { computeBill } from "@/lib/billing";
 import { inr, portionsAvailable } from "@/lib/costing";
 import { useItems, useMenu, useSettings } from "@/lib/hooks";
@@ -11,7 +12,7 @@ import { Badge, Button, ErrorText, Field, Input, PageHeader, Select, cx } from "
 import { DietDot } from "@/components/DietDot";
 import { AddressForm, emptyAddress } from "@/components/AddressForm";
 
-type CartLine = { menuItemId: string; qty: number; notes?: string; unitPriceOverride?: number };
+type CartLine = { menuItemId: string; qty: number; notes?: string; unitPriceOverride?: number; variantId?: string; addonIds?: string[] };
 
 export default function PosPage() {
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function PosPage() {
   const cats = ["All", ...new Set(visible.map((m) => m.category))];
   const byId = new Map(menu.map((m) => [m.id, m]));
 
-  const priceOf = (m: MenuItem, l?: CartLine) => l?.unitPriceOverride ?? m.channelPrice?.[source] ?? m.price;
+  const priceOf = (m: MenuItem, l?: CartLine) => l?.unitPriceOverride ?? resolveSelection(m, l, m.channelPrice?.[source] ?? m.price).unitPrice;
   const bill = computeBill(
     {
       source,
@@ -173,6 +174,8 @@ export default function PosPage() {
                 <div key={l.menuItemId} className="flex items-center gap-2 text-sm">
                   <div className="min-w-0 flex-1">
                     <div className="truncate">{m.name}</div>
+                    {!!m.variants?.length && <Select aria-label={`Option for ${m.name}`} value={l.variantId ?? resolveSelection(m, l).variant?.id} onChange={(e) => setCart((rows) => rows.map((row) => row === l ? { ...row, variantId: e.target.value, addonIds: [] } : row))}>{m.variants.map((v) => <option key={v.id} value={v.id} disabled={!v.available}>{v.name} · {inr(v.price)}</option>)}</Select>}
+                    {(m.addonGroups ?? []).filter((g) => { const v = resolveSelection(m, l).variant; return !v?.addonGroupIds || v.addonGroupIds.includes(g.id); }).map((g) => <div key={g.id} className="mt-2 space-y-1"><p className="text-xs text-stone-500">{g.name}</p>{g.options.map((a) => <label className="flex gap-2 text-xs" key={a.id}><input type="checkbox" checked={l.addonIds?.includes(a.id) ?? false} disabled={!a.available} onChange={(e) => setCart((rows) => rows.map((row) => row !== l ? row : { ...row, addonIds: e.target.checked ? [...(g.max === 1 ? (row.addonIds ?? []).filter((id) => !g.options.some((o) => o.id === id)) : row.addonIds ?? []), a.id] : (row.addonIds ?? []).filter((id) => id !== a.id) }))} />{a.name} +{inr(a.price)}</label>)}</div>)}
                     {source === "zomato" ? (
                       <input
                         className="w-24 rounded border border-stone-200 px-1 text-xs"

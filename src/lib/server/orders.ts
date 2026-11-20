@@ -1,4 +1,6 @@
 import "server-only";
+import { invoiceSeller } from "@/lib/invoice-record";
+import { resolveSelection } from "@/lib/menu-options";
 import { FieldValue, type Transaction } from "firebase-admin/firestore";
 import { computeBill, DEFAULT_SETTINGS } from "@/lib/billing";
 import { requirementsFor, round2 } from "@/lib/costing";
@@ -31,7 +33,7 @@ export interface CreateOrderInput {
   externalId?: string | null;
   customerUid?: string | null;
   customer: { name: string; phone?: string; email?: string; address?: Address | null };
-  lines: { menuItemId: string; qty: number; notes?: string; unitPriceOverride?: number }[];
+  lines: { menuItemId: string; qty: number; notes?: string; unitPriceOverride?: number; variantId?: string; addonIds?: string[] }[];
   discount?: number;
   paymentMode: Order["paymentMode"];
   paymentStatus?: Order["paymentStatus"];
@@ -110,24 +112,39 @@ export async function createOrder(input: CreateOrderInput, actor: Actor) {
     // Subscription meals were invoiced when the plan was bought — no second tax invoice.
     const invoiceCounter = isAggregator || input.prepaid ? null : await nextCounter(tx, `invoice-${financialYear()}`);
 
-    const req = requirementsFor(input.lines, menu);
+    // Legacy callers (subscriptions/aggregator) use the existing default portion.
+    const configuredLines = input.lines.map((l) => {
+      const m = menu.get(l.menuItemId)!;
+      if (!l.variantId && m.variants?.length && (input.prepaid || input.source === "zomato"))
+        return { ...l, variantId: (m.variants.find((v) => v.price === m.price && v.available) ?? m.variants.find((v) => v.available))?.id };
+      return l;
+    });
+    let req: Map<string, number>;
+    try { req = requirementsFor(configuredLines, menu); }
+    catch (e) { throw new HttpError(409, (e as Error).message); }
     const stx = new StockTx(tx, actor);
     await stx.load(req.keys());
 
     // ---------- compute
-    const lines: OrderLine[] = input.lines.map((l) => {
+    const lines: OrderLine[] = configuredLines.map((l) => {
       const m = menu.get(l.menuItemId)!;
+      const selected = resolveSelection(m, l, m.channelPrice?.[input.source] ?? m.price);
       // Server-side price. Aggregator orders carry the price the customer paid on Zomato.
       const unitPrice = input.prepaid
         ? input.prepaid.unitPrice
         : isAggregator && l.unitPriceOverride != null
           ? l.unitPriceOverride
-          : (m.channelPrice?.[input.source] ?? m.price);
+          : selected.unitPrice;
       const unitCost = round2(
-        m.recipe.reduce((s, r) => s + r.qty * stx.costOf(r.itemId), 0) + (m.packagingCost || 0),
+        selected.recipe.reduce((s, r) => s + r.qty * stx.costOf(r.itemId), 0) + (m.packagingCost || 0),
       );
       return {
         menuItemId: m.id,
+        ...(selected.variant ? { variantId: selected.variant.id, variantName: selected.variant.name } : {}),
+        addonIds: selected.addons.map((a) => a.id),
+        addons: selected.addons.map(({ id, name, price, diet, allergens }) => ({ id, name, price, diet, allergens })),
+        stockRecipe: selected.recipe,
+        baseUnitPrice: selected.baseUnitPrice,
         name: m.name,
         qty: l.qty,
         unitPrice,
@@ -166,7 +183,7 @@ export async function createOrder(input: CreateOrderInput, actor: Actor) {
 
     const order: Omit<Order, "id"> & { consumption: Consumption[]; dateKey: string } = {
       orderNo,
-      ...(invoiceNo ? { invoiceNo } : {}),
+      ...(invoiceNo ? { invoiceNo, invoicedAt: now, invoiceGstRate: settings.gstRate, invoiceSeller: invoiceSeller(settings) } : {}),
       source: input.source,
       externalId: input.externalId ?? null,
       customerUid: input.customerUid ?? null,

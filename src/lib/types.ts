@@ -127,6 +127,49 @@ export interface StockMovement {
 
 export type Channel = "pos" | "website" | "zomato";
 
+export interface MenuAddon {
+  id: string;
+  name: string;
+  price: number;
+  available: boolean;
+  diet: "veg" | "egg" | "nonveg";
+  allergens: string[];
+  recipe?: RecipeLine[];
+}
+export interface MenuAddonGroup {
+  id: string;
+  name: string;
+  min: number;
+  max: number;
+  options: MenuAddon[];
+}
+export interface MenuVariant {
+  id: string;
+  name: string;
+  price: number;
+  available: boolean;
+  addonGroupIds?: string[];
+  recipe?: RecipeLine[];
+}
+export interface MenuSelection { variantId?: string; addonIds?: string[] }
+export interface InvoiceEdit {
+  at: number;
+  by: string;
+  byName: string;
+  reason: string;
+  before: Record<string, unknown>;
+  after: Record<string, unknown>;
+}
+export type InvoiceSeller = Pick<BusinessSettings, "name" | "legalName" | "gstin" | "fssai" | "phone" | "email" | "address" | "invoiceFooter" | "gstRate">;
+
+export interface InvoiceDetails {
+  buyer?: { name: string; phone?: string; email?: string | null; address?: Address | null };
+  buyerGstin?: string;
+  note?: string;
+  revision?: number;
+  history?: InvoiceEdit[];
+}
+
 export interface MenuItem {
   id: string;
   /** URL slug for /menu/[slug] (kept identical to the old leafli.in /products/[slug]). */
@@ -146,6 +189,9 @@ export interface MenuItem {
   channelPrice?: Partial<Record<Channel, number>>;
   recipe: RecipeLine[];
   packagingCost: number;
+  variants?: MenuVariant[];
+  addonGroups?: MenuAddonGroup[];
+  sourceUrl?: string;
   allergens: string[];
   assembly?: string[];
   qualityStandard?: string;
@@ -166,7 +212,7 @@ export type OrderStatus =
   | "delivered"
   | "cancelled";
 
-export interface OrderLine {
+export interface OrderLine extends MenuSelection {
   menuItemId: string;
   name: string;
   qty: number;
@@ -174,6 +220,10 @@ export interface OrderLine {
   lineTotal: number;
   unitCost: number; // food + packaging cost snapshot at time of order
   notes?: string;
+  variantName?: string;
+  addons?: { id: string; name: string; price: number; diet: MenuAddon["diet"]; allergens: string[] }[];
+  stockRecipe?: RecipeLine[];
+  baseUnitPrice?: number;
 }
 
 export interface DeliveryInfo {
@@ -191,6 +241,10 @@ export interface DeliveryInfo {
 }
 
 export interface Order {
+  invoiceDetails?: InvoiceDetails;
+  invoiceSeller?: InvoiceSeller;
+  invoicedAt?: number;
+  invoiceGstRate?: number;
   id: string;
   orderNo: string;
   invoiceNo?: string;
@@ -337,6 +391,8 @@ export interface Plan {
 export type SubscriptionStatus = "pending_payment" | "active" | "paused" | "completed" | "cancelled" | "expired";
 
 export interface Subscription {
+  invoiceDetails?: InvoiceDetails;
+  invoiceSeller?: InvoiceSeller;
   id: string;
   planId: string;
   planName: string;

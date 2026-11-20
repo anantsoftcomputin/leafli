@@ -1,4 +1,5 @@
 import "server-only";
+import { publicOptions } from "@/lib/menu-options";
 import { unstable_cache } from "next/cache";
 import { adminDb } from "@/lib/firebase/admin";
 import { razorpayConfigured, razorpayKeyId } from "@/lib/integrations/razorpay";
@@ -24,6 +25,8 @@ export interface PublicDish {
   allergens: string[];
   nutrition: MenuItem["nutrition"] | null;
   ingredients: string[];
+  variants: NonNullable<MenuItem["variants"]>;
+  addonGroups: NonNullable<MenuItem["addonGroups"]>;
 }
 
 export interface PublicMenu {
@@ -54,6 +57,7 @@ export async function getPublicSettings(): Promise<PublicSettings> {
 
 const toDish = (id: string, m: Omit<MenuItem, "id">): PublicDish => ({
   id,
+  ...publicOptions(m),
   slug: m.slug || id,
   name: m.name,
   description: m.description,
@@ -98,7 +102,7 @@ export async function getPublicMenu(): Promise<PublicMenu> {
 
 export async function getDishBySlug(slug: string) {
   const menu = await getPublicMenu();
-  return menu.items.find((d) => d.slug === slug) ?? null;
+  return menu.items.find((d) => d.slug === slug || d.id === slug) ?? null;
 }
 
 export const getPlans = unstable_cache(

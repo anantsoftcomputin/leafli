@@ -121,6 +121,7 @@ function Track({ id }: { id: string }) {
 
   return (
     <div ref={root} className="relative">
+      {o.invoiceNo && !o.subscriptionId && <Link className="mb-5 inline-flex rounded-full bg-leaf-700 px-5 py-3 font-semibold text-white" href={`/account/orders/${o.id}/invoice`}>View invoice / Save PDF</Link>}
       {placed && (
         <div className="pointer-events-none absolute top-10 left-1/2" aria-hidden>
           {Array.from({ length: 28 }, (_, i) => (
@@ -186,10 +187,10 @@ function Track({ id }: { id: string }) {
           {o.delivery.partnerName && <p className="rounded-2xl bg-white px-5 py-4 text-sm ring-1 ring-ink/5">Rider: <b>{o.delivery.partnerName}</b></p>}
           <div className="rounded-[1.5rem] bg-white p-6 ring-1 ring-ink/5">
             <ul className="space-y-3">
-              {o.lines.map((l) => (
-                <li key={l.menuItemId} className="flex items-center gap-3">
+              {o.lines.map((l, index) => (
+                <li key={index} className="flex items-center gap-3">
                   <DishImage id={l.menuItemId} className="size-12" />
-                  <span className="flex-1">{l.qty}× {l.name}</span>
+                  <span className="flex-1">{l.qty}× {l.name}<small className="block text-leaf-700">{[l.variantName, ...(l.addons ?? []).map((a) => a.name)].filter(Boolean).join(" · ")}</small></span>
                   <span className="tabular-nums">{inr(l.lineTotal)}</span>
                 </li>
               ))}

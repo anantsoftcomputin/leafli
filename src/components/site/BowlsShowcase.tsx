@@ -87,7 +87,7 @@ export function BowlsShowcase() {
       <div data-pin className="relative overflow-hidden py-20 lg:flex lg:h-[100svh] lg:flex-col lg:justify-center lg:py-0">
         <div className="mx-auto mb-10 flex w-full max-w-7xl items-end justify-between gap-6 px-5 sm:px-8 lg:mb-12">
           <h2 data-title className="max-w-2xl font-display text-[clamp(2.4rem,5.5vw,4.6rem)] leading-[0.95] font-medium tracking-[-0.03em]">
-            Six bowls. <em className="text-leaf-600 italic">Zero</em> soggy leaves.
+            Fresh bowls. <em className="text-leaf-600 italic">Zero</em> soggy leaves.
           </h2>
           <p className="hidden max-w-xs text-sm text-ink/60 md:block">Every dressing travels in its own sealed cup. You toss, you taste, it crunches.</p>
         </div>
@@ -106,14 +106,14 @@ export function BowlsShowcase() {
                     <span>{String(i + 1).padStart(2, "0")} / {String(bowls.length).padStart(2, "0")}</span>
                     <span className="rounded-full px-2.5 py-1" style={{ background: `${t.fg}14` }}>{t.tag}</span>
                   </div>
-                  <div data-art className="mx-auto my-4 w-[78%] lg:my-2 lg:w-[62%]">
+                  <Link href={`/menu/${b.slug || b.id}`} aria-label={`View ${b.name} details`} data-art className="mx-auto my-4 w-[78%] lg:my-2 lg:w-[62%]">
                     <DishImage id={b.id} src={b.imageUrl} alt={b.name} className="w-full drop-shadow-[0_24px_30px_rgba(0,0,0,.18)]" />
-                  </div>
+                  </Link>
                   <div data-card-copy className="mt-auto">
                     <div className="flex items-start gap-2">
                       <DietDot diet={b.diet} />
                       <h3 className="font-display text-2xl leading-tight font-medium tracking-tight lg:text-3xl">
-                        {b.slug ? <Link href={`/menu/${b.slug}`} className="hover:underline">{b.name}</Link> : b.name}
+                        <Link href={`/menu/${b.slug || b.id}`} className="hover:underline">{b.name}</Link>
                       </h3>
                     </div>
                     <p className="mt-2 line-clamp-2 text-sm opacity-75">{b.description}</p>

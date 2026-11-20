@@ -77,13 +77,14 @@ export default function KitchenPage() {
                 </div>
                 <div className="mb-2 text-xs uppercase tracking-wide text-stone-500">{o.status} · {o.delivery.provider}</div>
                 <ul className="mb-3 space-y-2">
-                  {o.lines.map((l) => {
+                  {o.lines.map((l, lineIndex) => {
                     const m = menuMap.get(l.menuItemId);
-                    const k = `${o.id}:${l.menuItemId}`;
+                    const k = `${o.id}:${lineIndex}`;
                     return (
-                      <li key={l.menuItemId}>
+                      <li key={lineIndex}>
                         <button className="w-full text-left" onClick={() => setOpen(open === k ? null : k)}>
                           <span className="text-base font-semibold">{l.qty}× {l.name}</span>
+                          <span className="block text-sm text-leaf-700">{[l.variantName, ...(l.addons ?? []).map((a) => `${a.name}${a.allergens.length ? ` (contains ${a.allergens.join(", ")})` : ""}`)].filter(Boolean).join(" · ")}</span>
                           {l.notes && <span className="block text-xs text-amber-700">⚑ {l.notes}</span>}
                         </button>
                         {open === k && m?.assembly && (

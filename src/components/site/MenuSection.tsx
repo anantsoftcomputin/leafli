@@ -113,15 +113,15 @@ export function MenuSection({ hideHeading }: { hideHeading?: boolean } = {}) {
                 className={`group relative flex gap-4 overflow-hidden rounded-[1.5rem] bg-white p-3 ring-1 ring-ink/5 transition-shadow duration-500 hover:shadow-2xl hover:shadow-leaf-900/10 sm:flex-col sm:gap-0 sm:rounded-[1.75rem] sm:p-5 ${!i.available ? "opacity-60" : ""}`}
               >
                 {/* Phones: compact row (photo left). Larger screens: tall card. */}
-                <div className="relative grid size-28 shrink-0 place-items-center overflow-hidden rounded-[1.1rem] sm:mb-5 sm:aspect-[4/3] sm:size-auto sm:rounded-[1.25rem]" style={{ background: t.bg }}>
+                <Link href={`/menu/${i.slug || i.id}`} aria-label={`View ${i.name} details`} className="relative grid size-28 shrink-0 place-items-center overflow-hidden rounded-[1.1rem] sm:mb-5 sm:aspect-[4/3] sm:size-auto sm:rounded-[1.25rem]" style={{ background: t.bg }}>
                   <DishImage id={i.id} src={i.imageUrl} alt={i.name} className="w-[88%] drop-shadow-[0_12px_18px_rgba(0,0,0,.16)] transition-transform duration-[1.2s] ease-[var(--ease-spring)] group-hover:scale-110 group-hover:rotate-[25deg] sm:w-[74%]" />
                   {!i.available && <span className="absolute top-2 left-2 rounded-full bg-ink px-2 py-0.5 text-[10px] font-semibold text-white sm:top-3 sm:left-3 sm:px-3 sm:py-1 sm:text-xs">Sold out</span>}
-                </div>
+                </Link>
                 <div className="flex min-w-0 flex-1 flex-col py-1 sm:py-0">
                   <div className="flex items-start gap-2">
                     <DietDot diet={i.diet} />
                     <h3 className="font-display text-[1.05rem] leading-tight font-medium tracking-tight sm:text-xl">
-                      {i.slug ? <Link href={`/menu/${i.slug}`} className="hover:text-leaf-700 hover:underline">{i.name}</Link> : i.name}
+                      <Link href={`/menu/${i.slug || i.id}`} className="hover:text-leaf-700 hover:underline">{i.name}</Link>
                     </h3>
                   </div>
                   {i.nutrition && (i.nutrition.calories || i.nutrition.protein) ? (
@@ -131,7 +131,7 @@ export function MenuSection({ hideHeading }: { hideHeading?: boolean } = {}) {
                     </div>
                   ) : null}
                   <p className={`mt-1.5 text-[13px] leading-snug text-ink/60 sm:mt-2 sm:text-sm sm:leading-relaxed ${open ? "" : "line-clamp-2"}`}>{i.description}</p>
-                  <button className="mt-1 hidden self-start text-xs font-semibold text-leaf-600 hover:underline sm:block" onClick={() => setOpenId(open ? null : i.id)} aria-expanded={open}>
+                  <button className="mt-1 self-start text-xs font-semibold text-leaf-600 hover:underline" onClick={() => setOpenId(open ? null : i.id)} aria-expanded={open}>
                     {open ? "Less" : "Allergens & details"}
                   </button>
                   {open && (

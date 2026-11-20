@@ -14,6 +14,7 @@
     "seed": "tsx --conditions=react-server scripts/seed.ts",
     "check:firebase": "tsx --conditions=react-server scripts/check-firebase.ts",
     "emails:render": "tsx --conditions=react-server scripts/render-emails.ts",
+    "import:zomato": "tsx --conditions=react-server scripts/import-zomato.ts",
     "seed:posts": "tsx --conditions=react-server scripts/seed-posts.ts"
   },
   "dependencies": {

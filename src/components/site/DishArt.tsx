@@ -121,33 +121,33 @@ const R = 78; // inner bowl radius
 
 function piece(shape: Shape, color: string, s: number, key: string, x: number, y: number, rot: number) {
   const t = `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot.toFixed(0)})`;
-  const common = { "data-piece": "", key, transform: t } as const;
+  const common = { "data-piece": "", transform: t } as const;
   switch (shape) {
     case "leaf":
       return (
-        <g {...common}>
+        <g key={key} {...common}>
           <path d={`M0 ${-s / 2}C${s / 2.6} ${-s / 4} ${s / 2.6} ${s / 4} 0 ${s / 2}C${-s / 2.6} ${s / 4} ${-s / 2.6} ${-s / 4} 0 ${-s / 2}Z`} fill={color} />
           <path d={`M0 ${-s / 2.4}V${s / 2.4}`} stroke="#ffffff" strokeOpacity=".35" strokeWidth=".8" />
         </g>
       );
     case "blob":
-      return <ellipse {...common} rx={s / 2} ry={s / 2.4} fill={color} />;
+      return <ellipse key={key} {...common} rx={s / 2} ry={s / 2.4} fill={color} />;
     case "cube":
-      return <rect {...common} x={-s / 2} y={-s / 2} width={s} height={s} rx={s / 5} fill={color} />;
+      return <rect key={key} {...common} x={-s / 2} y={-s / 2} width={s} height={s} rx={s / 5} fill={color} />;
     case "disc":
-      return <circle {...common} r={s / 2} fill={color} />;
+      return <circle key={key} {...common} r={s / 2} fill={color} />;
     case "seed":
-      return <ellipse {...common} rx={s / 2} ry={s / 3.2} fill={color} />;
+      return <ellipse key={key} {...common} rx={s / 2} ry={s / 3.2} fill={color} />;
     case "half":
       return (
-        <g {...common}>
+        <g key={key} {...common}>
           <circle r={s / 2} fill={color} />
           <circle r={s / 3.4} fill="#ffd2c4" opacity=".55" />
         </g>
       );
     case "slice":
       return (
-        <g {...common}>
+        <g key={key} {...common}>
           <path d={`M${-s / 2} 0A${s / 2} ${s / 2} 0 0 1 ${s / 2} 0Z`} fill={color} />
           <path d={`M${-s / 2.6} -1A${s / 2.6} ${s / 2.6} 0 0 1 ${s / 2.6} -1`} stroke="#ffffff" strokeOpacity=".35" strokeWidth="1" fill="none" />
         </g>
@@ -155,7 +155,7 @@ function piece(shape: Shape, color: string, s: number, key: string, x: number, y
     case "strand":
       return (
         <path
-          {...common}
+          key={key} {...common}
           d={`M${-s / 2} 0C${-s / 4} ${-s / 6} ${s / 4} ${s / 6} ${s / 2} 0`}
           stroke={color}
           strokeWidth={s > 40 ? 3.2 : 2.6}
