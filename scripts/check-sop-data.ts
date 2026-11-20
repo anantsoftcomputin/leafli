@@ -77,3 +77,24 @@ import("../src/lib/subscriptions").then(({ upcomingDates, isDue, dishFor, eligib
   if (!canChange("2026-11-03", new Date("2026-11-02T20:59:00+05:30"))) fail("before cutoff");
   console.log("Subscription scheduling: OK");
 });
+
+// Cart edits must replace the original line, preserve quantity and keep only compatible extras.
+import assert from "node:assert/strict";
+import { cartKey, compatibleAddonIds, configureCart } from "../src/lib/menu-options";
+const configurable = MENU_ITEMS.find((m) => m.id === "chicken-caesar")!;
+const extraOptions = configurable.addonGroups!.flatMap((g) => g.options);
+const paneerOption = extraOptions.find((a) => a.name.startsWith("Paneer"))!;
+const tofuOption = extraOptions.find((a) => a.name.startsWith("Tofu"))!;
+const classicOption = configurable.variants!.find((v) => v.name === "Classic")!;
+assert.deepEqual(compatibleAddonIds(configurable, classicOption.id, [paneerOption.id]), [paneerOption.id]);
+assert.deepEqual(compatibleAddonIds({ ...configurable, variants: [{ ...classicOption, addonGroupIds: [] }] }, classicOption.id, [paneerOption.id]), []);
+const paneerKey = cartKey(configurable.id, { variantId: classicOption.id, addonIds: [paneerOption.id] });
+const tofuKey = cartKey(configurable.id, { variantId: classicOption.id, addonIds: [tofuOption.id] });
+const originalCart = { [paneerKey]: 2, [tofuKey]: 1 };
+assert.deepEqual(configureCart(originalCart, tofuKey, 2, paneerKey), { [tofuKey]: 3 });
+assert.deepEqual(configureCart(originalCart, paneerKey, 4, paneerKey), { [paneerKey]: 4, [tofuKey]: 1 });
+assert.deepEqual(originalCart, { [paneerKey]: 2, [tofuKey]: 1 }, "editing does not mutate saved cart state");
+assert.throws(() => configureCart({ [paneerKey]: 20 }, paneerKey, 1), /up to 20/);
+assert.throws(() => configureCart({}, paneerKey, 1, tofuKey), /removed/);
+assert.throws(() => configureCart({}, paneerKey, 0), /between 1 and 20/);
+console.log("Add-on cart editing and compatible selection checks: OK");

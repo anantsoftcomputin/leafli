@@ -139,7 +139,7 @@ export function MenuSection({ hideHeading }: { hideHeading?: boolean } = {}) {
                       <b>Contains:</b> {i.allergens.length ? i.allergens.join(", ") : "No major allergens listed"}. Made in a kitchen that handles nuts, sesame, soy, gluten, egg and dairy.
                     </p>
                   )}
-                  <div className="mt-auto flex items-center justify-between pt-2 sm:pt-5">
+                  <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-2 sm:pt-5">
                     <span className="font-display text-lg font-semibold sm:text-2xl">{inr(i.price)}</span>
                     <AddButton item={i} accent="#1f4d33" size="sm" />
                   </div>

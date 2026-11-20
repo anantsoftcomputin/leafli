@@ -146,3 +146,12 @@ body {
   from { width: 0%; }
   to { width: 100%; }
 }
+
+/* Leave a useful scrolling area for options on short phones and landscape screens. */
+@media (max-height: 500px) {
+  [data-dish-options] [data-options-photo],
+  [data-dish-options] [data-options-eyebrow],
+  [data-dish-options] [data-options-description] { display: none; }
+  [data-dish-options] header { padding-top: 0.875rem; padding-bottom: 0.875rem; }
+  [data-dish-options] h2 { font-size: 1.125rem; }
+}

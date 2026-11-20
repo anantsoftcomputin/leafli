@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { kitchenStatus, type KitchenStatus, type OrderingHours } from "@/lib/hours";
-import { parseCartKey, resolveSelection } from "@/lib/menu-options";
+import { configureCart, parseCartKey, resolveSelection } from "@/lib/menu-options";
 import type { MenuItem } from "@/lib/types";
 import { storagePhoto } from "./DishImage";
 
@@ -49,6 +49,7 @@ interface SiteState {
   count: number;
   cartLines: { key: string; item: PublicItem; qty: number; selection: ReturnType<typeof parseCartKey>; unitPrice: number; label: string }[];
   add: (id: string, delta?: number) => void;
+  saveCartLine: (key: string, qty: number, previousKey?: string) => void;
   clear: () => void;
   cartOpen: boolean;
   setCartOpen: (o: boolean) => void;
@@ -118,6 +119,10 @@ export function SiteProvider({ children, initialMenu }: { children: React.ReactN
     });
   }, []);
 
+  const saveCartLine = useCallback((key: string, qty: number, previousKey?: string) => {
+    setCart(configureCart(cart, key, qty, previousKey));
+  }, [cart]);
+
   const cartLines = useMemo(() => Object.entries(cart).flatMap(([key, qty]) => {
     try {
       const selection = parseCartKey(key);
@@ -135,6 +140,7 @@ export function SiteProvider({ children, initialMenu }: { children: React.ReactN
       live,
       cart,
       cartLines,
+      saveCartLine,
       count: Object.values(cart).reduce((a, b) => a + b, 0),
       add,
       clear: () => setCart({}),
@@ -143,7 +149,7 @@ export function SiteProvider({ children, initialMenu }: { children: React.ReactN
       cartTarget,
       setCartTarget,
     }),
-    [menu, kitchen, live, cart, cartLines, add, cartOpen, cartTarget],
+    [menu, kitchen, live, cart, cartLines, saveCartLine, add, cartOpen, cartTarget],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

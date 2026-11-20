@@ -9,8 +9,10 @@ import { useSite, type PublicItem } from "./SiteContext";
  * Add-to-bowl button. On add, a little green pea arcs from the button into
  * the cart in the header; once in the cart it becomes a − / + stepper.
  */
-export function AddButton({ item, accent = "#1f4d33", size = "md" }: { item: PublicItem; accent?: string; size?: "md" | "sm" }) {
-  const { cart, add, cartTarget, menu } = useSite();
+export function AddButton({ item: suppliedItem, accent = "#1f4d33", size = "md" }: { item: PublicItem; accent?: string; size?: "md" | "sm" }) {
+  const { cart, cartLines, add, cartTarget, menu, setCartOpen } = useSite();
+  const item = menu.items.find((m) => m.id === suppliedItem.id) ?? suppliedItem;
+  const configuredQty = cartLines.filter((l) => l.item.id === item.id).reduce((n, l) => n + l.qty, 0);
   const [customising, setCustomising] = useState(false);
   const configurable = !!(item.variants?.length || item.addonGroups?.length);
   const btn = useRef<HTMLButtonElement>(null);
@@ -36,12 +38,13 @@ export function AddButton({ item, accent = "#1f4d33", size = "md" }: { item: Pub
     if (cartTarget) gsap.fromTo(cartTarget, { scale: 1 }, { scale: 1.12, yoyo: true, repeat: 1, duration: 0.15, delay: 0.7 });
   }
 
-  const pad = size === "sm" ? "h-9 text-sm sm:h-10" : "h-12 text-[15px]";
+  const pad = size === "sm" ? "h-11 text-sm sm:h-10" : "h-12 text-[15px]";
   if (disabled) return <span className={`inline-flex items-center rounded-full px-4 text-sm font-semibold opacity-60 ${pad}`}>Sold out</span>;
-  if (configurable) return <>
-    <button className={`inline-flex items-center whitespace-nowrap rounded-full px-3 font-semibold text-white ${pad}`} style={{ background: accent }} onClick={() => setCustomising(true)} aria-label={`Customise ${item.name}`}>Customise +</button>
+  if (configurable) return <div className="inline-flex shrink-0 flex-col items-end gap-1.5">
+    <button type="button" className={`inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 font-semibold text-white ${pad}`} style={{ background: accent }} onClick={() => setCustomising(true)} aria-label={`Customise ${item.name}`} aria-haspopup="dialog">{configuredQty ? "Add more" : "Add"}<span aria-hidden>+</span></button>
+    <span aria-live="polite" className="text-xs font-medium" style={{ color: accent }}>{configuredQty ? <button type="button" onClick={() => setCartOpen(true)} className="rounded px-1 py-1 underline underline-offset-2" aria-label={`View ${configuredQty} ${item.name} in your bowl`}>{configuredQty} in bowl · View</button> : "Options available"}</span>
     {customising && <DishOptions item={item} onClose={() => setCustomising(false)} />}
-  </>;
+  </div>;
 
   if (!menu.acceptingOrders && qty === 0)
     return <span className={`inline-flex items-center rounded-full px-4 text-sm font-semibold opacity-70 ${pad}`}>Kitchen closed</span>;

@@ -47,3 +47,22 @@ export function publicOptions(item: Pick<MenuItem, "variants" | "addonGroups">) 
     addonGroups: (item.addonGroups ?? []).map((g) => ({ ...g, options: g.options.map(({ recipe: _recipe, ...a }) => a) })),
   };
 }
+
+/** Keep compatible extras when switching portion; drop only choices that no longer apply. */
+export function compatibleAddonIds(item: Pick<MenuItem, "variants" | "addonGroups">, variantId: string | undefined, ids: string[]) {
+  const variant = item.variants?.find((v) => v.id === variantId);
+  const groups = (item.addonGroups ?? []).filter((g) => !variant?.addonGroupIds || variant.addonGroupIds.includes(g.id));
+  return groups.flatMap((g) => g.options.filter((a) => a.available && ids.includes(a.id)).slice(0, g.max).map((a) => a.id));
+}
+
+/** Editing replaces the old line; matching configurations merge without losing bowls. */
+export function configureCart(cart: Record<string, number>, key: string, qty: number, previousKey?: string) {
+  if (!Number.isInteger(qty) || qty < 1 || qty > 20) throw new Error("Choose between 1 and 20 bowls.");
+  if (previousKey && !cart[previousKey]) throw new Error("This bowl was removed. Close this window and add it again.");
+  const next = { ...cart };
+  if (previousKey) delete next[previousKey];
+  const combined = (next[key] ?? 0) + qty;
+  if (combined > 20) throw new Error("You can have up to 20 bowls with the same options. Reduce the quantity and try again.");
+  next[key] = combined;
+  return next;
+}

@@ -21,12 +21,14 @@ export function MobileBuyBar({ watch, children }: { watch: string; children: Rea
 
   useEffect(() => {
     if (!bar.current) return;
-    gsap.to(bar.current, { yPercent: show ? 0 : 140, autoAlpha: show ? 1 : 0, duration: show ? 0.5 : 0.3, ease: show ? "expo.out" : "power2.in" });
+    gsap.to(bar.current, { y: 0, yPercent: show ? 0 : 140, autoAlpha: show ? 1 : 0, duration: show ? 0.5 : 0.3, ease: show ? "expo.out" : "power2.in" });
   }, [show]);
 
   return (
     <div
       ref={bar}
+      data-mobile-buy-bar
+      aria-hidden={!show}
       style={{ visibility: "hidden", transform: "translateY(140%)" }}
       className="fixed inset-x-3 bottom-[calc(var(--tabbar-live)+10px)] transition-[bottom] duration-400 z-30 flex items-center justify-between gap-3 rounded-[1.4rem] bg-white/95 p-2.5 pl-4 shadow-2xl shadow-leaf-900/20 ring-1 ring-ink/5 backdrop-blur lg:hidden"
     >

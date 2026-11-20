@@ -15,6 +15,8 @@ import { useAuth } from "@/components/AuthProvider";
 import { AddressForm, emptyAddress } from "@/components/AddressForm";
 import { DishImage } from "./DishImage";
 import { useSite } from "./SiteContext";
+import { DishOptions } from "./DishOptions";
+import { useBodyScrollLock } from "./scroll-lock";
 
 export function CartDrawer() {
   const { cartOpen, setCartOpen, cart, cartLines, add, menu, kitchen, clear, count } = useSite();
@@ -23,6 +25,9 @@ export function CartDrawer() {
   const panel = useRef<HTMLDivElement>(null);
   const shade = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const editingLine = cartLines.find((l) => l.key === editingKey);
+  useBodyScrollLock(mounted);
   const [step, setStep] = useState<"bag" | "details">("bag");
   const [mode, setMode] = useState<"porter" | "pickup">("porter");
   const [name, setName] = useState("");
@@ -49,11 +54,9 @@ export function CartDrawer() {
 
   useEffect(() => {
     if (!mounted) return;
-    document.body.style.overflow = cartOpen ? "hidden" : "";
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setCartOpen(false);
+    const onKey = (e: KeyboardEvent) => !e.defaultPrevented && e.key === "Escape" && setCartOpen(false);
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = "";
       window.removeEventListener("keydown", onKey);
     };
   }, [cartOpen, mounted, setCartOpen]);
@@ -154,6 +157,8 @@ export function CartDrawer() {
   const field = "w-full rounded-2xl border-0 bg-cream-100 px-4 py-3 text-[15px] ring-1 ring-ink/10 outline-none focus:ring-2 focus:ring-leaf-500";
 
   return (
+    <>
+    {editingLine && <DishOptions key={editingLine.key} item={editingLine.item} previousKey={editingLine.key} onClose={() => setEditingKey(null)} />}
     <div className="fixed inset-0 z-50" role="dialog" aria-modal aria-label="Your bowl">
       <div ref={shade} className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={() => setCartOpen(false)} />
       <div
@@ -186,7 +191,7 @@ export function CartDrawer() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5">
           {Object.keys(cart).length > lines.length && <div className="mb-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Some saved choices are no longer available. <button className="font-semibold underline" onClick={() => { for (const key of Object.keys(cart)) if (!lines.some((l) => l.key === key)) add(key, -cart[key]); }}>Remove unavailable choices</button></div>}
           {lines.length === 0 ? (
             <div className="grid h-full place-items-center text-center">
@@ -207,8 +212,9 @@ export function CartDrawer() {
                     <div className="font-medium leading-tight">{item.name}</div>
                     <div className="text-sm text-ink/50">{inr(unitPrice)}</div>
                     {label && <div className="mt-1 text-sm text-leaf-700">{label}</div>}
+                    {!!(item.variants?.length || item.addonGroups?.length) && <button type="button" className="mt-1 min-h-9 rounded text-sm font-semibold text-leaf-700 underline underline-offset-2" onClick={() => setEditingKey(key)} aria-label={`Edit options for ${item.name}`}>Edit options</button>}
                   </div>
-                  <div className="flex items-center rounded-full bg-white ring-1 ring-ink/10">
+                  <div className="flex shrink-0 items-center rounded-full bg-white ring-1 ring-ink/10">
                     <button className="grid size-9 place-items-center" onClick={() => add(key, -1)} aria-label={`Remove one ${item.name}`}>−</button>
                     <span className="w-5 text-center text-sm font-semibold tabular-nums">{qty}</span>
                     <button className="grid size-9 place-items-center" onClick={() => add(key, 1)} aria-label={`Add one ${item.name}`}>+</button>
@@ -291,5 +297,6 @@ export function CartDrawer() {
         )}
       </div>
     </div>
+    </>
   );
 }
